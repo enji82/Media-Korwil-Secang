@@ -1,0 +1,788 @@
+/**
+ * ===================================================================
+ * ======================= 1. KONFIGURASI PUSAT ======================
+ * ===================================================================
+ * Semua ID Spreadsheet dan Folder disimpan di sini agar mudah dikelola.
+ */
+
+const SPREADSHEET_CONFIG = {
+  // --- Modul SK Pembagian Tugas ---
+  SK_BAGI_TUGAS: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "SK Tabel Kirim" },
+  SK_FORM_RESPONSES: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "Form Responses 1" },
+  
+  // --- Modul Laporan Bulanan ---
+  LAPBUL_FORM_RESPONSES_PAUD: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Form Responses 1" },
+  LAPBUL_FORM_RESPONSES_SD: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Input" },
+  LAPBUL_RIWAYAT: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU", sheet: "Riwayat" },
+  LAPBUL_STATUS: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU", sheet: "Status" },
+
+  // --- Data Pendukung ---
+  DATA_SEKOLAH: { id: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs", sheet: "Data Sekolah" },
+  DATA_SEKOLAH_PAUD: { id: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA" }, 
+  DROPDOWN_DATA: { id: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA" },
+};
+
+const FOLDER_CONFIG = {
+  // --- Modul SK Pembagian Tugas ---
+  MAIN_SK: "1GwIow8B4O1OWoq3nhpzDbMO53LXJJUKs",
+
+  // --- Modul Laporan Bulanan ---
+  LAPBUL_KB: "18CxRT-eledBGRtHW1lFd2AZ8Bub6q5ra",
+  LAPBUL_TK: "1WUNz_BSFmcwRVlrG67D2afm9oJ-bVI9H",
+  LAPBUL_SD: "1I8DRQYpBbTt1mJwtD1WXVD6UK51TC8El",
+};
+
+
+/**
+ * ===================================================================
+ * ===================== 2. FUNGSI INTI APLIKASI =====================
+ * ===================================================================
+ */
+
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('index').evaluate();
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+
+/**
+ * ===================================================================
+ * ===================== 3. FUNGSI UTILITAS UMUM =====================
+ * ===================================================================
+ */
+
+function handleError(functionName, error) {
+  Logger.log(`Error di ${functionName}: ${error.message}\nStack: ${error.stack}`);
+  throw new Error(error.message);
+}
+
+function getOrCreateFolder(parentFolder, folderName) {
+  const folders = parentFolder.getFoldersByName(folderName);
+  if (folders.hasNext()) { return folders.next(); }
+  return parentFolder.createFolder(folderName);
+}
+
+function getDataFromSheet(configKey) {
+  try {
+    const config = SPREADSHEET_CONFIG[configKey];
+    if (!config) throw new Error(`Konfigurasi untuk '${configKey}' tidak ditemukan.`);
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet) throw new Error(`Sheet '${config.sheet}' tidak ditemukan.`);
+    return sheet.getDataRange().getValues(); // Selalu gunakan getValues() untuk konsistensi data tanggal
+  } catch (e) {
+    handleError(`getDataFromSheet: ${configKey}`, e);
+  }
+}
+
+function getCachedData(key, fetchFunction) {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(key);
+  if (cached != null) {
+    Logger.log("Mengambil data dari Cache: " + key);
+    return JSON.parse(cached);
+  }
+  Logger.log("Mengambil data dari Spreadsheet dan menyimpan ke Cache: " + key);
+  const freshData = fetchFunction();
+  cache.put(key, JSON.stringify(freshData), 21600); // Simpan selama 6 jam
+  return freshData;
+}
+
+
+/**
+ * ===================================================================
+ * ================= 4. MODUL SK PEMBAGIAN TUGAS =====================
+ * ===================================================================
+ */
+
+function getMasterSkOptions() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id);
+    
+    const getValuesFromSheet = (sheetName) => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return [];
+      return sheet.getRange('A2:A' + sheet.getLastRow()).getValues()
+                  .flat()
+                  .filter(value => String(value).trim() !== '');
+    };
+
+    return {
+      'Nama SD': getValuesFromSheet('Nama SD').sort(),
+      'Tahun Ajaran': getValuesFromSheet('Tahun Ajaran').sort().reverse(),
+      'Semester': getValuesFromSheet('Semester').sort(),
+      'Kriteria SK': getValuesFromSheet('Kriteria SK').sort()
+    };
+
+  } catch (e) {
+    return handleError('getMasterSkOptions', e);
+  }
+}
+
+function processManualForm(formData) {
+  try {
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    
+    const mainFolder = DriveApp.getFolderById(FOLDER_CONFIG.MAIN_SK);  
+    
+    const tahunAjaranFolderName = formData.tahunAjaran.replace(/\//g, '-');
+    const tahunAjaranFolder = getOrCreateFolder(mainFolder, tahunAjaranFolderName);
+
+    const semesterFolderName = formData.semester;
+    const targetFolder = getOrCreateFolder(tahunAjaranFolder, semesterFolderName);
+
+    const newFilename = `${formData.namaSD} - ${tahunAjaranFolderName} - ${formData.semester} - ${formData.kriteriaSK}.pdf`;
+    
+    const decodedData = Utilities.base64Decode(formData.fileData.data);
+    const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFilename);
+    const newFile = targetFolder.createFile(blob);
+    const fileUrl = newFile.getUrl();
+
+    const newRow = [ new Date(), formData.namaSD, formData.tahunAjaran, formData.semester, formData.nomorSK, new Date(formData.tanggalSK), formData.kriteriaSK, fileUrl ];
+    
+    sheet.appendRow(newRow);
+    
+    const lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow, 6).setNumberFormat("dd-MM-yyyy");
+
+    return "Dokumen SK berhasil diunggah.";
+  } catch (e) {
+    return handleError('processManualForm', e);
+  }
+}
+
+function getRiwayatPengirimanSKData() {
+  try {
+    const data = getDataFromSheet('SK_FORM_RESPONSES');
+    if (data.length < 2) return data;
+    
+    const headers = data[0].map(h => String(h).trim());
+    let dataRows = data.slice(1);
+    
+    const timestampIndex = headers.indexOf('Tanggal Unggah');
+    const tglSKIndex = headers.indexOf('Tanggal SK');
+    
+    const sortIndex = (timestampIndex > -1) ? timestampIndex : 0;
+
+    const parseDate = (value) => {
+        if (!value) return new Date(0);
+        if (value instanceof Date && !isNaN(value)) return value;
+        const date = new Date(value);
+        return isNaN(date) ? new Date(0) : date;
+    };
+    
+    dataRows.sort((a, b) => {
+      const dateA = parseDate(a[sortIndex]);
+      const dateB = parseDate(b[sortIndex]);
+      return dateB - dateA;
+    });
+    
+    const formattedDataRows = dataRows.map(row => {
+        return row.map((cell, index) => {
+            if (cell instanceof Date) {
+                if (index === tglSKIndex) {
+                    return Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
+                } else {
+                    return Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+                }
+            }
+            return cell;
+        });
+    });
+    
+    return [headers].concat(formattedDataRows);
+
+  } catch(e) {
+    return handleError('getRiwayatPengirimanSKData', e);
+  }
+}
+
+function getStatusPengirimanSKData() { 
+  const data = getDataFromSheet('SK_BAGI_TUGAS');
+  return data.map(row => row.map(cell => String(cell))); // Pastikan semua data adalah string
+}
+
+function getSKDataForManagement() {
+  try {
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet) throw new Error(`Sheet '${config.sheet}' tidak ditemukan.`);
+    
+    const originalData = sheet.getDataRange().getValues();
+
+    if (originalData.length < 2) {
+      return { headers: originalData.length > 0 ? originalData[0] : [], rows: [] };
+    }
+    
+    const originalHeaders = originalData[0].map(h => String(h).trim());
+    const dataRows = originalData.slice(1);
+
+    const timestampIndex = originalHeaders.indexOf('Tanggal Unggah');
+    const updateIndex = originalHeaders.indexOf('Update');
+    const tglSKIndex = originalHeaders.indexOf('Tanggal SK');
+    
+    const sortIndex = (timestampIndex > -1) ? timestampIndex : 0;
+
+    const parseDate = (value) => {
+        if (!value) return new Date(0);
+        if (value instanceof Date && !isNaN(value)) return value;
+        const date = new Date(value);
+        return isNaN(date) ? new Date(0) : date;
+    };
+    
+    const indexedData = dataRows.map((row, index) => ({ row: row, originalIndex: index + 2 }));
+    
+    indexedData.sort((a, b) => {
+      const dateB_update = (updateIndex > -1) ? parseDate(b.row[updateIndex]) : new Date(0);
+      const dateA_update = (updateIndex > -1) ? parseDate(a.row[updateIndex]) : new Date(0);
+      
+      if (dateB_update.getTime() !== dateA_update.getTime()) {
+        return dateB_update - dateA_update;
+      }
+      
+      const dateB_timestamp = parseDate(b.row[sortIndex]);
+      const dateA_timestamp = parseDate(a.row[sortIndex]);
+      return dateB_timestamp - dateA_timestamp;
+    });
+
+    const formattedRows = indexedData.map(item => {
+      const rowData = {};
+      originalHeaders.forEach((header, i) => {
+        let cell = item.row[i];
+        if ((i === timestampIndex || i === updateIndex || i === tglSKIndex) && cell) {
+          const dateObject = parseDate(cell);
+          if (dateObject.getTime() !== 0) {
+            const format = (i === tglSKIndex) ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm:ss";
+            rowData[header] = Utilities.formatDate(dateObject, Session.getScriptTimeZone(), format);
+          } else {
+            rowData[header] = '';
+          }
+        } else {
+          rowData[header] = String(cell);
+        }
+      });
+      return { rowIndex: item.originalIndex, data: rowData };
+    });
+
+    return { headers: originalHeaders, rows: formattedRows };
+
+  } catch (e) {
+    return handleError("getSKDataForManagement", e);
+  }
+}
+
+function getSKDataByRow(rowIndex) {
+  try {
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+    
+    const rowData = {};
+    headers.forEach((header, i) => {
+      rowData[header] = rowValues[i];
+    });
+    return rowData;
+  } catch (e) {
+    return handleError("getSKDataByRow", e);
+  }
+}
+
+function updateSKData(formData) {
+  try {
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    
+    const range = sheet.getRange(formData.rowIndex, 1, 1, headers.length);
+    const existingRowValues = range.getDisplayValues()[0]; // getDisplayValues untuk perbandingan string
+    const existingRowObject = {};
+    headers.forEach((header, i) => { existingRowObject[header] = existingRowValues[i]; });
+
+    const mainFolder = DriveApp.getFolderById(FOLDER_CONFIG.MAIN_SK);
+    const tahunAjaranFolderName = existingRowObject['Tahun Ajaran'].replace(/\//g, '-');
+    const tahunAjaranFolder = getOrCreateFolder(mainFolder, tahunAjaranFolderName);
+    
+    let fileUrl = existingRowObject['Dokumen'];
+    const fileUrlIndex = headers.indexOf('Dokumen');
+
+    // Tentukan nama file dan folder tujuan BARU berdasarkan data form
+    const newSemesterFolderName = formData['Semester'];
+    const newTargetFolder = getOrCreateFolder(tahunAjaranFolder, newSemesterFolderName);
+    const newFilename = `${existingRowObject['Nama SD']} - ${tahunAjaranFolderName} - ${newSemesterFolderName} - ${formData['Kriteria SK']}.pdf`;
+
+    // Skenario 1: File BARU diunggah
+    if (formData.fileData && formData.fileData.data) {
+      // Hapus file lama jika ada
+      if (fileUrlIndex > -1 && existingRowObject['Dokumen']) {
+        try {
+          const fileId = existingRowObject['Dokumen'].match(/[-\w]{25,}/);
+          if (fileId) DriveApp.getFileById(fileId[0]).setTrashed(true);
+        } catch (e) {
+          Logger.log(`Gagal menghapus file lama saat upload baru: ${e.message}`);
+        }
+      }
+      
+      // Unggah file baru
+      const decodedData = Utilities.base64Decode(formData.fileData.data);
+      const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFilename);
+      const newFile = newTargetFolder.createFile(blob);
+      fileUrl = newFile.getUrl();
+
+    // Skenario 2: TIDAK ada file baru, tapi data (Semester/Kriteria) berubah
+    } else if (fileUrlIndex > -1 && existingRowObject['Dokumen']) {
+        const fileIdMatch = existingRowObject['Dokumen'].match(/[-\w]{25,}/);
+        if (fileIdMatch) {
+            const fileId = fileIdMatch[0];
+            const file = DriveApp.getFileById(fileId);
+            const currentFileName = file.getName();
+            const currentParentFolder = file.getParents().next();
+
+            // Cek jika nama file atau folder perlu diubah
+            if (currentFileName !== newFilename || currentParentFolder.getName() !== newSemesterFolderName) {
+                file.moveTo(newTargetFolder);
+                file.setName(newFilename);
+                fileUrl = file.getUrl(); // Perbarui URL setelah dipindah/diubah namanya
+                Logger.log(`File dipindahkan ke folder '${newSemesterFolderName}' dan diubah namanya menjadi '${newFilename}'`);
+            }
+        }
+    }
+    
+    formData['Dokumen'] = fileUrl; // Pastikan URL file diperbarui di formData
+    formData['Update'] = new Date();
+
+    const newRowValuesForSheet = headers.map(header => {
+      return formData.hasOwnProperty(header) ? formData[header] : existingRowObject[header];
+    });
+    
+    // Gunakan getRange(row, col, numRows, numCols) dan setValues()
+    sheet.getRange(formData.rowIndex, 1, 1, headers.length).setValues([newRowValuesForSheet]);
+    
+    const tanggalSKIndex = headers.indexOf('Tanggal SK');
+    if (tanggalSKIndex !== -1) {
+      sheet.getRange(formData.rowIndex, tanggalSKIndex + 1).setNumberFormat("dd-MM-yyyy");
+    }
+    
+    return "Data berhasil diperbarui!";
+  } catch (e) {
+    return handleError('updateSKData', e);
+  }
+}
+
+
+function deleteSKData(rowIndex, deleteCode) {
+  try {
+    const today = new Date();
+    const todayCode = Utilities.formatDate(today, Session.getScriptTimeZone(), "yyyyMMdd");
+    
+    if (String(deleteCode).trim() !== todayCode) {
+      throw new Error("Kode Hapus salah.");
+    }
+
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const fileUrlIndex = headers.findIndex(h => h.trim().toLowerCase() === 'dokumen');
+    
+    if (fileUrlIndex !== -1) {
+        const fileUrl = sheet.getRange(rowIndex, fileUrlIndex + 1).getValue();
+        if (fileUrl && typeof fileUrl === 'string') {
+            const fileId = fileUrl.match(/[-\w]{25,}/);
+            if (fileId) {
+                try {
+                    DriveApp.getFileById(fileId[0]).setTrashed(true);
+                } catch (err) {
+                    Logger.log(`Gagal menghapus file dengan ID ${fileId[0]}: ${err.message}`);
+                }
+            }
+        }
+    }
+    
+    sheet.deleteRow(rowIndex);
+    return "Data dan file terkait berhasil dihapus.";
+  } catch (e) {
+    return handleError("deleteSKData", e);
+  }
+}
+
+
+/**
+ * ===================================================================
+ * ==================== 5. MODUL LAPORAN BULAN =======================
+ * ===================================================================
+ */
+
+function getPaudSchoolLists() {
+  const cacheKey = 'paud_school_lists';
+  return getCachedData(cacheKey, function() {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DATA_SEKOLAH_PAUD.id);
+    const getValues = (sheetName) => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      return sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat().filter(Boolean).sort();
+    };
+    return { KB: getValues('Nama KB'), TK: getValues('Nama TK') };
+  });
+}
+
+function getSdSchoolLists() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DATA_SEKOLAH_PAUD.id); 
+    
+    const getValues = (sheetName) => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      return sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat().filter(Boolean).sort();
+    };
+
+    return {
+      SDN: getValues('Nama SDN'),
+      SDS: getValues('Nama SDS')
+    };
+  } catch (e) {
+    return handleError('getSdSchoolLists', e);
+  }
+}
+
+function processLapbulFormPaud(formData) {
+  try {
+    const jenjang = formData.jenjang;
+    let FOLDER_ID_LAPBUL;
+    if (jenjang === 'KB') {
+      FOLDER_ID_LAPBUL = FOLDER_CONFIG.LAPBUL_KB;
+    } else if (jenjang === 'TK') {
+      FOLDER_ID_LAPBUL = FOLDER_CONFIG.LAPBUL_TK;
+    } else {
+      throw new Error("Jenjang tidak valid: " + jenjang);
+    }
+    
+    const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
+    const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
+    const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
+
+    const fileData = formData.fileData;
+    const decodedData = Utilities.base64Decode(fileData.data);
+    const blob = Utilities.newBlob(decodedData, fileData.mimeType, fileData.fileName);
+    
+    const newFileName = `${formData.namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
+    const newFile = bulanFolder.createFile(blob).setName(newFileName);
+    const fileUrl = newFile.getUrl();
+
+    const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+
+    const newRow = [
+      new Date(),
+      formData.laporanBulan, formData.tahun, formData.npsn, formData.statusSekolah, formData.jumlahRombel, formData.jenjang, formData.namaSekolah,
+      formData.murid_0_1_L, formData.murid_0_1_P, formData.murid_1_2_L, formData.murid_1_2_P,
+      formData.murid_2_3_L, formData.murid_2_3_P, formData.murid_3_4_L, formData.murid_3_4_P,
+      formData.murid_4_5_L, formData.murid_4_5_P, formData.murid_5_6_L, formData.murid_5_6_P,
+      formData.murid_6_up_L, formData.murid_6_up_P, formData.kelompok_A_L, formData.kelompok_A_P,
+      formData.kelompok_B_L, formData.kelompok_B_P, formData.kepsek_ASN, formData.kepsek_Non_ASN,
+      formData.guru_PNS, formData.guru_PPPK, formData.guru_GTY, formData.guru_GTT,
+      formData.tendik_Penjaga, formData.tendik_TAS, formData.tendik_Pustakawan, formData.tendik_Lainnya,
+      fileUrl
+    ];
+    
+    sheet.appendRow(newRow);
+
+    return "Sukses! Laporan Bulan PAUD berhasil dikirim.";
+  } catch (e) {  
+    return handleError('processLapbulFormPaud', e);
+  }
+}
+
+function processLapbulFormSd(formData) {
+  try {
+    // 1. Proses File dan Simpan ke Google Drive
+    const mainFolder = DriveApp.getFolderById(FOLDER_CONFIG.LAPBUL_SD);
+    const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
+    const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
+
+    const fileData = formData.fileData;
+    const decodedData = Utilities.base64Decode(fileData.data);
+    const blob = Utilities.newBlob(decodedData, fileData.mimeType, fileData.fileName);
+    
+    const newFileName = `${formData.namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
+    const newFile = bulanFolder.createFile(blob).setName(newFileName);
+    const fileUrl = newFile.getUrl();
+
+    // 2. Siapkan Data untuk Disimpan ke Google Sheet
+    // PERBAIKAN: Menggunakan nama konfigurasi yang benar (RESPONSES bukan RESPONCES)
+    const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    const getValue = (key) => formData[key] || 0;
+
+    // PERBAIKAN: Susun baris baru sesuai urutan kolom A s/d GH
+    const newRow = [
+      new Date(), // A
+      formData.laporanBulan, // B
+      formData.tahun, // C
+      formData.statusSekolah, // D
+      formData.namaSekolah, // E
+      formData.npsn, // F
+      formData.jumlahRombel, // G
+      fileUrl, // H
+      
+      // Kelas 1 (I-AC)
+      getValue('k1_jumlah_rombel'), getValue('k1_rombel_tunggal_L'), getValue('k1_rombel_tunggal_P'),
+      getValue('k1_rombel_a_L'), getValue('k1_rombel_a_P'), getValue('k1_rombel_b_L'), getValue('k1_rombel_b_P'), getValue('k1_rombel_c_L'), getValue('k1_rombel_c_P'),
+      getValue('k1_agama_islam_L'), getValue('k1_agama_islam_P'), getValue('k1_agama_kristen_L'), getValue('k1_agama_kristen_P'), getValue('k1_agama_katolik_L'), getValue('k1_agama_katolik_P'), 
+      getValue('k1_agama_hindu_L'), getValue('k1_agama_hindu_P'), getValue('k1_agama_buddha_L'), getValue('k1_agama_buddha_P'), getValue('k1_agama_konghucu_L'), getValue('k1_agama_konghucu_P'),
+      
+      // Kelas 2 (AD-AX)
+      getValue('k2_jumlah_rombel'), getValue('k2_rombel_tunggal_L'), getValue('k2_rombel_tunggal_P'),
+      getValue('k2_rombel_a_L'), getValue('k2_rombel_a_P'), getValue('k2_rombel_b_L'), getValue('k2_rombel_b_P'), getValue('k2_rombel_c_L'), getValue('k2_rombel_c_P'),
+      getValue('k2_agama_islam_L'), getValue('k2_agama_islam_P'), getValue('k2_agama_kristen_L'), getValue('k2_agama_kristen_P'), getValue('k2_agama_katolik_L'), getValue('k2_agama_katolik_P'), 
+      getValue('k2_agama_hindu_L'), getValue('k2_agama_hindu_P'), getValue('k2_agama_buddha_L'), getValue('k2_agama_buddha_P'), getValue('k2_agama_konghucu_L'), getValue('k2_agama_konghucu_P'),
+
+      // Kelas 3 (AY-BS)
+      getValue('k3_jumlah_rombel'), getValue('k3_rombel_tunggal_L'), getValue('k3_rombel_tunggal_P'),
+      getValue('k3_rombel_a_L'), getValue('k3_rombel_a_P'), getValue('k3_rombel_b_L'), getValue('k3_rombel_b_P'), getValue('k3_rombel_c_L'), getValue('k3_rombel_c_P'),
+      getValue('k3_agama_islam_L'), getValue('k3_agama_islam_P'), getValue('k3_agama_kristen_L'), getValue('k3_agama_kristen_P'), getValue('k3_agama_katolik_L'), getValue('k3_agama_katolik_P'), 
+      getValue('k3_agama_hindu_L'), getValue('k3_agama_hindu_P'), getValue('k3_agama_buddha_L'), getValue('k3_agama_buddha_P'), getValue('k3_agama_konghucu_L'), getValue('k3_agama_konghucu_P'),
+      
+      // Kelas 4 (BT-CN)
+      getValue('k4_jumlah_rombel'), getValue('k4_rombel_tunggal_L'), getValue('k4_rombel_tunggal_P'),
+      getValue('k4_rombel_a_L'), getValue('k4_rombel_a_P'), getValue('k4_rombel_b_L'), getValue('k4_rombel_b_P'), getValue('k4_rombel_c_L'), getValue('k4_rombel_c_P'),
+      getValue('k4_agama_islam_L'), getValue('k4_agama_islam_P'), getValue('k4_agama_kristen_L'), getValue('k4_agama_kristen_P'), getValue('k4_agama_katolik_L'), getValue('k4_agama_katolik_P'), 
+      getValue('k4_agama_hindu_L'), getValue('k4_agama_hindu_P'), getValue('k4_agama_buddha_L'), getValue('k4_agama_buddha_P'), getValue('k4_agama_konghucu_L'), getValue('k4_agama_konghucu_P'),
+
+      // Kelas 5 (CO-DI)
+      getValue('k5_jumlah_rombel'), getValue('k5_rombel_tunggal_L'), getValue('k5_rombel_tunggal_P'),
+      getValue('k5_rombel_a_L'), getValue('k5_rombel_a_P'), getValue('k5_rombel_b_L'), getValue('k5_rombel_b_P'), getValue('k5_rombel_c_L'), getValue('k5_rombel_c_P'),
+      getValue('k5_agama_islam_L'), getValue('k5_agama_islam_P'), getValue('k5_agama_kristen_L'), getValue('k5_agama_kristen_P'), getValue('k5_agama_katolik_L'), getValue('k5_agama_katolik_P'), 
+      getValue('k5_agama_hindu_L'), getValue('k5_agama_hindu_P'), getValue('k5_agama_buddha_L'), getValue('k5_agama_buddha_P'), getValue('k5_agama_konghucu_L'), getValue('k5_agama_konghucu_P'),
+
+      // Kelas 6 (DJ-ED)
+      getValue('k6_jumlah_rombel'), getValue('k6_rombel_tunggal_L'), getValue('k6_rombel_tunggal_P'),
+      getValue('k6_rombel_a_L'), getValue('k6_rombel_a_P'), getValue('k6_rombel_b_L'), getValue('k6_rombel_b_P'), getValue('k6_rombel_c_L'), getValue('k6_rombel_c_P'),
+      getValue('k6_agama_islam_L'), getValue('k6_agama_islam_P'), getValue('k6_agama_kristen_L'), getValue('k6_agama_kristen_P'), getValue('k6_agama_katolik_L'), getValue('k6_agama_katolik_P'), 
+      getValue('k6_agama_hindu_L'), getValue('k6_agama_hindu_P'), getValue('k6_agama_buddha_L'), getValue('k6_agama_buddha_P'), getValue('k6_agama_konghucu_L'), getValue('k6_agama_konghucu_P'),
+
+      // PTK Negeri (EE-FH)
+      getValue('ptk_negeri_ks_pns'), getValue('ptk_negeri_ks_pppk'),
+      getValue('ptk_negeri_guru_kelas_pns'), getValue('ptk_negeri_guru_kelas_pppk'), getValue('ptk_negeri_guru_kelas_pppkpw'), getValue('ptk_negeri_guru_kelas_gtt'),
+      getValue('ptk_negeri_guru_pai_pns'), getValue('ptk_negeri_guru_pai_pppk'), getValue('ptk_negeri_guru_pai_pppkpw'), getValue('ptk_negeri_guru_pai_gtt'),
+      getValue('ptk_negeri_guru_pjok_pns'), getValue('ptk_negeri_guru_pjok_pppk'), getValue('ptk_negeri_guru_pjok_pppkpw'), getValue('ptk_negeri_guru_pjok_gtt'),
+      getValue('ptk_negeri_guru_kristen_pns'), getValue('ptk_negeri_guru_kristen_pppk'), getValue('ptk_negeri_guru_kristen_pppkpw'), getValue('ptk_negeri_guru_kristen_gtt'),
+      getValue('ptk_negeri_guru_inggris_gtt'), getValue('ptk_negeri_guru_lainnya_gtt'),
+      getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
+      getValue('ptk_negeri_tendik_pengelola_pppk'), getValue('ptk_negeri_tendik_pengelola_pppkpw'), getValue('ptk_negeri_tendik_pengelola_ptt'),
+      getValue('ptk_negeri_tendik_penjaga_ptt'), getValue('ptk_negeri_tendik_tas_ptt'), getValue('ptk_negeri_tendik_pustakawan_ptt'), getValue('ptk_negeri_tendik_lainnya_ptt'),
+
+      // PTK Swasta (FI-GH)
+      getValue('ptk_swasta_ks_gty'), getValue('ptk_swasta_ks_gtt'),
+      getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'),
+      getValue('ptk_swasta_guru_pai_gty'), getValue('ptk_swasta_guru_pai_gtt'),
+      getValue('ptk_swasta_guru_pjok_gty'), getValue('ptk_swasta_guru_pjok_gtt'),
+      getValue('ptk_swasta_guru_kristen_gty'), getValue('ptk_swasta_guru_kristen_gtt'),
+      getValue('ptk_swasta_guru_inggris_gty'), getValue('ptk_swasta_guru_inggris_gtt'),
+      getValue('ptk_swasta_guru_lainnya_gty'), getValue('ptk_swasta_guru_lainnya_gtt'),
+      getValue('ptk_swasta_tendik_operator_pty'), getValue('ptk_swasta_tendik_operator_ptt'),
+      getValue('ptk_swasta_tendik_pengelola_pty'), getValue('ptk_swasta_tendik_pengelola_ptt'),
+      getValue('ptk_swasta_tendik_penjaga_pty'), getValue('ptk_swasta_tendik_penjaga_ptt'),
+      getValue('ptk_swasta_tendik_tas_pty'), getValue('ptk_swasta_tendik_tas_ptt'),
+      getValue('ptk_swasta_tendik_pustakawan_pty'), getValue('ptk_swasta_tendik_pustakawan_ptt'),
+      getValue('ptk_swasta_tendik_lainnya_pty'), getValue('ptk_swasta_tendik_lainnya_ptt')
+    ];
+    
+    sheet.appendRow(newRow);
+
+    return "Sukses! Laporan Bulan SD berhasil dikirim.";
+  } catch (e) {
+    return handleError('processLapbulFormSd', e);
+  }
+}
+
+function getLapbulRiwayatData() {
+  try {
+    const data = getDataFromSheet('LAPBUL_RIWAYAT');
+    if (data.length < 2) return data;
+
+    const headers = data[0];
+    const dataRows = data.slice(1);
+    
+    // Urutkan berdasarkan kolom A (Timestamp) dari yang terbaru
+    dataRows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    
+    return [headers].concat(dataRows);
+  } catch(e) {
+    return handleError('getLapbulRiwayatData', e);
+  }
+}
+
+function getLapbulStatusData() {
+  try {
+    const data = getDataFromSheet('LAPBUL_STATUS'); 
+    return data;
+  } catch(e) {
+    return handleError('getLapbulStatusData', e);
+  }
+}
+
+function getLapbulKelolaData() {
+  try {
+    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+
+    const paudData = paudSheet.getDataRange().getValues();
+    const sdData = sdSheet.getDataRange().getValues();
+
+    const paudHeaders = paudData.length > 0 ? paudData[0].map(h => String(h).trim()) : [];
+    const sdHeaders = sdData.length > 0 ? sdData[0].map(h => String(h).trim()) : [];
+
+    let combinedData = [];
+
+    const processRow = (row, rowIndex, source, mapping) => {
+        if (rowIndex === 0) return null;
+        const timestampValue = row[mapping.waktuUnggah];
+        if (!timestampValue || String(timestampValue).trim() === '') return null;
+
+        return {
+            waktuUnggah: timestampValue,
+            bulan: row[mapping.bulan],
+            tahun: row[mapping.tahun],
+            jenjang: source === 'SD' ? (row[mapping.jenjang] || 'SD') : row[mapping.jenjang],
+            namaSekolah: row[mapping.namaSekolah],
+            status: row[mapping.status],
+            jumlahRombel: row[mapping.jumlahRombel],
+            dokumen: row[mapping.dokumen],
+            update: row[mapping.update] || timestampValue,
+            source: source,
+            originalIndex: rowIndex + 1
+        };
+    };
+
+    const paudMapping = {
+        waktuUnggah: paudHeaders.indexOf('Waktu Unggah'),
+        bulan: paudHeaders.indexOf('Bulan'),
+        tahun: paudHeaders.indexOf('Tahun'),
+        jenjang: paudHeaders.indexOf('Jenjang'),
+        namaSekolah: paudHeaders.indexOf('Nama Sekolah'),
+        status: paudHeaders.indexOf('Status'),
+        jumlahRombel: paudHeaders.indexOf('Rombel'),
+        dokumen: paudHeaders.indexOf('File Laporan Bulan'),
+        update: paudHeaders.indexOf('Update')
+    };
+
+    const sdMapping = {
+        waktuUnggah: sdHeaders.indexOf('Timestamp'),
+        bulan: sdHeaders.indexOf('Bulan'),
+        tahun: sdHeaders.indexOf('Tahun'),
+        jenjang: sdHeaders.indexOf('Jenjang'),
+        namaSekolah: sdHeaders.indexOf('Nama SD'),
+        status: sdHeaders.indexOf('Status'),
+        jumlahRombel: sdHeaders.indexOf('Jumlah Rombel'),
+        dokumen: sdHeaders.indexOf('Dokumen'),
+        update: sdHeaders.indexOf('Update')
+    };
+
+    paudData.forEach((row, index) => {
+        const processed = processRow(row, index, 'PAUD', paudMapping);
+        if (processed) combinedData.push(processed);
+    });
+    sdData.forEach((row, index) => {
+        const processed = processRow(row, index, 'SD', sdMapping);
+        if (processed) combinedData.push(processed);
+    });
+    
+    const parseDate = (value) => {
+      if (!value) return new Date(0);
+      if (value instanceof Date) return value;
+      const date = new Date(value);
+      return isNaN(date) ? new Date(0) : date;
+    };
+    
+    combinedData.sort((a, b) => {
+        const dateBUpdate = parseDate(b.update);
+        const dateAUpdate = parseDate(a.update);
+        if (dateBUpdate.getTime() !== dateAUpdate.getTime()) {
+            return dateBUpdate - dateAUpdate;
+        }
+        const dateBTimestamp = parseDate(b.waktuUnggah);
+        const dateATimestamp = parseDate(a.waktuUnggah);
+        return dateBTimestamp - dateATimestamp;
+    });
+
+    return combinedData;
+
+  } catch (e) {
+    return handleError('getLapbulKelolaData', e);
+  }
+}
+
+/**
+ * ===================================================================
+ * =================== 6. MODUL GOOGLE DRIVE (ARSIP) =================
+ * ===================================================================
+ */
+
+function getFolders(folderId) {
+  try {
+    const parentFolder = DriveApp.getFolderById(folderId);
+    const subFolders = parentFolder.getFolders();
+    const folderList = [];
+    while (subFolders.hasNext()) {
+      const folder = subFolders.next();
+      folderList.push({
+        id: folder.getId(),
+        name: folder.getName()
+      });
+    }
+    folderList.sort((a, b) => b.name.localeCompare(a.name));
+    return folderList;
+  } catch (e) {
+    return handleError("getFolders", e);
+  }
+}
+
+function getFiles(folderId) {
+  try {
+    const parentFolder = DriveApp.getFolderById(folderId);
+    const files = parentFolder.getFiles();
+    const fileList = [];
+    while (files.hasNext()) {
+      const file = files.next();
+      fileList.push({
+        name: file.getName(),
+        url: file.getUrl()
+      });
+    }
+    fileList.sort((a, b) => a.name.localeCompare(b.name));
+    return fileList;
+  } catch (e) {
+    return handleError("getFiles", e);
+  }
+}
+
+function getLapbulInfo() {
+  const cacheKey = 'lapbul_info_v1'; // Kunci unik untuk cache
+  return getCachedData(cacheKey, function() {
+    try {
+      // Menggunakan kembali konfigurasi DROPDOWN_DATA karena ID spreadsheet sama
+      const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id);
+      const sheet = ss.getSheetByName('Informasi');
+      
+      if (!sheet) {
+        throw new Error("Sheet 'Informasi' tidak ditemukan di spreadsheet referensi.");
+      }
+
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return []; // Kembalikan array kosong jika tidak ada data
+
+      // Ambil data dari A2 sampai baris terakhir yang berisi konten
+      const range = sheet.getRange('A2:A' + lastRow);
+      const values = range.getValues()
+                          .flat() // Mengubah array 2D menjadi 1D
+                          .filter(item => String(item).trim() !== ''); // Menghapus baris kosong
+      return values;
+    } catch (e) {
+      return handleError('getLapbulInfo', e);
+    }
+  });
+}
