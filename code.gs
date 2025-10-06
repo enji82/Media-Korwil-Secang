@@ -601,16 +601,74 @@ function processLapbulFormSd(formData) {
 
 function getLapbulRiwayatData() {
   try {
-    const data = getDataFromSheet('LAPBUL_RIWAYAT');
-    if (data.length < 2) return data;
+    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
 
-    const headers = data[0];
-    const dataRows = data.slice(1);
+    const combinedHeaders = ["Waktu Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Rombel", "Dokumen"];
+    let combinedData = [];
+
+    const parseDate = (dateString) => {
+        if (!dateString || typeof dateString !== 'string') return null;
+        const parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
+        if (!parts) return new Date(dateString);
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+    };
+
+    const processSheetData = (sheet, jenjangDefault) => {
+      if (!sheet) return;
+      const data = sheet.getDataRange().getDisplayValues();
+      if (data.length < 2) return;
+
+      const headers = data[0].map(h => h.trim());
+      const rows = data.slice(1);
+
+      // PERBAIKAN: Pemetaan untuk SD disederhanakan dan diperbaiki
+      const mapping = {
+        'PAUD': { waktu: 'Waktu Unggah', bulan: 'Bulan', tahun: 'Tahun', jenjang: 'Jenjang', nama: 'Nama Sekolah', status: 'Status', rombel: 'Jumlah Rombel', doc: 'File Laporan Bulan' },
+        'SD': { waktu: 'Timestamp', bulan: 'Bulan', tahun: 'Tahun', nama: 'Nama SD', status: 'Status', rombel: 'Jumlah Rombel', doc: 'Dokumen' }
+      };
+      
+      const currentMap = mapping[jenjangDefault];
+      const colIndices = {};
+      for (const key in currentMap) {
+        colIndices[key] = headers.indexOf(currentMap[key]);
+      }
+
+      rows.forEach(row => {
+        if (colIndices.waktu > -1 && row[colIndices.waktu]) {
+          const rowData = [
+            row[colIndices.waktu],
+            colIndices.bulan > -1 ? row[colIndices.bulan] : '',
+            colIndices.tahun > -1 ? row[colIndices.tahun] : '',
+            // Menggunakan jenjang default ('SD' atau 'PAUD')
+            jenjangDefault === 'SD' ? 'SD' : (colIndices.jenjang > -1 ? row[colIndices.jenjang] : jenjangDefault),
+            colIndices.nama > -1 ? row[colIndices.nama] : '',
+            // Mengambil data status
+            colIndices.status > -1 ? row[colIndices.status] : '',
+            colIndices.rombel > -1 ? row[colIndices.rombel] : '',
+            colIndices.doc > -1 ? row[colIndices.doc] : ''
+          ];
+          rowData.push(parseDate(row[colIndices.waktu])); 
+          combinedData.push(rowData);
+        }
+      });
+    };
+
+    processSheetData(paudSheet, 'PAUD');
+    processSheetData(sdSheet, 'SD');
+
+    combinedData.sort((a, b) => {
+        const dateA = a[a.length - 1];
+        const dateB = b[b.length - 1];
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateB - dateA;
+    });
     
-    // Urutkan berdasarkan kolom A (Timestamp) dari yang terbaru
-    dataRows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
-    
-    return [headers].concat(dataRows);
+    const finalData = combinedData.map(row => row.slice(0, -1));
+
+    return [combinedHeaders].concat(finalData);
+
   } catch(e) {
     return handleError('getLapbulRiwayatData', e);
   }
