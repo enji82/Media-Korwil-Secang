@@ -615,6 +615,82 @@
     text-align: center;
   }
 
+/* =================================================================== */
+/* ============== GAYA TABEL STATUS LAPORAN BULAN ================== */
+/* =================================================================== */
+
+#lapbulStatusTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* 1. Atur semua sel agar rata tengah secara default */
+#lapbulStatusTable th,
+#lapbulStatusTable td {
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Atur lebar kolom "No." */
+#lapbulStatusTable th:nth-child(1),
+#lapbulStatusTable td:nth-child(1) {
+  width: 40px;
+}
+
+/* --- PERUBAHAN DI SINI --- */
+/* Atur HEADER "Nama Sekolah" agar rata tengah */
+#lapbulStatusTable th:nth-child(2) {
+  width: 250px;
+  text-align: center; 
+}
+
+/* Atur ISI KOLOM "Nama Sekolah" agar rata kiri */
+#lapbulStatusTable td:nth-child(2) {
+  width: 250px;
+  text-align: left;
+}
+/* --- AKHIR PERUBAHAN --- */
+
+/* 2. Atur agar semua kolom bulan (dari kolom ke-4 dst.) punya lebar sama */
+#lapbulStatusTable th:nth-child(n+4),
+#lapbulStatusTable td:nth-child(n+4) {
+  width: 70px;
+}
+
+/* 3. Atur freeze pane untuk kolom "No." dan "Nama Sekolah" */
+#lapbulStatusTable th:nth-child(1),
+#lapbulStatusTable td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background-color: #1c2e3a; 
+}
+
+#lapbulStatusTable th:nth-child(2),
+#lapbulStatusTable td:nth-child(2) {
+  position: sticky;
+  left: 40px; 
+  z-index: 5;
+  background-color: #1c2e3a;
+}
+
+/* Pastikan header sticky tetap di atas dengan warna latar yang solid */
+#lapbulStatusTable thead th {
+    background-color: #101E26;
+}
+
+/* Pastikan header sticky punya z-index lebih tinggi */
+#lapbulStatusTable thead th:nth-child(1),
+#lapbulStatusTable thead th:nth-child(2) {
+    z-index: 15;
+}
+
+/* Efek hover untuk kolom sticky */
+#lapbulStatusTable tbody tr:hover td:nth-child(1),
+#lapbulStatusTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152; /* Warna hover yang sedikit lebih terang */
+}
+
   /* =================================================================== */
   /* ========================== GAYA TABEL DATA ======================== */
   /* =================================================================== */
@@ -852,8 +928,13 @@
     text-decoration: none;
   }
   #view-container {
-    flex-grow: 1;
-    overflow-y: auto;
+  flex-grow: 1;
+  /* overflow-y: auto; DIHAPUS DARI SINI */
+  }
+
+  /* KELAS BARU UNTUK MENGAKTIFKAN SCROLLBAR */
+  .view-container-scrollable {
+  overflow-y: auto;
   }
   .card-grid {
     display: grid;
@@ -1348,5 +1429,22 @@
 #lapbulRiwayatTable td:nth-child(6) {
   text-align: left;
 }
-</style>
 
+/* =================================================================== */
+/* ============== GAYA TABEL KELOLA DATA LAPBUL ==================== */
+/* =================================================================== */
+
+/* 1. Atur semua sel di tabel agar rata tengah secara default */
+#lapbulKelolaTable th,
+#lapbulKelolaTable td {
+  text-align: center;
+}
+
+/* 2. Atur sel pada kolom ke-3 (Bulan) dan ke-6 (Nama Sekolah) agar rata kiri */
+/* Ingat: Kolom No. adalah anak ke-1 */
+#lapbulKelolaTable td:nth-child(3),
+#lapbulKelolaTable td:nth-child(6) {
+  text-align: left;
+}
+
+</style>
