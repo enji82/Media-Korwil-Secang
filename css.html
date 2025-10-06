@@ -1333,5 +1333,20 @@
     grid-template-columns: 120px 1fr 1fr 1fr 1fr; /* 1 kolom untuk label, 4 untuk input */
 }
 
+/* =================================================================== */
+/* ============== GAYA KHUSUS TABEL RIWAYAT LAPBUL ================= */
+/* =================================================================== */
+
+/* Atur semua sel di tabel riwayat lapbul agar rata tengah */
+#lapbulRiwayatTable th,
+#lapbulRiwayatTable td {
+  text-align: center;
+}
+
+/* Atur sel pada kolom ke-3 (Bulan) dan ke-6 (Nama Sekolah) agar rata kiri */
+#lapbulRiwayatTable td:nth-child(3),
+#lapbulRiwayatTable td:nth-child(6) {
+  text-align: left;
+}
 </style>
 
