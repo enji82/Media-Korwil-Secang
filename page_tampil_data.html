@@ -1,0 +1,32 @@
+<div class="sidebar-header" style="text-align: center; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+  <h3 style="margin:0; font-size: 1.2em;">NAVIGASI</h3>
+</div>
+<ul class="sidebar-menu">
+    <li><a href="#" onclick="loadPage('home')" data-page="home"><i class="fas fa-home"></i> Menu Utama</a></li>
+    <li>
+        <a href="#" onclick="toggleSubmenu(this); loadPage('sk_menu');" data-page="sk_menu"><i class="fas fa-file-signature"></i> SK Pembagian Tugas</a>
+        <ul class="submenu">
+            <li><a href="#" onclick="loadPage('sk_unggah')" data-page="sk_unggah">Unggah SK</a></li>
+            <li><a href="#" onclick="loadPage('sk_riwayat')" data-page="sk_riwayat">Riwayat Pengiriman</a></li>
+            <li><a href="#" onclick="loadPage('sk_status')" data-page="sk_status">Status Pengiriman</a></li>
+            <li><a href="#" onclick="loadPage('sk_arsip')" data-page="sk_arsip">Arsip SK</a></li>
+            <li><a href="#" onclick="loadPage('sk_kelola')" data-page="sk_kelola">Kelola Data SK</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#" onclick="toggleSubmenu(this); loadPage('lapbul_menu');" data-page="lapbul_menu"><i class="fas fa-chart-line"></i> Laporan Bulan</a>
+        <ul class="submenu">
+            <!-- Submenu Laporan Bulan bisa ditambahkan di sini nanti -->
+        </ul>
+    </li>
+    <li>
+        <a href="#" onclick="toggleSubmenu(this); loadPage('ptk_menu');" data-page="ptk_menu"><i class="fas fa-chalkboard-teacher"></i> Data PTK</a>
+        <ul class="submenu">
+            <!-- Submenu Data PTK bisa ditambahkan di sini nanti -->
+        </ul>
+    </li>
+    <li><a href="#" onclick="loadPage('murid_menu')" data-page="murid_menu"><i class="fas fa-user-graduate"></i> Data Murid</a></li>
+    <li><a href="#" onclick="loadPage('siaba_menu')" data-page="siaba_menu"><i class="fas fa-fingerprint"></i> SIABA</a></li>
+    <li><a href="#" onclick="loadPage('pns_menu')" data-page="pns_menu"><i class="fas fa-user-tie"></i> PNS</a></li>
+</ul>
+
