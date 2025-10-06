@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Memanggil semua CSS dari file css.html -->
+    <?!= include('css'); ?>
+    <!-- PERUBAHAN: Menggunakan Font Awesome Versi 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  </head>
+  <body>
+
+    <div class="app-container">
+      <!-- Area Sidebar (Menu Samping) -->
+      <div class="sidebar">
+        <!-- Memanggil isi menu dari file sidebar.html -->
+        <?!= include('sidebar'); ?>
+      </div>
+
+      <!-- Area Konten Utama -->
+      <main id="main-content" class="main-content">
+        <!-- Konten dari halaman lain akan dimuat di sini oleh JavaScript -->
+      </main>
+    </div>
+
+    <!-- PENTING: Memanggil semua JavaScript dari javascript.html di akhir body -->
+    <?!= include('javascript'); ?>
+
+  </body>
+</html>
+
