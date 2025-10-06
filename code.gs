@@ -604,14 +604,15 @@ function getLapbulRiwayatData() {
     const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
     const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
 
-    const combinedHeaders = ["Waktu Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Rombel", "Dokumen"];
+    const combinedHeaders = ["Tanggal Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Rombel", "Dokumen"];
     let combinedData = [];
 
     const parseDate = (dateString) => {
         if (!dateString || typeof dateString !== 'string') return null;
         const parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
-        if (!parts) return new Date(dateString);
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+        if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+        const isoDate = new Date(dateString);
+        return isNaN(isoDate) ? null : isoDate;
     };
 
     const processSheetData = (sheet, jenjangDefault) => {
@@ -622,31 +623,31 @@ function getLapbulRiwayatData() {
       const headers = data[0].map(h => h.trim());
       const rows = data.slice(1);
 
-      // PERBAIKAN: Pemetaan untuk SD disederhanakan dan diperbaiki
+      // --- PERBAIKAN DI SINI ---
       const mapping = {
-        'PAUD': { waktu: 'Waktu Unggah', bulan: 'Bulan', tahun: 'Tahun', jenjang: 'Jenjang', nama: 'Nama Sekolah', status: 'Status', rombel: 'Jumlah Rombel', doc: 'File Laporan Bulan' },
-        'SD': { waktu: 'Timestamp', bulan: 'Bulan', tahun: 'Tahun', nama: 'Nama SD', status: 'Status', rombel: 'Jumlah Rombel', doc: 'Dokumen' }
+        'PAUD': { waktu: 'Tanggal Unggah', bulan: 'Bulan', tahun: 'Tahun', jenjang: 'Jenjang', nama: 'Nama Sekolah', status: 'Status', rombel: 'Jumlah Rombel', doc: 'Dokumen' },
+        'SD': { waktu: 'Tanggal Unggah', bulan: 'Bulan', tahun: 'Tahun', jenjang: 'Jenjang', nama: 'Nama Sekolah', status: 'Status', rombel: 'Jumlah Rombel', doc: 'Dokumen' }
       };
       
       const currentMap = mapping[jenjangDefault];
       const colIndices = {};
       for (const key in currentMap) {
-        colIndices[key] = headers.indexOf(currentMap[key]);
+        const index = headers.indexOf(currentMap[key]);
+        if (index === -1) throw new Error(`Header '${currentMap[key]}' tidak ditemukan di sheet '${jenjangDefault}'.`);
+        colIndices[key] = index;
       }
 
       rows.forEach(row => {
         if (colIndices.waktu > -1 && row[colIndices.waktu]) {
           const rowData = [
             row[colIndices.waktu],
-            colIndices.bulan > -1 ? row[colIndices.bulan] : '',
-            colIndices.tahun > -1 ? row[colIndices.tahun] : '',
-            // Menggunakan jenjang default ('SD' atau 'PAUD')
-            jenjangDefault === 'SD' ? 'SD' : (colIndices.jenjang > -1 ? row[colIndices.jenjang] : jenjangDefault),
-            colIndices.nama > -1 ? row[colIndices.nama] : '',
-            // Mengambil data status
-            colIndices.status > -1 ? row[colIndices.status] : '',
-            colIndices.rombel > -1 ? row[colIndices.rombel] : '',
-            colIndices.doc > -1 ? row[colIndices.doc] : ''
+            row[colIndices.bulan],
+            row[colIndices.tahun],
+            row[colIndices.jenjang], // Dibaca langsung dari kolom 'Jenjang'
+            row[colIndices.nama],
+            row[colIndices.status],
+            row[colIndices.rombel],
+            row[colIndices.doc]
           ];
           rowData.push(parseDate(row[colIndices.waktu])); 
           combinedData.push(rowData);
@@ -660,8 +661,7 @@ function getLapbulRiwayatData() {
     combinedData.sort((a, b) => {
         const dateA = a[a.length - 1];
         const dateB = b[b.length - 1];
-        if (!dateA) return 1;
-        if (!dateB) return -1;
+        if (!dateA) return 1; if (!dateB) return -1;
         return dateB - dateA;
     });
     
@@ -670,107 +670,106 @@ function getLapbulRiwayatData() {
     return [combinedHeaders].concat(finalData);
 
   } catch(e) {
-    return handleError('getLapbulRiwayatData', e);
+    Logger.log(`Error in getLapbulRiwayatData: ${e.message}\nStack: ${e.stack}`);
+    return { error: `Terjadi error di server: ${e.message}` };
   }
 }
 
 function getLapbulStatusData() {
   try {
-    const data = getDataFromSheet('LAPBUL_STATUS'); 
-    return data;
-  } catch(e) {
+    const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Status");
+    if (!sheet) {
+      throw new Error("Sheet 'Status' tidak ditemukan.");
+    }
+    const allData = sheet.getDataRange().getDisplayValues();
+    if (allData.length < 2) {
+      return { headers: [], rows: [], filters: {} };
+    }
+
+    const headers = allData[0];
+    const dataRows = allData.slice(1);
+
+    // Ekstrak data unik untuk filter
+    const uniqueTahun = [...new Set(dataRows.map(row => row[1]))].filter(Boolean).sort().reverse(); // Kolom B
+    const uniqueJenjang = [...new Set(dataRows.map(row => row[0]))].filter(Boolean).sort(); // Kolom A
+    const uniqueStatus = [...new Set(dataRows.map(row => row[3]))].filter(Boolean).sort(); // Kolom D
+
+    // Ambil header dari kolom C (indeks 2) sampai P (indeks 15)
+    const displayHeaders = headers.slice(2, 16);
+    
+    // Proses baris data untuk dikirim ke client
+    const displayRows = dataRows.map(row => {
+      return {
+        // Data ini digunakan untuk filtering di sisi client
+        filters: {
+          jenjang: row[0], // Kolom A
+          tahun: row[1],   // Kolom B
+          status: row[3]   // Kolom D
+        },
+        // Data ini yang akan ditampilkan di tabel (Kolom C s/d P)
+        values: row.slice(2, 16)
+      };
+    });
+
+    return {
+      headers: displayHeaders,
+      rows: displayRows,
+      filters: {
+        tahun: uniqueTahun,
+        jenjang: uniqueJenjang,
+        status: uniqueStatus
+      }
+    };
+  } catch (e) {
     return handleError('getLapbulStatusData', e);
   }
 }
 
 function getLapbulKelolaData() {
   try {
-    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
-    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+    const paudSheet = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs").getSheetByName("Form Responses 1");
+    const sdSheet = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s").getSheetByName("Input");
 
-    const paudData = paudSheet.getDataRange().getValues();
-    const sdData = sdSheet.getDataRange().getValues();
-
-    const paudHeaders = paudData.length > 0 ? paudData[0].map(h => String(h).trim()) : [];
-    const sdHeaders = sdData.length > 0 ? sdData[0].map(h => String(h).trim()) : [];
-
+    const finalHeaders = ["Tanggal Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Jumlah Rombel", "Dokumen"];
     let combinedData = [];
 
-    const processRow = (row, rowIndex, source, mapping) => {
-        if (rowIndex === 0) return null;
-        const timestampValue = row[mapping.waktuUnggah];
-        if (!timestampValue || String(timestampValue).trim() === '') return null;
+    const processSheetData = (sheet, sourceName) => {
+      if (!sheet || sheet.getLastRow() < 2) return;
+      const data = sheet.getDataRange().getDisplayValues();
+      
+      const idx = {
+        'PAUD': { ts: 0, bulan: 1, tahun: 2, jenjang: 6, nama: 7, status: 4, rombel: 5, doc: 36, update: 50 },
+        'SD':   { ts: 0, bulan: 1, tahun: 2, jenjang: 190, nama: 4, status: 3, rombel: 6, doc: 7, update: 191 }
+      };
+      
+      const currentIdx = idx[sourceName];
+      const rows = data.slice(1);
 
-        return {
-            waktuUnggah: timestampValue,
-            bulan: row[mapping.bulan],
-            tahun: row[mapping.tahun],
-            jenjang: source === 'SD' ? (row[mapping.jenjang] || 'SD') : row[mapping.jenjang],
-            namaSekolah: row[mapping.namaSekolah],
-            status: row[mapping.status],
-            jumlahRombel: row[mapping.jumlahRombel],
-            dokumen: row[mapping.dokumen],
-            update: row[mapping.update] || timestampValue,
-            source: source,
-            originalIndex: rowIndex + 1
-        };
+      rows.forEach((row, index) => {
+        const timestamp = row[currentIdx.ts];
+        if (!timestamp) return;
+
+        // Langsung buat array data mentah
+        const rowData = [
+          timestamp, row[currentIdx.bulan], row[currentIdx.tahun],
+          row[currentIdx.jenjang], row[currentIdx.nama], row[currentIdx.status],
+          row[currentIdx.rombel], row[currentIdx.doc], row[currentIdx.update],
+          sourceName, // Tambahkan sumber data
+          index + 2   // Tambahkan nomor baris asli
+        ];
+        combinedData.push(rowData);
+      });
     };
 
-    const paudMapping = {
-        waktuUnggah: paudHeaders.indexOf('Waktu Unggah'),
-        bulan: paudHeaders.indexOf('Bulan'),
-        tahun: paudHeaders.indexOf('Tahun'),
-        jenjang: paudHeaders.indexOf('Jenjang'),
-        namaSekolah: paudHeaders.indexOf('Nama Sekolah'),
-        status: paudHeaders.indexOf('Status'),
-        jumlahRombel: paudHeaders.indexOf('Rombel'),
-        dokumen: paudHeaders.indexOf('File Laporan Bulan'),
-        update: paudHeaders.indexOf('Update')
-    };
-
-    const sdMapping = {
-        waktuUnggah: sdHeaders.indexOf('Timestamp'),
-        bulan: sdHeaders.indexOf('Bulan'),
-        tahun: sdHeaders.indexOf('Tahun'),
-        jenjang: sdHeaders.indexOf('Jenjang'),
-        namaSekolah: sdHeaders.indexOf('Nama SD'),
-        status: sdHeaders.indexOf('Status'),
-        jumlahRombel: sdHeaders.indexOf('Jumlah Rombel'),
-        dokumen: sdHeaders.indexOf('Dokumen'),
-        update: sdHeaders.indexOf('Update')
-    };
-
-    paudData.forEach((row, index) => {
-        const processed = processRow(row, index, 'PAUD', paudMapping);
-        if (processed) combinedData.push(processed);
-    });
-    sdData.forEach((row, index) => {
-        const processed = processRow(row, index, 'SD', sdMapping);
-        if (processed) combinedData.push(processed);
-    });
+    processSheetData(paudSheet, 'PAUD');
+    processSheetData(sdSheet, 'SD');
     
-    const parseDate = (value) => {
-      if (!value) return new Date(0);
-      if (value instanceof Date) return value;
-      const date = new Date(value);
-      return isNaN(date) ? new Date(0) : date;
-    };
-    
-    combinedData.sort((a, b) => {
-        const dateBUpdate = parseDate(b.update);
-        const dateAUpdate = parseDate(a.update);
-        if (dateBUpdate.getTime() !== dateAUpdate.getTime()) {
-            return dateBUpdate - dateAUpdate;
-        }
-        const dateBTimestamp = parseDate(b.waktuUnggah);
-        const dateATimestamp = parseDate(a.waktuUnggah);
-        return dateBTimestamp - dateATimestamp;
-    });
-
-    return combinedData;
+    // Kirim data mentah untuk diproses di client
+    return { headers: finalHeaders, rows: combinedData };
 
   } catch (e) {
-    return handleError('getLapbulKelolaData', e);
+    Logger.log(`Error in getLapbulKelolaData: ${e.message}`);
+    return { error: `Terjadi error di server: ${e.message}` };
   }
 }
 
@@ -843,4 +842,72 @@ function getLapbulInfo() {
       return handleError('getLapbulInfo', e);
     }
   });
+}
+
+/**
+ * ===================================================================
+ * ======================= FUNGSI DIAGNOSIS DATA =====================
+ * ===================================================================
+ * Fungsi ini digunakan untuk memeriksa bagaimana skrip membaca data
+ * dari spreadsheet Laporan Bulan.
+ */
+function diagnoseKelolaData() {
+  Logger.log("===== MEMULAI DIAGNOSIS KELOLA DATA LAPORAN BULAN =====");
+
+  try {
+    // --- Bagian Diagnosis untuk Spreadsheet PAUD ---
+    Logger.log("\n--- Mendiagnosis Spreadsheet PAUD ---");
+    const paudSheet = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs").getSheetByName("Form Responses 1");
+    if (!paudSheet) {
+      Logger.log("ERROR: Sheet 'Form Responses 1' untuk PAUD tidak ditemukan.");
+      return;
+    }
+    const paudData = paudSheet.getRange(1, 1, 2, paudSheet.getLastColumn()).getDisplayValues();
+    const paudHeaders = paudData[0];
+    const paudFirstRow = paudData[1];
+    
+    Logger.log("Total kolom ditemukan di PAUD: " + paudHeaders.length);
+    Logger.log("Header PAUD (sampel 10 kolom pertama): " + paudHeaders.slice(0, 10).join(", "));
+    
+    // Indeks kolom yang kita cari (A=0, B=1, ..., AK=36, AY=50)
+    const paudIdx = { ts: 0, bulan: 1, tahun: 2, jenjang: 6, nama: 7, status: 4, rombel: 5, doc: 36, update: 50 };
+    
+    Logger.log("\n--- Mengecek Data Baris Pertama PAUD Berdasarkan Indeks ---");
+    Logger.log("Tanggal Unggah (Kolom A): " + paudFirstRow[paudIdx.ts] + " | Header Sebenarnya: " + paudHeaders[paudIdx.ts]);
+    Logger.log("Nama Sekolah (Kolom H): " + paudFirstRow[paudIdx.nama] + " | Header Sebenarnya: " + paudHeaders[paudIdx.nama]);
+    Logger.log("Jenjang (Kolom G): " + paudFirstRow[paudIdx.jenjang] + " | Header Sebenarnya: " + paudHeaders[paudIdx.jenjang]);
+    Logger.log("Dokumen (Kolom AK): " + paudFirstRow[paudIdx.doc] + " | Header Sebenarnya: " + paudHeaders[paudIdx.doc]);
+    Logger.log("Update (Kolom AY): " + paudFirstRow[paudIdx.update] + " | Header Sebenarnya: " + paudHeaders[paudIdx.update]);
+    
+    // --- Bagian Diagnosis untuk Spreadsheet SD ---
+    Logger.log("\n--- Mendiagnosis Spreadsheet SD ---");
+    const sdSheet = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s").getSheetByName("Input");
+     if (!sdSheet) {
+      Logger.log("ERROR: Sheet 'Input' untuk SD tidak ditemukan.");
+      return;
+    }
+    const sdData = sdSheet.getRange(1, 1, 2, sdSheet.getLastColumn()).getDisplayValues();
+    const sdHeaders = sdData[0];
+    const sdFirstRow = sdData[1];
+
+    Logger.log("Total kolom ditemukan di SD: " + sdHeaders.length);
+    Logger.log("Header SD (sampel 10 kolom pertama): " + sdHeaders.slice(0, 10).join(", "));
+
+    // Indeks kolom yang kita cari (A=0, ..., H=7, GI=188, GJ=189)
+    const sdIdx = { ts: 0, bulan: 1, tahun: 2, jenjang: 188, nama: 4, status: 3, rombel: 6, doc: 7, update: 189 };
+
+    Logger.log("\n--- Mengecek Data Baris Pertama SD Berdasarkan Indeks ---");
+    Logger.log("Tanggal Unggah (Kolom A): " + sdFirstRow[sdIdx.ts] + " | Header Sebenarnya: " + sdHeaders[sdIdx.ts]);
+    Logger.log("Nama Sekolah (Kolom E): " + sdFirstRow[sdIdx.nama] + " | Header Sebenarnya: " + sdHeaders[sdIdx.nama]);
+    Logger.log("Jenjang (Kolom GI): " + sdFirstRow[sdIdx.jenjang] + " | Header Sebenarnya: " + sdHeaders[sdIdx.jenjang]);
+    Logger.log("Dokumen (Kolom H): " + sdFirstRow[sdIdx.doc] + " | Header Sebenarnya: " + sdHeaders[sdIdx.doc]);
+    Logger.log("Update (Kolom GJ): " + sdFirstRow[sdIdx.update] + " | Header Sebenarnya: " + sdHeaders[sdIdx.update]);
+
+  } catch (e) {
+    Logger.log("!!! TERJADI ERROR SAAT DIAGNOSIS !!!");
+    Logger.log("Pesan Error: " + e.message);
+    Logger.log("Stack Trace: " + e.stack);
+  } finally {
+    Logger.log("\n===== DIAGNOSIS SELESAI =====");
+  }
 }
