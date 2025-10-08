@@ -727,37 +727,55 @@ function getLapbulStatusData() {
 
 function getLapbulKelolaData() {
   try {
-    const paudSheet = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs").getSheetByName("Form Responses 1");
-    const sdSheet = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s").getSheetByName("Input");
+    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName("Form Responses 1");
+    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName("Input");
 
-    // KEMBALIKAN "Update" ke dalam finalHeaders
     const finalHeaders = ["Tanggal Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Jumlah Rombel", "Dokumen", "Update"];
     let combinedData = [];
 
     const processSheetData = (sheet, sourceName) => {
       if (!sheet || sheet.getLastRow() < 2) return;
       
-      const data = sheet.getDataRange().getDisplayValues();
+      // --- PERBAIKAN UTAMA DI SINI: Gunakan getValues() ---
+      const data = sheet.getDataRange().getValues(); // Mengambil nilai mentah, termasuk objek Date
+      const headers = data[0].map(h => String(h).trim());
       
       const idx = {
         'PAUD': { ts: 0, bulan: 1, tahun: 2, jenjang: 6, nama: 7, status: 4, rombel: 5, doc: 36, update: 50 },
-        'SD':   { ts: 0, bulan: 1, tahun: 2, jenjang: 190, nama: 4, status: 3, rombel: 6, doc: 7, update: 189 }
+        'SD':   { ts: 0, bulan: 1, tahun: 2, jenjang: 190, nama: 4, status: 3, rombel: 6, doc: 7, update: 191 }
       };
       
       const currentIdx = idx[sourceName];
       const rows = data.slice(1);
 
       rows.forEach((row, index) => {
-        const timestamp = row[currentIdx.ts];
-        if (!timestamp) return;
+        const timestampCell = row[currentIdx.ts];
+        if (!timestampCell) return;
 
-        // Langsung buat array data mentah
+        // Fungsi untuk memformat sel tanggal dengan aman
+        const formatDate = (cell) => {
+            if (cell instanceof Date) {
+                return Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+            }
+            return cell; // Kembalikan nilai aslinya jika bukan objek Date
+        };
+
+        const timestamp = formatDate(timestampCell);
+        const updateTimestamp = formatDate(row[currentIdx.update]);
+
+        // Buat array data mentah
         const rowData = [
-          timestamp, row[currentIdx.bulan], row[currentIdx.tahun],
-          row[currentIdx.jenjang], row[currentIdx.nama], row[currentIdx.status],
-          row[currentIdx.rombel], row[currentIdx.doc], row[currentIdx.update],
-          sourceName, // Tambahkan sumber data di akhir
-          index + 2   // Tambahkan nomor baris asli di akhir
+          timestamp,
+          row[currentIdx.bulan],
+          row[currentIdx.tahun],
+          row[currentIdx.jenjang],
+          row[currentIdx.nama],
+          row[currentIdx.status],
+          row[currentIdx.rombel],
+          row[currentIdx.doc],
+          updateTimestamp, // Gunakan nilai yang sudah diformat
+          sourceName,
+          index + 2
         ];
         combinedData.push(rowData);
       });
@@ -955,6 +973,32 @@ function getLapbulInfo() {
       return values;
     } catch (e) {
       return handleError('getLapbulInfo', e);
+    }
+  });
+}
+
+function getUnduhFormatInfo() {
+  const cacheKey = 'unduh_format_info_v1';
+  return getCachedData(cacheKey, function() {
+    try {
+      const ss = SpreadsheetApp.openById("1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA");
+      const sheet = ss.getSheetByName('Informasi');
+      
+      if (!sheet) {
+        throw new Error("Sheet 'Informasi' tidak ditemukan.");
+      }
+
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return [];
+
+      // Ambil data dari B2 sampai baris terakhir
+      const range = sheet.getRange('B2:B' + lastRow);
+      const values = range.getDisplayValues()
+                          .flat()
+                          .filter(item => String(item).trim() !== '');
+      return values;
+    } catch (e) {
+      return handleError('getUnduhFormatInfo', e);
     }
   });
 }
