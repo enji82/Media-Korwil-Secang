@@ -730,16 +730,18 @@ function getLapbulKelolaData() {
     const paudSheet = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs").getSheetByName("Form Responses 1");
     const sdSheet = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s").getSheetByName("Input");
 
-    const finalHeaders = ["Tanggal Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Jumlah Rombel", "Dokumen"];
+    // KEMBALIKAN "Update" ke dalam finalHeaders
+    const finalHeaders = ["Tanggal Unggah", "Bulan", "Tahun", "Jenjang", "Nama Sekolah", "Status", "Jumlah Rombel", "Dokumen", "Update"];
     let combinedData = [];
 
     const processSheetData = (sheet, sourceName) => {
       if (!sheet || sheet.getLastRow() < 2) return;
+      
       const data = sheet.getDataRange().getDisplayValues();
       
       const idx = {
         'PAUD': { ts: 0, bulan: 1, tahun: 2, jenjang: 6, nama: 7, status: 4, rombel: 5, doc: 36, update: 50 },
-        'SD':   { ts: 0, bulan: 1, tahun: 2, jenjang: 190, nama: 4, status: 3, rombel: 6, doc: 7, update: 191 }
+        'SD':   { ts: 0, bulan: 1, tahun: 2, jenjang: 190, nama: 4, status: 3, rombel: 6, doc: 7, update: 189 }
       };
       
       const currentIdx = idx[sourceName];
@@ -754,8 +756,8 @@ function getLapbulKelolaData() {
           timestamp, row[currentIdx.bulan], row[currentIdx.tahun],
           row[currentIdx.jenjang], row[currentIdx.nama], row[currentIdx.status],
           row[currentIdx.rombel], row[currentIdx.doc], row[currentIdx.update],
-          sourceName, // Tambahkan sumber data
-          index + 2   // Tambahkan nomor baris asli
+          sourceName, // Tambahkan sumber data di akhir
+          index + 2   // Tambahkan nomor baris asli di akhir
         ];
         combinedData.push(rowData);
       });
@@ -764,11 +766,124 @@ function getLapbulKelolaData() {
     processSheetData(paudSheet, 'PAUD');
     processSheetData(sdSheet, 'SD');
     
-    // Kirim data mentah untuk diproses di client
     return { headers: finalHeaders, rows: combinedData };
 
   } catch (e) {
     Logger.log(`Error in getLapbulKelolaData: ${e.message}`);
+    return { error: `Terjadi error di server: ${e.message}` };
+  }
+}
+
+/**
+ * Mengambil satu baris data Laporan Bulan berdasarkan sumber dan nomor baris.
+ * @param {number} rowIndex Nomor baris di spreadsheet.
+ * @param {string} source Sumber data ('PAUD' atau 'SD').
+ * @returns {Object} Objek yang berisi data dari baris tersebut.
+ */
+function getLapbulDataByRow(rowIndex, source) {
+  try {
+    let sheet;
+    if (source === 'PAUD') {
+      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+    } else if (source === 'SD') {
+      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+    } else {
+      throw new Error("Sumber data tidak valid.");
+    }
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const values = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+    
+    const rowData = {};
+    headers.forEach((header, i) => {
+      rowData[header.trim()] = values[i];
+    });
+    
+    return rowData;
+  } catch (e) {
+    return handleError('getLapbulDataByRow', e);
+  }
+}
+
+
+/**
+ * Memperbarui satu baris data Laporan Bulan.
+ * @param {Object} formData Objek data dari form edit di client.
+ * @returns {string} Pesan sukses.
+ */
+function updateLapbulData(formData) {
+  try {
+    let sheet, FOLDER_ID;
+    const source = formData.source;
+    const rowIndex = formData.rowIndex;
+
+    if (!source || !rowIndex) throw new Error("Informasi 'source' atau 'rowIndex' tidak ditemukan.");
+
+    if (source === 'PAUD') {
+      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+      // Dapatkan jenjang dari data yang dikirim jika ada, jika tidak, baca dari sheet
+      const jenjang = formData.jenjang || sheet.getRange(rowIndex, headers.indexOf('Jenjang') + 1).getValue();
+      FOLDER_ID = jenjang === 'KB' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_TK;
+    } else if (source === 'SD') {
+      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+      FOLDER_ID = FOLDER_CONFIG.LAPBUL_SD;
+    } else {
+      throw new Error("Sumber data tidak valid: " + source);
+    }
+    
+    if (!formData.laporanBulan || !formData.tahun) {
+        throw new Error("Informasi 'laporanBulan' atau 'tahun' kosong. Tidak dapat memproses file.");
+    }
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    const range = sheet.getRange(rowIndex, 1, 1, headers.length);
+    const existingValues = range.getValues()[0];
+
+    if (formData.fileData && formData.fileData.data) {
+      const docHeaderName = 'Dokumen';
+      const docIndex = headers.indexOf(docHeaderName);
+      if (docIndex !== -1 && existingValues[docIndex]) {
+        try {
+          const fileId = String(existingValues[docIndex]).match(/[-\w]{25,}/);
+          if (fileId) DriveApp.getFileById(fileId[0]).setTrashed(true);
+        } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
+      }
+      
+      const mainFolder = DriveApp.getFolderById(FOLDER_ID);
+      const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
+      const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
+      
+      const namaSekolah = formData.namaSekolah || existingValues[headers.indexOf('Nama Sekolah')];
+      const newFileName = `${namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
+      const decodedData = Utilities.base64Decode(formData.fileData.data);
+      const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
+      const newFile = bulanFolder.createFile(blob);
+      formData[docHeaderName] = newFile.getUrl();
+    }
+
+    formData['Update'] = new Date();
+    
+    const newRowValues = headers.map((header, index) => {
+      if (formData.hasOwnProperty(header)) {
+        return formData[header];
+      }
+      return existingValues[index];
+    });
+
+    range.setValues([newRowValues]);
+
+    // --- PERBAIKAN UTAMA DI SINI ---
+    // 1. Cari posisi kolom "Update"
+    const updateColIndex = headers.indexOf('Update');
+    if (updateColIndex !== -1) {
+      // 2. Set format sel di kolom tersebut agar selalu menampilkan tanggal dan jam
+      sheet.getRange(rowIndex, updateColIndex + 1).setNumberFormat("dd/MM/yyyy HH:mm:ss");
+    }
+    
+    return "Data berhasil diperbarui.";
+  } catch (e) {
+    Logger.log(`Error in updateLapbulData: ${e.message}\nStack: ${e.stack}`);
+    // Mengembalikan objek error agar bisa ditangkap di client
     return { error: `Terjadi error di server: ${e.message}` };
   }
 }
@@ -842,72 +957,4 @@ function getLapbulInfo() {
       return handleError('getLapbulInfo', e);
     }
   });
-}
-
-/**
- * ===================================================================
- * ======================= FUNGSI DIAGNOSIS DATA =====================
- * ===================================================================
- * Fungsi ini digunakan untuk memeriksa bagaimana skrip membaca data
- * dari spreadsheet Laporan Bulan.
- */
-function diagnoseKelolaData() {
-  Logger.log("===== MEMULAI DIAGNOSIS KELOLA DATA LAPORAN BULAN =====");
-
-  try {
-    // --- Bagian Diagnosis untuk Spreadsheet PAUD ---
-    Logger.log("\n--- Mendiagnosis Spreadsheet PAUD ---");
-    const paudSheet = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs").getSheetByName("Form Responses 1");
-    if (!paudSheet) {
-      Logger.log("ERROR: Sheet 'Form Responses 1' untuk PAUD tidak ditemukan.");
-      return;
-    }
-    const paudData = paudSheet.getRange(1, 1, 2, paudSheet.getLastColumn()).getDisplayValues();
-    const paudHeaders = paudData[0];
-    const paudFirstRow = paudData[1];
-    
-    Logger.log("Total kolom ditemukan di PAUD: " + paudHeaders.length);
-    Logger.log("Header PAUD (sampel 10 kolom pertama): " + paudHeaders.slice(0, 10).join(", "));
-    
-    // Indeks kolom yang kita cari (A=0, B=1, ..., AK=36, AY=50)
-    const paudIdx = { ts: 0, bulan: 1, tahun: 2, jenjang: 6, nama: 7, status: 4, rombel: 5, doc: 36, update: 50 };
-    
-    Logger.log("\n--- Mengecek Data Baris Pertama PAUD Berdasarkan Indeks ---");
-    Logger.log("Tanggal Unggah (Kolom A): " + paudFirstRow[paudIdx.ts] + " | Header Sebenarnya: " + paudHeaders[paudIdx.ts]);
-    Logger.log("Nama Sekolah (Kolom H): " + paudFirstRow[paudIdx.nama] + " | Header Sebenarnya: " + paudHeaders[paudIdx.nama]);
-    Logger.log("Jenjang (Kolom G): " + paudFirstRow[paudIdx.jenjang] + " | Header Sebenarnya: " + paudHeaders[paudIdx.jenjang]);
-    Logger.log("Dokumen (Kolom AK): " + paudFirstRow[paudIdx.doc] + " | Header Sebenarnya: " + paudHeaders[paudIdx.doc]);
-    Logger.log("Update (Kolom AY): " + paudFirstRow[paudIdx.update] + " | Header Sebenarnya: " + paudHeaders[paudIdx.update]);
-    
-    // --- Bagian Diagnosis untuk Spreadsheet SD ---
-    Logger.log("\n--- Mendiagnosis Spreadsheet SD ---");
-    const sdSheet = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s").getSheetByName("Input");
-     if (!sdSheet) {
-      Logger.log("ERROR: Sheet 'Input' untuk SD tidak ditemukan.");
-      return;
-    }
-    const sdData = sdSheet.getRange(1, 1, 2, sdSheet.getLastColumn()).getDisplayValues();
-    const sdHeaders = sdData[0];
-    const sdFirstRow = sdData[1];
-
-    Logger.log("Total kolom ditemukan di SD: " + sdHeaders.length);
-    Logger.log("Header SD (sampel 10 kolom pertama): " + sdHeaders.slice(0, 10).join(", "));
-
-    // Indeks kolom yang kita cari (A=0, ..., H=7, GI=188, GJ=189)
-    const sdIdx = { ts: 0, bulan: 1, tahun: 2, jenjang: 188, nama: 4, status: 3, rombel: 6, doc: 7, update: 189 };
-
-    Logger.log("\n--- Mengecek Data Baris Pertama SD Berdasarkan Indeks ---");
-    Logger.log("Tanggal Unggah (Kolom A): " + sdFirstRow[sdIdx.ts] + " | Header Sebenarnya: " + sdHeaders[sdIdx.ts]);
-    Logger.log("Nama Sekolah (Kolom E): " + sdFirstRow[sdIdx.nama] + " | Header Sebenarnya: " + sdHeaders[sdIdx.nama]);
-    Logger.log("Jenjang (Kolom GI): " + sdFirstRow[sdIdx.jenjang] + " | Header Sebenarnya: " + sdHeaders[sdIdx.jenjang]);
-    Logger.log("Dokumen (Kolom H): " + sdFirstRow[sdIdx.doc] + " | Header Sebenarnya: " + sdHeaders[sdIdx.doc]);
-    Logger.log("Update (Kolom GJ): " + sdFirstRow[sdIdx.update] + " | Header Sebenarnya: " + sdHeaders[sdIdx.update]);
-
-  } catch (e) {
-    Logger.log("!!! TERJADI ERROR SAAT DIAGNOSIS !!!");
-    Logger.log("Pesan Error: " + e.message);
-    Logger.log("Stack Trace: " + e.stack);
-  } finally {
-    Logger.log("\n===== DIAGNOSIS SELESAI =====");
-  }
 }
