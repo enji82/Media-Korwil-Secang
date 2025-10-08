@@ -20,7 +20,6 @@
     </div>
 </div>
 
-
 <script>
 /**
  * ===================================================================
@@ -81,7 +80,7 @@ function loadPage(event, pageName, params = {}) {
                 updateActiveMenu(pageName);
             } catch (e) {
                 console.error("Client-side error after loading page:", e);
-                contentArea.innerHTML = `<div class="error-box"><h3>Error JavaScript di Browser!</h3><p><strong>Pesan:</strong> ${e.message}</p></div>`;
+                contentArea.innerHTML = `<div class="error-box"><h3>Error JavaScript di Browser!</h3><p><strong>Pesan:</strong> ${e.message}</p><p><strong>Stack:</strong> ${e.stack}</p></div>`;
             }
         })
         .withFailureHandler(err => {
@@ -116,26 +115,18 @@ function calculateRowsPerPage(tableId) {
         const paginationContainer = document.getElementById('pagination-container');
         const tableHeader = document.querySelector(`#${tableId} thead`);
         const tableBody = document.querySelector(`#${tableId} tbody`);
-
         if (!mainContent || !tableHeader || !tableBody) return 15;
-
-        // Hitung semua ruang vertikal yang sudah terpakai
         let reservedHeight = 60; 
         if (header) reservedHeight += header.offsetHeight + 30; 
         if (filterContainer) reservedHeight += filterContainer.offsetHeight + 20; 
         if (paginationContainer) reservedHeight += paginationContainer.offsetHeight;
         if (tableHeader) reservedHeight += tableHeader.offsetHeight;
-
         const availableHeight = mainContent.clientHeight - reservedHeight;
-        
-        // Buat baris tiruan untuk mengukur tinggi pastinya
         const numCols = tableHeader.querySelector('tr')?.children.length || 1;
         const dummyRow = createDummyRow(tableBody, numCols);
         const actualRowHeight = dummyRow.offsetHeight || 48;
         tableBody.removeChild(dummyRow);
-
         if (actualRowHeight <= 0) return 15;
-
         const calculatedRows = Math.floor(availableHeight / actualRowHeight);
         return Math.max(5, calculatedRows);
     } catch (e) {
@@ -158,7 +149,6 @@ function createDummyRow(tableBody, numCols) {
     }
     return dummyRow;
 }
-
 
 const debounce = (func, timeout = 150) => {
     let timer;
@@ -186,7 +176,7 @@ function initSubMenuPage() {
     });
 }
 
-// --- Modul SK Pembagian Tugas ---
+// --- Modul SK Pembagian Tugas (Semua fungsi lengkap) ---
 
 function initSkUnggahPage() {
     const form = document.getElementById('manualUploadForm');
@@ -884,7 +874,9 @@ function initSkArsipPage() {
     renderTahunAjaranView();
 }
 
-// --- Modul Laporan Bulan ---
+
+// --- Modul Laporan Bulan (Semua fungsi lengkap dan diperbaiki) ---
+
 function initLapbulUnggahPage() {
     initSubMenuPage(); // Menjalankan animasi tombol menu
     
@@ -985,68 +977,20 @@ function initLapbulFormSdPage() {
     if (!form) return;
 
     function generateKelasHTML(kelas) {
-    const rombels = ['A', 'B', 'C'];
-    const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
-
-    let rombelInputsHTML = '';
-    for (const rombel of rombels) {
-        rombelInputsHTML += `
-            <div class="rombel-input-group" id="rombel-${kelas}-${rombel}" style="display: none;">
-                <label class="rombel-group-label">Kelas ${kelas}${rombel}</label>
-                <div class="murid-input-pair">
-                    <div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_L" value="0" min="0" required></div>
-                    <div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_P" value="0" min="0" required></div>
-                </div>
-            </div>
-        `;
-    }
-    rombelInputsHTML += `
-        <div class="rombel-input-group" id="rombel-${kelas}-Tunggal" style="display: none;">
-            <label class="rombel-group-label">Kelas ${kelas}</label>
-            <div class="murid-input-pair">
-                <div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_rombel_tunggal_L" value="0" min="0" required></div>
-                <div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_rombel_tunggal_P" value="0" min="0" required></div>
-            </div>
-        </div>`;
-
-    let agamaInputsHTML = '';
-    for (const ag of agama) {
-        const agId = ag.toLowerCase();
-        const isIslam = ag === 'Islam';
-        agamaInputsHTML += `
-            <div class="form-grid agama-row">
-                <div class="form-group">
-                    <label>${ag}</label>
-                    <select class="agama-toggle" data-kelas="${kelas}" data-agama="${agId}">
-                        <option value="Ada" ${isIslam ? 'selected' : ''}>Ada</option>
-                        <option value="Tidak Ada" ${!isIslam ? 'selected' : ''}>Tidak Ada</option>
-                    </select>
-                </div>
-                <div class="agama-input-pair" id="agama-input-${kelas}-${agId}" style="display: ${isIslam ? 'grid' : 'none'};">
-                    <div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_agama_${agId}_L" value="0" min="0" required></div>
-                    <div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_agama_${agId}_P" value="0" min="0" required></div>
-                </div>
-            </div>
-        `;
-    }
-    
-    return `
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Jumlah Rombel Kelas ${kelas}</label>
-                <select class="rombel-toggle" name="k${kelas}_jumlah_rombel" data-kelas="${kelas}">
-                    <option value="0">0</option>
-                    <option value="1" selected>1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                </select>
-            </div>
-        </div>
-        <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
-        <div class="rombel-container" id="rombel-container-${kelas}">${rombelInputsHTML}</div>
-        <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
-        <div class="agama-container">${agamaInputsHTML}</div>
-    `;
+        const rombels = ['A', 'B', 'C'];
+        const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+        let rombelInputsHTML = '';
+        for (const rombel of rombels) {
+            rombelInputsHTML += `<div class="rombel-input-group" id="rombel-${kelas}-${rombel}" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}${rombel}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_P" value="0" min="0" required></div></div></div>`;
+        }
+        rombelInputsHTML += `<div class="rombel-input-group" id="rombel-${kelas}-Tunggal" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_rombel_tunggal_P" value="0" min="0" required></div></div></div>`;
+        let agamaInputsHTML = '';
+        for (const ag of agama) {
+            const agId = ag.toLowerCase();
+            const isIslam = ag === 'Islam';
+            agamaInputsHTML += `<div class="form-grid agama-row"><div class="form-group"><label>${ag}</label><select class="agama-toggle" data-kelas="${kelas}" data-agama="${agId}"><option value="Ada" ${isIslam ? 'selected' : ''}>Ada</option><option value="Tidak Ada" ${!isIslam ? 'selected' : ''}>Tidak Ada</option></select></div><div class="agama-input-pair" id="agama-input-${kelas}-${agId}" style="display: ${isIslam ? 'grid' : 'none'};"><div class="form-group"><label>Laki-laki</label><input type="number" name="k${kelas}_agama_${agId}_L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="k${kelas}_agama_${agId}_P" value="0" min="0" required></div></div></div>`;
+        }
+        return `<div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas ${kelas}</label><select class="rombel-toggle" name="k${kelas}_jumlah_rombel" data-kelas="${kelas}"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div><h4 class="sub-section-title">Jumlah Murid per Rombel</h4><div class="rombel-container" id="rombel-container-${kelas}">${rombelInputsHTML}</div><h4 class="sub-section-title">Jumlah Murid per Agama</h4><div class="agama-container">${agamaInputsHTML}</div>`;
     }
     function generatePtkNegeriHTML() {
     return `
@@ -1239,12 +1183,7 @@ function initLapbulFormSdPage() {
 }
 
 function initLapbulRiwayatPage() {
-    let allDataRows = [],
-        headerCols = [],
-        filterIndices = {},
-        currentPage = 1,
-        rowsPerPage = 15,
-        currentFilteredRows = [];
+    let allDataRows = [], headerCols = [], filterIndices = {}, currentPage = 1, rowsPerPage = 15, currentFilteredRows = [];
 
     function buildTable() {
         const tableBody = document.getElementById('lapbulRiwayatTable').querySelector('tbody');
@@ -1255,7 +1194,6 @@ function initLapbulRiwayatPage() {
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
-
         if (paginatedRows.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
@@ -1276,15 +1214,12 @@ function initLapbulRiwayatPage() {
         }
         setupPagination();
     }
-
+    
     function setupPagination() {
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
-        if (pageCount <= 1) {
-            paginationContainer.style.display = 'none';
-            return;
-        }
+        if (pageCount <= 1) { paginationContainer.style.display = 'none'; return; }
         paginationContainer.style.display = 'flex';
         const pageInfo = document.createElement('span');
         pageInfo.className = 'page-info';
@@ -1293,27 +1228,17 @@ function initLapbulRiwayatPage() {
         prevBtn.innerHTML = '«';
         prevBtn.className = 'page-btn';
         prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                buildTable();
-            }
-        };
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; buildTable(); } };
         const nextBtn = document.createElement('button');
         nextBtn.innerHTML = '»';
         nextBtn.className = 'page-btn';
         nextBtn.disabled = currentPage === pageCount;
-        nextBtn.onclick = () => {
-            if (currentPage < pageCount) {
-                currentPage++;
-                buildTable();
-            }
-        };
+        nextBtn.onclick = () => { if (currentPage < pageCount) { currentPage++; buildTable(); } };
         paginationContainer.appendChild(prevBtn);
         paginationContainer.appendChild(pageInfo);
         paginationContainer.appendChild(nextBtn);
     }
-
+    
     function applyFilters() {
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
@@ -1332,33 +1257,18 @@ function initLapbulRiwayatPage() {
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
         const tableHead = document.getElementById('lapbulRiwayatTable').querySelector('thead');
-        const tableBody = document.getElementById('lapbulRiwayatTable').querySelector('tbody');
-
         if (!dataArray || dataArray.length < 2) {
-            loadingStatus.innerHTML = "<p>Tidak ada data riwayat untuk ditampilkan.</p>";
-            return;
+            loadingStatus.innerHTML = "<p>Tidak ada data riwayat untuk ditampilkan.</p>"; return;
         }
         headerCols = dataArray[0].map(h => String(h).trim());
         allDataRows = dataArray.slice(1);
-
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = '<th>No.</th>';
-        headerCols.forEach(header => {
-            headerRow.innerHTML += `<th>${header}</th>`;
-        });
+        headerCols.forEach(header => { headerRow.innerHTML += `<th>${header}</th>`; });
         tableHead.innerHTML = '';
         tableHead.appendChild(headerRow);
-
         rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable');
-        tableBody.innerHTML = '';
-
-        filterIndices = {
-            tahun: headerCols.indexOf('Tahun'),
-            jenjang: headerCols.indexOf('Jenjang'),
-            nama: headerCols.indexOf('Nama Sekolah')
-        };
-
-        // Mengisi dropdown filter
+        filterIndices = { tahun: headerCols.indexOf('Tahun'), jenjang: headerCols.indexOf('Jenjang'), nama: headerCols.indexOf('Nama Sekolah') };
         const populateFilter = (elementId, colIndex, sortReverse = false) => {
             const select = document.getElementById(elementId);
             if (!select) return;
@@ -1369,11 +1279,9 @@ function initLapbulRiwayatPage() {
             sortedValues.forEach(val => select.add(new Option(val, val)));
             select.addEventListener('change', applyFilters);
         };
-        
         populateFilter('filterTahun', filterIndices.tahun, true);
         populateFilter('filterJenjang', filterIndices.jenjang);
         populateFilter('filterNamaSekolah', filterIndices.nama);
-
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         applyFilters();
@@ -1381,17 +1289,10 @@ function initLapbulRiwayatPage() {
 
     google.script.run
         .withSuccessHandler(initializePage)
-        .withFailureHandler(error => {
-            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
-        })
+        .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })
         .getLapbulRiwayatData();
 
-    window.addEventListener('resize', debounce(() => {
-        if (document.getElementById('lapbulRiwayatTable')) {
-            rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable');
-            buildTable();
-        }
-    }));
+    window.addEventListener('resize', debounce(() => { if (document.getElementById('lapbulRiwayatTable')) { rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable'); buildTable(); } }));
 }
 
 function initLapbulStatusPage() {
@@ -1497,58 +1398,109 @@ function initLapbulStatusPage() {
         buildTable();
     }
 
-    function initializePage(data) {
-        const loadingStatus = document.getElementById('loadingStatus');
-        const tableWrapper = document.getElementById('tableWrapper');
+    function initializePage(serverData) {
+    const loadingStatus = document.getElementById('loadingStatus');
+    const tableWrapper = document.getElementById('tableWrapper');
 
-        if (data.error || !data.rows || data.rows.length === 0) {
-            loadingStatus.innerHTML = "<p>Tidak ada data status untuk ditampilkan.</p>";
-            return;
-        }
+    if (serverData && serverData.error) {
+        loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${serverData.error}</p>`;
+        return;
+      }
+    if (!serverData || !serverData.rows || !serverData.rows.length === 0) {
+        loadingStatus.innerHTML = `<p>Tidak ada data untuk dikelola.</p>`;
+        return;
+      }
 
-        headerCols = data.headers;
-        allDataRows = data.rows;
-        
-        rowsPerPage = calculateRowsPerPage('lapbulStatusTable');
+    headerCols = serverData.headers;
+    
+    // --- PERBAIKAN UTAMA DI SINI ---
+    // Logika baru untuk memproses data mentah dari server
+    allDataRows = serverData.rows.map(rowArray => {
+        const rowData = {};
+        // Mengisi data utama sesuai dengan header
+        headerCols.forEach((header, i) => {
+            rowData[header] = rowArray[i];
+          });
 
-        // Mengisi dropdown filter
-        const populateSelect = (elementId, options, defaultValue) => {
-            const select = document.getElementById(elementId);
-            if (!select) return;
-            select.innerHTML = '<option value="">Semua</option>';
-            options.forEach(val => {
-                const option = new Option(val, val);
-                if (val === defaultValue) {
-                    option.selected = true;
-                }
-                select.add(option);
-            });
-            select.addEventListener('change', applyFilters);
+        // Mengambil data 'Update' dari posisi setelah data utama
+        rowData['Update'] = rowArray[headerCols.length];
+
+        return {
+            // Mengambil 'source' dari posisi kedua dari akhir array
+            source: rowArray[rowArray.length - 2],
+            // Mengambil 'rowIndex' dari posisi paling akhir array
+            rowIndex: rowArray[rowArray.length - 1],
+            data: rowData
+          };
+        });
+
+    // Mengurutkan data di client side
+    const parseDate = (dateString) => {
+            if (!dateString || typeof dateString !== 'string') return null;
+            // Coba parse "dd/MM/yyyy HH:mm:ss"
+            let parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
+            if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            
+            // Coba parse "dd/MM/yyyy"
+            parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (parts) return new Date(parts[3], parts[2] - 1, parts[1]);
+
+            return null; // Abaikan format yang tidak dikenali
         };
-        
-        const currentYear = new Date().getFullYear().toString();
-        populateSelect('filterTahun', data.filters.tahun, currentYear);
-        populateSelect('filterJenjang', data.filters.jenjang);
-        populateSelect('filterStatus', data.filters.status);
 
+        allDataRows.sort((a, b) => {
+            const dateA_update = parseDate(a.data['Update']);
+            const dateB_update = parseDate(b.data['Update']);
+            const dateA_upload = parseDate(a.data['Tanggal Unggah']);
+            const dateB_upload = parseDate(b.data['Tanggal Unggah']);
+
+            // Urutkan berdasarkan tanggal Update jika keduanya valid
+            if (dateA_update && dateB_update) {
+                if (dateB_update.getTime() !== dateA_update.getTime()) {
+                    return dateB_update - dateA_update;
+                }
+            }
+            // Jika salah satu update null, yang punya tanggal akan di atas
+            if (dateB_update) return 1;
+            if (dateA_update) return -1;
+            
+            // Jika keduanya sama (atau null), urutkan berdasarkan Tanggal Unggah
+            return (dateB_upload || 0) - (dateA_upload || 0);
+        });
+
+        rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
+
+    const populateStaticFilter = (elementId, key, sortReverse = false) => {
+        const select = document.getElementById(elementId);
+        if (!select) return;
+        const uniqueValues = [...new Set(allDataRows.map(row => row.data[key]))].filter(Boolean);
+        let sorted = uniqueValues.sort();
+        if (sortReverse) sorted.reverse();
+        select.innerHTML = '<option value="">Semua</option>';
+        sorted.forEach(val => select.add(new Option(val, val)));
+      };
+    
+    const updateNamaSekolahFilter = () => {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
+        const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
+        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
+        uniqueSekolah.forEach(nama => { namaSekolahFilter.add(new Option(nama, nama)); });
+      };
+
+    populateStaticFilter('filterTahun', 'Tahun', true);
+        populateStaticFilter('filterJenjang', 'Jenjang');
+        document.getElementById('filterJenjang').addEventListener('change', () => { updateNamaSekolahFilter(); applyFilters(); });
+        document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
+        document.getElementById('filterTahun').addEventListener('change', applyFilters);
+        updateNamaSekolahFilter();
+        
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
-        applyFilters(); // Panggil filter untuk pertama kali
-        
-        window.addEventListener('resize', debounce(() => {
-            if (document.getElementById('lapbulStatusTable')) {
-                rowsPerPage = calculateRowsPerPage('lapbulStatusTable');
-                buildTable();
-            }
-        }));
+        document.getElementById('pagination-container').style.display = 'flex';
+        applyFilters();
     }
-
-    google.script.run
-        .withSuccessHandler(initializePage)
-        .withFailureHandler(error => {
-            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
-        })
-        .getLapbulStatusData();
 }
 
 function initLapbulArsipPage() {
@@ -1680,37 +1632,12 @@ function initLapbulArsipPage() {
 }
 
 function initLapbulKelolaPage() {
-    let allDataRows = [],
-        headerCols = [],
-        currentFilteredRows = [],
-        currentPage = 1,
-        rowsPerPage = 15;
-
-    // --- FUNGSI BARU UNTUK FILTER DINAMIS ---
-    // Fungsi ini akan memperbarui opsi di dropdown "Nama Sekolah"
-    function updateNamaSekolahFilter() {
-        const jenjangFilter = document.getElementById('filterJenjang').value;
-        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
-        
-        // Saring data berdasarkan jenjang yang dipilih
-        const filteredData = (jenjangFilter === "") 
-            ? allDataRows // Jika "Semua", ambil semua data
-            : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter); // Jika tidak, saring berdasarkan jenjang
-
-        // Ambil nama sekolah unik dari data yang sudah disaring
-        const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
-        
-        // Kosongkan dan isi kembali dropdown "Nama Sekolah"
-        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
-        uniqueSekolah.forEach(nama => {
-            namaSekolahFilter.add(new Option(nama, nama));
-        });
-    }
+    let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
 
     function buildTable() {
         const tableBody = document.getElementById('lapbulKelolaTable').querySelector('tbody');
         const tableHead = document.getElementById('lapbulKelolaTable').querySelector('thead');
-        tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}<th>Aksi</th><th>Update</th></tr>`;
+        tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}<th>Aksi</th></tr>`;
         const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
         if (currentPage > pageCount) currentPage = pageCount;
         const start = (currentPage - 1) * rowsPerPage;
@@ -1718,7 +1645,7 @@ function initLapbulKelolaPage() {
         const paginatedRows = currentFilteredRows.slice(start, end);
         tableBody.innerHTML = '';
         if (paginatedRows.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 3}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 2}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
             paginatedRows.forEach((rowInfo, index) => {
                 const tr = document.createElement('tr');
@@ -1734,17 +1661,23 @@ function initLapbulKelolaPage() {
                 tr.innerHTML = rowHTML;
                 const actionCell = document.createElement('td');
                 actionCell.className = 'action-buttons';
-                actionCell.innerHTML = `<button class="action-btn edit-btn"><i class="fas fa-pencil-alt"></i> Edit</button> <button class="action-btn delete-btn"><i class="fas fa-trash"></i> Hapus</button>`;
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn edit-btn';
+                editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
+                const editPage = rowInfo.source === 'PAUD' ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
+                editBtn.onclick = (e) => loadPage(e, editPage, { rowIndex: rowInfo.rowIndex, source: rowInfo.source });
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn delete-btn';
+                deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
+                actionCell.appendChild(editBtn);
+                actionCell.appendChild(deleteBtn);
                 tr.appendChild(actionCell);
-                const updateCell = document.createElement('td');
-                updateCell.textContent = rowInfo.data['Update'] || '-';
-                tr.appendChild(updateCell);
                 tableBody.appendChild(tr);
             });
         }
         setupPagination();
     }
-
+    
     function setupPagination() {
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
@@ -1773,7 +1706,6 @@ function initLapbulKelolaPage() {
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterNama = document.getElementById('filterNamaSekolah').value;
-        
         currentFilteredRows = allDataRows.filter(row => {
             const tahunMatch = (filterTahun === "") || (row.data['Tahun'] === filterTahun);
             const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === filterJenjang);
@@ -1783,11 +1715,19 @@ function initLapbulKelolaPage() {
         currentPage = 1;
         buildTable();
     }
+    
+    function updateNamaSekolahFilter() {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
+        const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
+        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
+        uniqueSekolah.forEach(nama => { namaSekolahFilter.add(new Option(nama, nama)); });
+    }
 
     function initializePage(serverData) {
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
-
         if (serverData && serverData.error) {
             loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${serverData.error}</p>`;
             return;
@@ -1801,7 +1741,9 @@ function initLapbulKelolaPage() {
         
         allDataRows = serverData.rows.map(rowArray => {
             const rowData = {};
-            headerCols.forEach((header, i) => { rowData[header] = rowArray[i]; });
+            headerCols.forEach((header, i) => {
+                rowData[header] = rowArray[i];
+            });
             return {
                 source: rowArray[headerCols.length],
                 rowIndex: rowArray[headerCols.length + 1],
@@ -1809,21 +1751,15 @@ function initLapbulKelolaPage() {
             };
         });
 
-        const parseDate = (d) => d ? new Date(d.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$2/$1/$3')) : null;
-        allDataRows.sort((a, b) => {
-            const dateA_update = parseDate(a.data['Update']);
-            const dateB_update = parseDate(b.data['Update']);
-            const dateA_upload = parseDate(a.data['Tanggal Unggah']);
-            const dateB_upload = parseDate(b.data['Tanggal Unggah']);
-            if (dateB_update && dateA_update) {
-                if (dateB_update.getTime() !== dateA_update.getTime()) return dateB_update - dateA_update;
-            }
-            return (dateB_upload || 0) - (dateA_upload || 0);
-        });
+        const parseDate = (d) => {
+            if (!d) return null;
+            const parts = d.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            return parts ? new Date(parts[3], parts[2] - 1, parts[1]) : new Date(d);
+        };
+        allDataRows.sort((a, b) => (parseDate(b.data['Update']) || parseDate(b.data['Tanggal Unggah'])) - (parseDate(a.data['Update']) || parseDate(a.data['Tanggal Unggah'])));
 
         rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
 
-        // Mengisi filter Tahun dan Jenjang
         const populateStaticFilter = (elementId, key, sortReverse = false) => {
             const select = document.getElementById(elementId);
             if (!select) return;
@@ -1833,25 +1769,17 @@ function initLapbulKelolaPage() {
             select.innerHTML = '<option value="">Semua</option>';
             sorted.forEach(val => select.add(new Option(val, val)));
         };
-        
         populateStaticFilter('filterTahun', 'Tahun', true);
         populateStaticFilter('filterJenjang', 'Jenjang');
-        
-        // --- PERUBAHAN UTAMA DI SINI ---
-        // Tambahkan event listener ke dropdown "Jenjang"
+
         document.getElementById('filterJenjang').addEventListener('change', () => {
-            updateNamaSekolahFilter(); // Perbarui opsi "Nama Sekolah"
-            applyFilters();           // Terapkan semua filter ke tabel
+            updateNamaSekolahFilter();
+            applyFilters();
         });
-        
-        // Tambahkan event listener ke dropdown "Nama Sekolah"
         document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
         document.getElementById('filterTahun').addEventListener('change', applyFilters);
 
-
-        // Inisialisasi awal
-        updateNamaSekolahFilter(); // Panggil pertama kali untuk mengisi "Nama Sekolah"
-        
+        updateNamaSekolahFilter();
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         document.getElementById('pagination-container').style.display = 'flex';
@@ -1865,6 +1793,301 @@ function initLapbulKelolaPage() {
         .withSuccessHandler(initializePage)
         .getLapbulKelolaData();
 }
+
+function initLapbulEditPaudPage(params) {
+    if (!params || !params.rowIndex) {
+        document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Parameter untuk edit data tidak ditemukan.</p></div>`;
+        return;
+    }
+
+    const form = document.getElementById('lapbulEditFormPaud');
+    const loadingDiv = document.getElementById('loading-data');
+    const formContainer = document.getElementById('edit-form-container');
+    
+    const lockField = (fieldName) => {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.disabled = true;
+            field.style.backgroundColor = 'rgba(0,0,0,0.3)';
+            field.style.cursor = 'not-allowed';
+            if (field.tagName === 'INPUT') field.readOnly = true;
+        }
+    };
+
+    google.script.run
+        .withSuccessHandler(rowData => {
+            if (!rowData || Object.keys(rowData).length === 0) {
+                loadingDiv.innerHTML = `<p style="color:red;">Gagal: Data untuk baris ${params.rowIndex} tidak ditemukan.</p>`;
+                return;
+            }
+            
+            form.querySelector('[name="rowIndex"]').value = params.rowIndex;
+
+            const bulanSelect = form.querySelector('[name="Bulan"]');
+            const tahunSelect = form.querySelector('[name="Tahun"]');
+            const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
+            const currentYear = new Date().getFullYear();
+            tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
+            
+            for (const key in rowData) {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field) field.value = rowData[key];
+            }
+            
+            lockField('Bulan');
+            lockField('Tahun');
+            lockField('Status');
+            lockField('Jenjang');
+            lockField('Nama Sekolah');
+
+            const fileLinkContainer = document.getElementById('existingFileLink');
+            if (rowData['Dokumen']) {
+                 fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`;
+            } else {
+                 fileLinkContainer.innerHTML = 'Tidak ada file.';
+            }
+
+            loadingDiv.style.display = 'none';
+            formContainer.style.display = 'block';
+        })
+        .withFailureHandler(err => {
+            loadingDiv.innerHTML = `<p style="color:red;">Gagal memuat data baris: ${err.message}</p>`;
+        })
+        .getLapbulDataByRow(params.rowIndex, params.source);
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        showAppModal('loading', 'Menyimpan perubahan...');
+
+        // --- PERBAIKAN UTAMA DI SINI ---
+        // Buat objek payload baru dengan kunci yang benar (camelCase)
+        const payload = {
+            rowIndex: form.querySelector('[name="rowIndex"]').value,
+            source: form.querySelector('[name="source"]').value,
+            // Ambil nilai dari field yang terkunci
+            laporanBulan: form.querySelector('[name="Bulan"]').value,
+            tahun: form.querySelector('[name="Tahun"]').value,
+            jenjang: form.querySelector('[name="Jenjang"]').value,
+            namaSekolah: form.querySelector('[name="Nama Sekolah"]').value,
+            // Ambil nilai dari field yang bisa diedit
+            'NPSN': form.querySelector('[name="NPSN"]').value,
+            'Jumlah Rombel': form.querySelector('[name="Jumlah Rombel"]').value,
+            'Status': form.querySelector('[name="Status"]').value
+            // Anda bisa menambahkan field lain yang bisa diedit di sini
+        };
+
+        const file = form.querySelector('input[type="file"]').files[0];
+
+        const sendData = (data) => {
+            google.script.run
+                .withSuccessHandler(res => showAppModal('success', res, 'lapbul_kelola'))
+                .withFailureHandler(err => {
+                    showAppModal('error', err.message);
+                    if (submitButton) submitButton.disabled = false;
+                })
+                .updateLapbulData(data);
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
+                sendData(payload);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            sendData(payload);
+        }
+    });
+}
+
+function initLapbulEditSdPage(params) {
+    if (!params || !params.rowIndex) {
+        document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Parameter untuk edit data tidak ditemukan.</p></div>`;
+        return;
+    }
+
+    const form = document.getElementById('lapbulEditFormSd');
+    const loadingDiv = document.getElementById('loading-data');
+    const formContainer = document.getElementById('edit-form-container');
+
+    // --- SEMUA FUNGSI BANTU SEKARANG ADA DI DALAM SATU FUNGSI INI ---
+    function generateKelasHTML(kelas) {
+        const rombels = ['A', 'B', 'C'];
+        const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+        let rombelInputsHTML = `<div class="rombel-input-group" id="rombel-${kelas}-Tunggal" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas} P" value="0" min="0" required></div></div></div>`;
+        for (const rombel of rombels) {
+            rombelInputsHTML += `<div class="rombel-input-group" id="rombel-${kelas}-${rombel}" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}${rombel}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas}${rombel} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas}${rombel} P" value="0" min="0" required></div></div></div>`;
+        }
+        let agamaInputsHTML = '';
+        for (const ag of agama) {
+            const agId = ag;
+            agamaInputsHTML += `<div class="form-grid agama-row"><div class="form-group"><label>${ag}</label><select class="agama-toggle" data-kelas="${kelas}" data-agama="${agId}"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select></div><div class="agama-input-pair" id="agama-input-${kelas}-${agId}" style="display: none;"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas} ${agId} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas} ${agId} P" value="0" min="0" required></div></div></div>`;
+        }
+        return `<div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas ${kelas}</label><select class="rombel-toggle" name="Rombel ${kelas}" data-kelas="${kelas}"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div><h4 class="sub-section-title">Jumlah Murid per Rombel</h4><div class="rombel-container" id="rombel-container-${kelas}">${rombelInputsHTML}</div><h4 class="sub-section-title">Jumlah Murid per Agama</h4><div class="agama-container">${agamaInputsHTML}</div>`;
+    }
+    function generatePtkNegeriHTML() {
+        return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Negeri)</legend><fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-2"><div class="form-group"><label>PNS</label><input type="number" name="KS PNS" value="0" min="0" max="1"></div><div class="form-group"><label>PPPK</label><input type="number" name="KS PPPK" value="0" min="0" max="1"></div></div></fieldset><fieldset class="ptk-sub-fieldset"><legend>Guru</legend><div class="ptk-row has-label"><label>Guru Kelas</label><div class="form-group"><label>PNS</label><input type="number" name="GK PNS" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="GK PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="GK PPPK PW" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="GK GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PAI</label><div class="form-group"><label>PNS</label><input type="number" name="GPAI PNS" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="GPAI PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="GPAI PPPK PW" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="GPAI GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PJOK</label><div class="form-group"><label>PNS</label><input type="number" name="GPJOK PNS" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="GPJOK PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="GPJOK PPPK PW" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="GPJOK GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PA Kristen</label><div class="form-group"><label>PNS</label><input type="number" name="GPAKris PNS" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="GPAKris PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="GPAKris PPPK PW" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="GPAKris GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div class="form-group"><label>GTT</label><input type="number" name="GTT Inggris" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru Mapel Lainnya</label><div class="form-group"><label>GTT</label><input type="number" name="GTT Lain" value="0" min="0"></div></div></fieldset><fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend><div class="ptk-row has-label"><label>Operator</label><div class="form-group"><label>PPPK</label><input type="number" name="OLO PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="OLO PPPK PW" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="OLO PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Pengelola Umum</label><div class="form-group"><label>PPPK</label><input type="number" name="PUO PPPK" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="PUO PPPK PW" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="PUO PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Penjaga Sekolah</label><div class="form-group"><label>PTT</label><input type="number" name="PTT Penjaga" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Tenaga Administrasi</label><div class="form-group"><label>PTT</label><input type="number" name="PTT Admin" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Pustakawan</label><div class="form-group"><label>PTT</label><input type="number" name="PTT Perpus" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Tendik Lainnya</label><div class="form-group"><label>PTT</label><input type="number" name="PTT Lain" value="0" min="0"></div></div></fieldset></fieldset>`;
+    }
+    function generatePtkSwastaHTML() {
+        return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Swasta)</legend><fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-2"><div class="form-group"><label>GTY</label><input type="number" name="SDS KS GTY" value="0" min="0" max="1"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS KS GTT" value="0" min="0" max="1"></div></div></fieldset><fieldset class="ptk-sub-fieldset"><legend>Guru</legend><div class="ptk-row has-label"><label>Guru Kelas</label><div class="form-group"><label>GTY</label><input type="number" name="SDS GK GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS GK GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PAI</label><div class="form-group"><label>GTY</label><input type="number" name="SDS GPAI GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS GPAI GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PJOK</label><div class="form-group"><label>GTY</label><input type="number" name="SDS GPJOK GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS GPJOK GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru PA Kristen</label><div class="form-group"><label>GTY</label><input type="number" name="SDS GKRIS GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS GKRIS GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div class="form-group"><label>GTY</label><input type="number" name="SDS ING GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS ING GTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Guru Mapel Lainnya</label><div class="form-group"><label>GTY</label><input type="number" name="SDS GLAIN GTY" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="SDS GLAIN GTT" value="0" min="0"></div></div></fieldset><fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend><div class="ptk-row has-label"><label>Operator</label><div class="form-group"><label>PTY</label><input type="number" name="SDS OLO PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS OLO PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Pengelola Umum</label><div class="form-group"><label>PTY</label><input type="number" name="SDS PUO PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS PUO PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Penjaga Sekolah</label><div class="form-group"><label>PTY</label><input type="number" name="SDS Penjaga PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS Penjaga PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Tenaga Administrasi</label><div class="form-group"><label>PTY</label><input type="number" name="SDS Admin PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS Admin PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Pustakawan</label><div class="form-group"><label>PTY</label><input type="number" name="SDS Perpus PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS Perpus PTT" value="0" min="0"></div></div><div class="ptk-row has-label"><label>Tendik Lainnya</label><div class="form-group"><label>PTY</label><input type="number" name="SDS Tendik Lain PTY" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="SDS Tendik Lain PTT" value="0" min="0"></div></div></fieldset></fieldset>`;
+    }
+    function setupFormUI() {
+        const tabsContainer = document.getElementById('kelas-tabs');
+        const contentContainer = document.getElementById('kelas-content-container');
+        tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
+        for (let i = 1; i <= 6; i++) {
+            tabsContainer.innerHTML += `<button type="button" class="tab-link ${i === 1 ? 'active' : ''}" data-kelas="${i}">Kelas ${i}</button>`;
+            const content = document.createElement('div');
+            content.id = `kelas-content-${i}`; content.className = 'tab-content';
+            content.style.display = i === 1 ? 'block' : 'none';
+            content.innerHTML = generateKelasHTML(i);
+            contentContainer.appendChild(content);
+        }
+        tabsContainer.addEventListener('click', function(e) { if (e.target.classList.contains('tab-link')) { document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none'); e.target.classList.add('active'); document.getElementById(`kelas-content-${e.target.dataset.kelas}`).style.display = 'block'; } });
+        contentContainer.addEventListener('change', function(e) { 
+            const t = e.target; 
+            if (t.classList.contains('rombel-toggle')) { 
+                const k = t.dataset.kelas, c = parseInt(t.value, 10); 
+                document.querySelectorAll(`#rombel-container-${k} .rombel-input-group`).forEach(el => el.style.display = 'none'); 
+                if (c === 1) { 
+                    document.getElementById(`rombel-${k}-Tunggal`).style.display = 'block'; 
+                } else if (c > 1) { 
+                    ['A', 'B', 'C'].slice(0, c).forEach(r => {
+                        const rombelEl = document.getElementById(`rombel-${k}-${r}`);
+                        if (rombelEl) rombelEl.style.display = 'block';
+                    });
+                } 
+            } 
+            if (t.classList.contains('agama-toggle')) { 
+                document.getElementById(`agama-input-${t.dataset.kelas}-${t.dataset.agama}`).style.display = t.value === 'Ada' ? 'grid' : 'none'; 
+            } 
+        });
+        document.getElementById('ptk-section-container').innerHTML = `<div id="ptk-negeri" style="display:none;">${generatePtkNegeriHTML()}</div><div id="ptk-swasta" style="display:none;">${generatePtkSwastaHTML()}</div>`;
+    }
+    function lockField(fieldName) {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (field) { field.disabled = true; field.style.cssText = 'background-color: rgba(0,0,0,0.3); cursor: not-allowed;'; if (field.tagName === 'INPUT') field.readOnly = true; }
+    }
+
+    // --- PROSES UTAMA ---
+    setupFormUI();
+
+    google.script.run
+        .withSuccessHandler(rowData => {
+            if (!rowData || Object.keys(rowData).length === 0) {
+                loadingDiv.innerHTML = `<p style="color:red;">Gagal: Data untuk baris ${params.rowIndex} tidak ditemukan.</p>`;
+                return;
+            }
+
+            form.querySelector('[name="rowIndex"]').value = params.rowIndex;
+            
+            for (const header in rowData) {
+                const fieldName = header.trim();
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    let value = rowData[header];
+                    if (field.type === 'number' && (value === '' || value === null || value === undefined)) {
+                        value = '0';
+                    }
+                    field.value = value;
+                }
+            }
+            
+            const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+            for (let i = 1; i <= 6; i++) {
+                agama.forEach(ag => {
+                    const L = parseInt(rowData[`K${i} ${ag} L`] || 0, 10);
+                    const P = parseInt(rowData[`K${i} ${ag} P`] || 0, 10);
+                    const selectAgama = form.querySelector(`.agama-toggle[data-kelas="${i}"][data-agama="${ag}"]`);
+                    if (selectAgama) {
+                        selectAgama.value = (L + P > 0) ? 'Ada' : 'Tidak Ada';
+                    }
+                });
+            }
+
+            form.querySelectorAll('select').forEach(select => {
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+
+            const bulanSelect = form.querySelector('[name="Bulan"]');
+            const tahunSelect = form.querySelector('[name="Tahun"]');
+            const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
+            const currentYear = new Date().getFullYear();
+            tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
+            bulanSelect.value = rowData['Bulan'];
+            tahunSelect.value = rowData['Tahun'];
+
+            if (rowData['Status'] === 'Negeri') {
+                document.getElementById('ptk-negeri').style.display = 'block';
+            } else if (rowData['Status'] === 'Swasta') {
+                document.getElementById('ptk-swasta').style.display = 'block';
+            }
+
+            lockField('Bulan'); lockField('Tahun'); lockField('Status'); lockField('Nama Sekolah');
+            
+            const fileLinkContainer = document.getElementById('existingFileLink');
+            if (rowData['Dokumen']) { fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`; } else { fileLinkContainer.innerHTML = 'Tidak ada file.'; }
+
+            loadingDiv.style.display = 'none';
+            formContainer.style.display = 'block';
+        })
+        .withFailureHandler(err => { loadingDiv.innerHTML = `<p style="color:red;">Gagal memuat data baris: ${err.message}</p>`; })
+        .getLapbulDataByRow(params.rowIndex, params.source);
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        showAppModal('loading', 'Menyimpan perubahan...');
+        
+        const payload = {};
+        const allFields = form.querySelectorAll('input, select, textarea');
+        allFields.forEach(field => {
+            if (field.name) {
+                payload[field.name] = field.value;
+            }
+        });
+        
+        payload.laporanBulan = form.querySelector('[name="Bulan"]').value;
+        payload.tahun = form.querySelector('[name="Tahun"]').value;
+        payload.namaSekolah = form.querySelector('[name="Nama Sekolah"]').value;
+
+        const file = form.querySelector('input[type="file"]').files[0];
+
+        const sendData = (data) => {
+            google.script.run
+                .withSuccessHandler(res => {
+                    if (res && res.error) {
+                         showAppModal('error', res.error);
+                         if (submitButton) submitButton.disabled = false;
+                    } else {
+                         showAppModal('success', res, 'lapbul_kelola');
+                    }
+                })
+                .withFailureHandler(err => {
+                    showAppModal('error', err.message);
+                    if (submitButton) submitButton.disabled = false;
+                })
+                .updateLapbulData(data);
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
+                sendData(payload);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            sendData(payload);
+        }
+      });
+  }
 
 /**
  * ===================================================================
@@ -1889,6 +2112,8 @@ const pageInitializers = {
     'lapbul_status': initLapbulStatusPage,
     'lapbul_arsip': initLapbulArsipPage,
     'lapbul_kelola': initLapbulKelolaPage,
+    'lapbul_edit_paud': initLapbulEditPaudPage,
+    'lapbul_edit_sd': initLapbulEditSdPage,
     'ptk_menu': initSubMenuPage,
     'murid_menu': initSubMenuPage,
     'siaba_menu': initSubMenuPage,
@@ -1905,19 +2130,15 @@ const pageInitializers = {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPage(null, 'home');
-
     document.body.addEventListener('click', function(e) {
         const link = e.target.closest('a');
         if (!link) return;
-
         const pageName = link.dataset.page;
         const isSubmenuToggle = link.hasAttribute('data-page-parent');
-
         if (isSubmenuToggle) {
             e.preventDefault();
             link.parentElement.classList.toggle('open');
         }
-
         if (pageName) {
             e.preventDefault();
             loadPage(null, pageName);
@@ -1925,4 +2146,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-
