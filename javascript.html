@@ -1632,8 +1632,27 @@ function initLapbulArsipPage() {
 }
 
 function initLapbulKelolaPage() {
-    let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
+    let allDataRows = [],
+        headerCols = [],
+        currentFilteredRows = [],
+        currentPage = 1,
+        rowsPerPage = 15;
 
+    // --- FUNGSI BARU UNTUK MENGURUTKAN DATA ---
+    const sortFunction = (a, b) => {
+        const parseDate = (d) => {
+            if (!d || typeof d !== 'string') return null;
+            let parts = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
+            if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            parts = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (parts) return new Date(parts[3], parts[2] - 1, parts[1]);
+            return null;
+        };
+
+        const dateA = parseDate(a.data['Update']) || parseDate(a.data['Tanggal Unggah']);
+        const dateB = parseDate(b.data['Update']) || parseDate(b.data['Tanggal Unggah']);
+        return (dateB || 0) - (dateA || 0);
+    };
     function buildTable() {
         const tableBody = document.getElementById('lapbulKelolaTable').querySelector('tbody');
         const tableHead = document.getElementById('lapbulKelolaTable').querySelector('thead');
@@ -1706,12 +1725,21 @@ function initLapbulKelolaPage() {
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterNama = document.getElementById('filterNamaSekolah').value;
-        currentFilteredRows = allDataRows.filter(row => {
-            const tahunMatch = (filterTahun === "") || (row.data['Tahun'] === filterTahun);
+        
+        let filteredRows = allDataRows.filter(row => {
+            // --- PERBAIKAN UTAMA DI SINI ---
+            // Tambahkan .trim() untuk memastikan tidak ada spasi ekstra
+            const tahunMatch = (filterTahun === "") || (String(row.data['Tahun']).trim() === filterTahun);
             const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === filterJenjang);
             const namaMatch = (filterNama === "") || (row.data['Nama Sekolah'] === filterNama);
             return tahunMatch && jenjangMatch && namaMatch;
         });
+
+        // --- PERBAIKAN UTAMA DI SINI ---
+        // Urutkan kembali hasil filter sebelum ditampilkan
+        filteredRows.sort(sortFunction);
+        
+        currentFilteredRows = filteredRows;
         currentPage = 1;
         buildTable();
     }
@@ -1719,6 +1747,7 @@ function initLapbulKelolaPage() {
     function updateNamaSekolahFilter() {
         const jenjangFilter = document.getElementById('filterJenjang').value;
         const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        if (!namaSekolahFilter) return;
         const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
         const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
         namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
@@ -1751,13 +1780,6 @@ function initLapbulKelolaPage() {
             };
         });
 
-        const parseDate = (d) => {
-            if (!d) return null;
-            const parts = d.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-            return parts ? new Date(parts[3], parts[2] - 1, parts[1]) : new Date(d);
-        };
-        allDataRows.sort((a, b) => (parseDate(b.data['Update']) || parseDate(b.data['Tanggal Unggah'])) - (parseDate(a.data['Update']) || parseDate(a.data['Tanggal Unggah'])));
-
         rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
 
         const populateStaticFilter = (elementId, key, sortReverse = false) => {
@@ -1783,7 +1805,7 @@ function initLapbulKelolaPage() {
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         document.getElementById('pagination-container').style.display = 'flex';
-        applyFilters();
+        applyFilters(); // Panggilan pertama ini akan menyaring dan mengurutkan
     }
 
     google.script.run
@@ -2089,6 +2111,49 @@ function initLapbulEditSdPage(params) {
       });
   }
 
+function initLapbulUnduhFormatPage() {
+    // Jalankan animasi untuk tombol Unduh
+    initSubMenuPage();
+
+    const infoBtn = document.getElementById('infoDropdownBtn');
+    const contentDiv = document.getElementById('infoDropdownContent');
+
+    if (!infoBtn || !contentDiv) return;
+
+    let isDataLoaded = false;
+
+    infoBtn.onclick = function() {
+        // Toggle (buka/tutup) dropdown
+        const isOpen = this.classList.toggle('active');
+        contentDiv.style.maxHeight = isOpen ? contentDiv.scrollHeight + "px" : "0px";
+
+        // Jika dropdown dibuka dan data belum dimuat, panggil server
+        if (isOpen && !isDataLoaded) {
+            google.script.run
+                .withSuccessHandler(infoItems => {
+                    if (infoItems && infoItems.length > 0) {
+                        const infoContent = `
+                            <ul style="text-align: left; padding: 10px 20px 10px 35px; line-height: 1.6; margin: 0;">
+                                ${infoItems.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        `;
+                        contentDiv.innerHTML = infoContent;
+                    } else {
+                        contentDiv.innerHTML = '<p style="padding: 15px;">Informasi tidak ditemukan.</p>';
+                    }
+                    // Sesuaikan kembali tinggi dropdown setelah konten dimuat
+                    contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
+                    isDataLoaded = true;
+                })
+                .withFailureHandler(err => {
+                    contentDiv.innerHTML = `<p style="color:red; padding: 15px;">Gagal memuat: ${err.message}</p>`;
+                    contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
+                })
+                .getUnduhFormatInfo();
+        }
+    };
+}
+
 /**
  * ===================================================================
  * =================== 3. OBJEK INISIALISASI & TRIGGER ===============
@@ -2114,6 +2179,7 @@ const pageInitializers = {
     'lapbul_kelola': initLapbulKelolaPage,
     'lapbul_edit_paud': initLapbulEditPaudPage,
     'lapbul_edit_sd': initLapbulEditSdPage,
+    'lapbul_unduh_format': initLapbulUnduhFormatPage,
     'ptk_menu': initSubMenuPage,
     'murid_menu': initSubMenuPage,
     'siaba_menu': initSubMenuPage,
