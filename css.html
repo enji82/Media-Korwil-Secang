@@ -579,7 +579,7 @@
   .ptk-fieldset {
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    padding: 5px 15px 1px 15px;/*asline 5px 15px 15px 15px*/
+    padding: 5px 15px 10px 15px;/*asline 5px 15px 15px 15px*/
     margin-bottom: 7px;/*asline 12px*/
   }
 
@@ -1216,13 +1216,6 @@
   flex-grow: 1;
 }
 
-/* GAYA BARU UNTUK FORM SD */
-.form-layout-grid {
-  display: grid;
-  grid-template-columns: 3fr 5fr 4fr; /* Perbandingan lebar kolom */
-  gap: 25px;
-}
-
 .form-column {
   min-width: 0; /* Mencegah overflow pada grid */
 }
@@ -1281,12 +1274,11 @@
 /* ============= GAYA KHUSUS UNTUK FORM LAPORAN BULAN SD ============= */
 /* =================================================================== */
 
-/* 1. TATA LETAK 3 KOLOM UTAMA */
+/* GAYA BARU UNTUK FORM SD */
 .form-layout-grid {
-    display: grid;
-    /* Atur perbandingan lebar kolom: 3:5:4 */
-    grid-template-columns: 3fr 4fr 5fr;
-    gap: 25px; /* Jarak antar kolom */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+  gap: 25px;
 }
 .form-column {
     min-width: 0; /* Mencegah kolom merusak layout saat mengecil */
@@ -1448,3 +1440,4 @@
 }
 
 </style>
+
