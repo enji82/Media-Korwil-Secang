@@ -91,19 +91,34 @@ function loadPage(event, pageName, params = {}) {
 }
 
 function updateActiveMenu(pageName) {
+    // 1. Reset semua menu terlebih dahulu
     document.querySelectorAll('.sidebar-menu a').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sidebar-menu .has-submenu').forEach(el => el.classList.remove('open'));
+
+    // 2. Temukan link yang sesuai dengan halaman yang dibuka
     const activeLink = document.querySelector(`.sidebar-menu a[data-page="${pageName}"]`);
-    if (activeLink) {
-        activeLink.classList.add('active');
-        const parentLi = activeLink.closest('.has-submenu');
-        document.querySelectorAll('.sidebar-menu li.has-submenu').forEach(li => {
-            if (li !== parentLi) { li.classList.remove('open'); }
-        });
-        if (parentLi) {
-            parentLi.classList.add('open');
-            const parentAnchor = parentLi.querySelector('a[data-page-parent]');
-            if(parentAnchor) parentAnchor.classList.add('active');
+    if (!activeLink) return;
+
+    // 3. Aktifkan link itu sendiri
+    activeLink.classList.add('active');
+
+    // 4. Telusuri ke atas untuk membuka semua menu induknya
+    let parent = activeLink.parentElement; 
+    while (parent && !parent.classList.contains('sidebar-menu')) {
+        // Jika elemen induk adalah sebuah submenu (punya class .submenu)
+        if (parent.classList.contains('submenu')) {
+            const parentLi = parent.closest('li.has-submenu');
+            if (parentLi) {
+                // Buka lipatan menunya
+                parentLi.classList.add('open');
+                // Aktifkan juga link induknya
+                const parentAnchor = parentLi.querySelector('a[data-page-parent]');
+                if (parentAnchor) {
+                    parentAnchor.classList.add('active');
+                }
+            }
         }
+        parent = parent.parentElement;
     }
 }
 
@@ -878,37 +893,47 @@ function initSkArsipPage() {
 // --- Modul Laporan Bulan (Semua fungsi lengkap dan diperbaiki) ---
 
 function initLapbulUnggahPage() {
-    initSubMenuPage(); // Menjalankan animasi tombol menu
+    // Menjalankan animasi untuk tombol menu utama
+    initSubMenuPage(); 
     
-    const infoBtn = document.getElementById('showInfoBtn');
-    if (infoBtn) {
-        infoBtn.onclick = function() {
-            // 1. Tampilkan modal loading terlebih dahulu
-            showAppModal('loading', 'Memuat informasi...');
-            
-            // 2. Panggil fungsi di server untuk mengambil data
+    // Logika BARU untuk dropdown informasi
+    const infoBtn = document.getElementById('infoDropdownBtnUnggah');
+    const contentDiv = document.getElementById('infoDropdownContentUnggah');
+
+    if (!infoBtn || !contentDiv) return;
+
+    let isDataLoaded = false;
+
+    infoBtn.onclick = function() {
+        // Buka atau tutup dropdown
+        const isOpen = this.classList.toggle('active');
+        contentDiv.style.maxHeight = isOpen ? contentDiv.scrollHeight + "px" : "0px";
+
+        // Jika dropdown dibuka dan data belum dimuat, panggil server
+        if (isOpen && !isDataLoaded) {
             google.script.run
                 .withSuccessHandler(infoItems => {
-                    // 3. Jika berhasil, format data menjadi daftar HTML
                     if (infoItems && infoItems.length > 0) {
                         const infoContent = `
-                            <ul style="text-align: left; padding-left: 20px; line-height: 1.6;">
+                            <ul style="text-align: left; padding: 10px 20px 10px 35px; line-height: 1.6; margin: 0;">
                                 ${infoItems.map(item => `<li>${item}</li>`).join('')}
                             </ul>
                         `;
-                        // 4. Tampilkan informasi di modal
-                        showAppModal('info', infoContent);
+                        contentDiv.innerHTML = infoContent;
                     } else {
-                        showAppModal('error', 'Informasi tidak ditemukan di spreadsheet.');
+                        contentDiv.innerHTML = '<p style="padding: 15px;">Informasi tidak ditemukan.</p>';
                     }
+                    // Sesuaikan kembali tinggi dropdown setelah konten dimuat
+                    contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
+                    isDataLoaded = true;
                 })
                 .withFailureHandler(err => {
-                    // Jika gagal, tampilkan pesan error
-                    showAppModal('error', `Gagal memuat informasi: ${err.message}`);
+                    contentDiv.innerHTML = `<p style="color:red; padding: 15px;">Gagal memuat: ${err.message}</p>`;
+                    contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
                 })
-                .getLapbulInfo();
-        };
-    }
+                .getLapbulInfo(); // Menggunakan fungsi yang sudah ada untuk mengambil data
+        }
+    };
 }
 
 function initLapbulFormPaudPage(params) {
@@ -2154,6 +2179,217 @@ function initLapbulUnduhFormatPage() {
     };
 }
 
+function initPtkKeadaanPaudPage() {
+    let allDataRows = [], headerCols = [], filterIndices = {}, currentFilteredRows = [];
+
+    function buildTable() {
+        const tableBody = document.getElementById('keadaanPtkPaudTable').querySelector('tbody');
+        const tableFoot = document.getElementById('keadaanPtkPaudTable').querySelector('tfoot');
+        if (!tableBody || !tableFoot) return;
+
+        tableBody.innerHTML = '';
+        tableFoot.innerHTML = ''; 
+
+        if (currentFilteredRows.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok.</td></tr>`;
+            return;
+        }
+        
+        const namaSekolahIndex = headerCols.indexOf('Nama Sekolah');
+        const bulanIndex = headerCols.indexOf('Bulan');
+
+        currentFilteredRows.forEach((cols, index) => {
+            const tr = document.createElement('tr');
+            let rowHTML = `<td>${index + 1}</td>`;
+            cols.forEach((cellData, colIndex) => {
+                let displayData = (String(cellData) === '0') ? '-' : (cellData || '-');
+                let cellClasses = [];
+                if (colIndex === namaSekolahIndex || colIndex === bulanIndex) cellClasses.push('cell-align-left');
+                if (colIndex === cols.length - 1) cellClasses.push('cell-font-bold');
+                const classString = cellClasses.length > 0 ? ` class="${cellClasses.join(' ')}"` : '';
+                rowHTML += `<td${classString}>${displayData}</td>`;
+            });
+            tr.innerHTML = rowHTML;
+            tableBody.appendChild(tr);
+        });
+
+        // --- PERBAIKAN LOGIKA BARIS JUMLAH ---
+        const totals = new Array(headerCols.length).fill(0);
+        currentFilteredRows.forEach(row => {
+            // POIN 1: Penjumlahan sekarang dimulai dari kolom ke-6 (indeks 5: Jumlah Rombel)
+            for (let i = 5; i < headerCols.length; i++) {
+                const value = parseInt(row[i], 10);
+                if (!isNaN(value)) totals[i] += value;
+            }
+        });
+
+        let totalRowHTML = '<tr>';
+        // POIN 2: Label "JUMLAH TOTAL" hanya menggabungkan 2 kolom beku.
+        totalRowHTML += '<td colspan="2" class="cell-align-left">JUMLAH TOTAL</td>'; 
+        
+        // POIN 2: Kolom 3, 4, 5, 6 (indeks 2, 3, 4) dikosongkan.
+        totalRowHTML += '<td>-</td>'; // Kolom Jer
+        totalRowHTML += '<td>-</td>'; // Kolom Sta
+        totalRowHTML += '<td>-</td>'; // Kolom Bul
+        totalRowHTML += '<td>-</td>'; // Kolom Tah
+
+        // Loop untuk menampilkan hasil penjumlahan (sekarang dimulai dari indeks 5)
+        for (let i = 5; i < headerCols.length; i++) {
+            let displayTotal = (totals[i] === 0) ? '-' : totals[i];
+            let totalClass = (i === headerCols.length - 1) ? ' class="cell-font-bold"' : '';
+            totalRowHTML += `<td${totalClass}>${displayTotal}</td>`;
+        }
+        totalRowHTML += '</tr>';
+        tableFoot.innerHTML = totalRowHTML;
+        // --- AKHIR PERBAIKAN ---
+    }
+    
+    function applyFilters() {
+        const filterJenjang = document.getElementById('filterJenjang').value;
+        currentFilteredRows = allDataRows.filter(cols => {
+            const jenjangMatch = (filterJenjang === "") || (filterIndices.jenjang === -1) || (String(cols[filterIndices.jenjang]) === filterJenjang);
+            return jenjangMatch;
+        });
+        buildTable();
+    }
+
+    function initializePage(dataArray) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('keadaanPtkPaudTable').querySelector('thead');
+
+        if (!dataArray || dataArray.length < 2) {
+            loadingStatus.innerHTML = "<p>Tidak ada data untuk ditampilkan.</p>"; 
+            return;
+        }
+
+        headerCols = dataArray[0];
+        allDataRows = dataArray.slice(1);
+        
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>No.</th>' + headerCols.map(header => `<th>${header}</th>`).join('');
+        tableHead.innerHTML = '';
+        tableHead.appendChild(headerRow);
+        
+        filterIndices = { jenjang: headerCols.indexOf('Jenjang') };
+        
+        const jenjangSelect = document.getElementById('filterJenjang');
+        if (jenjangSelect && filterIndices.jenjang !== -1) {
+            const uniqueValues = [...new Set(allDataRows.map(row => String(row[filterIndices.jenjang])))];
+            jenjangSelect.innerHTML = `<option value="">Semua</option>`;
+            uniqueValues.sort().forEach(val => { 
+                if(val && val.trim() !== '') jenjangSelect.add(new Option(val, val)); 
+            });
+            jenjangSelect.addEventListener('change', applyFilters);
+        }
+        
+        loadingStatus.style.display = 'none';
+        tableWrapper.style.display = 'block';
+        applyFilters();
+    }
+    
+    google.script.run
+        .withSuccessHandler(initializePage)
+        .withFailureHandler(error => {
+            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
+        })
+        .getKeadaanPtkPaudData();
+}
+
+function initPtkKeadaanSdPage() {
+    
+    function initializePage(dataArray) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('keadaanPtkSdTable').querySelector('thead');
+        const tableBody = document.getElementById('keadaanPtkSdTable').querySelector('tbody');
+        const tableFoot = document.getElementById('keadaanPtkSdTable').querySelector('tfoot'); // Ambil elemen tfoot
+
+        if (!dataArray || dataArray.length < 3) {
+            loadingStatus.innerHTML = "<p>Data tidak lengkap atau tidak ditemukan.</p>"; 
+            return;
+        }
+
+        const headerRow1 = dataArray[0];
+        const headerRow2 = dataArray[1];
+        const dataRows = dataArray.slice(2);
+
+        // --- Logika Header (Tidak Berubah) ---
+        let firstRowHTML = '<th rowspan="2">No.</th>';
+        let secondRowHTML = '';
+        let i = 0;
+        while (i < headerRow1.length) {
+            const topHeader = headerRow1[i];
+            const isGroupHeader = topHeader && (i + 1 < headerRow1.length && !headerRow1[i + 1]);
+            if (isGroupHeader) {
+                let colspan = 1;
+                while ((i + colspan) < headerRow1.length && !headerRow1[i + colspan]) {
+                    colspan++;
+                }
+                firstRowHTML += `<th colspan="${colspan}">${topHeader}</th>`;
+                for (let j = 0; j < colspan; j++) {
+                    secondRowHTML += `<th>${headerRow2[i + j]}</th>`;
+                }
+                i += colspan;
+            } else {
+                firstRowHTML += `<th rowspan="2">${topHeader}</th>`;
+                i++;
+            }
+        }
+        const finalHeaderHTML = `<tr>${firstRowHTML}</tr><tr>${secondRowHTML}</tr>`;
+        tableHead.innerHTML = finalHeaderHTML;
+        
+        // --- Membangun Isi Tabel ---
+        let bodyHTML = '';
+        dataRows.forEach((row, index) => {
+            bodyHTML += '<tr>';
+            bodyHTML += `<td>${index + 1}</td>`;
+            row.forEach(cell => {
+                bodyHTML += `<td>${(cell === '0' || cell === '') ? '-' : cell}</td>`;
+            });
+            bodyHTML += '</tr>';
+        });
+        tableBody.innerHTML = bodyHTML;
+
+        // --- LOGIKA BARU UNTUK BARIS JUMLAH ---
+        const totals = new Array(headerRow1.length).fill(0);
+        dataRows.forEach(row => {
+            // Kolom "Rombel" ada di indeks ke-4 dari data mentah (setelah Nama, Status, Bulan, Tahun)
+            for (let i = 4; i < headerRow1.length; i++) {
+                const value = parseInt(row[i], 10);
+                if (!isNaN(value)) {
+                    totals[i] += value;
+                }
+            }
+        });
+        
+        let totalRowHTML = '<tr>';
+        totalRowHTML += '<td>-</td>'; // Kolom No.
+        totalRowHTML += '<td class="cell-align-left">JUMLAH</td>'; // Kolom Nama Sekolah
+        totalRowHTML += '<td>-</td>'; // Kolom Status
+        totalRowHTML += '<td>-</td>'; // Kolom Bulan
+        totalRowHTML += '<td>-</td>'; // Kolom Tahun
+        
+        // Loop untuk menampilkan total, dimulai dari Rombel
+        for (let i = 4; i < totals.length; i++) {
+            totalRowHTML += `<td>${totals[i] || '-'}</td>`;
+        }
+        totalRowHTML += '</tr>';
+        tableFoot.innerHTML = totalRowHTML;
+        // --- AKHIR LOGIKA BARU ---
+        
+        loadingStatus.style.display = 'none';
+        tableWrapper.style.display = 'block';
+    }
+    
+    google.script.run
+        .withSuccessHandler(initializePage)
+        .withFailureHandler(error => {
+            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
+        })
+        .getKeadaanPtkSdData();
+}
+
 /**
  * ===================================================================
  * =================== 3. OBJEK INISIALISASI & TRIGGER ===============
@@ -2181,6 +2417,13 @@ const pageInitializers = {
     'lapbul_edit_sd': initLapbulEditSdPage,
     'lapbul_unduh_format': initLapbulUnduhFormatPage,
     'ptk_menu': initSubMenuPage,
+    'ptk_keadaan_menu': initSubMenuPage, // Halaman menu baru
+    'ptk_keadaan_paud': initPtkKeadaanPaudPage, // Halaman konten baru
+    'ptk_keadaan_sd': initPtkKeadaanSdPage,
+    'ptk_data': initSubMenuPage,    // Diasumsikan akan ada konten, bisa diubah nanti
+    'ptk_kelola': initSubMenuPage,  // Diasumsikan akan ada konten, bisa diubah nanti
+    'ptk_kebutuhan': initSubMenuPage, // Diasumsikan akan ada konten, bisa diubah nanti
+    'ptk_bezetting': initSubMenuPage,
     'murid_menu': initSubMenuPage,
     'siaba_menu': initSubMenuPage,
     'pns_menu': initSubMenuPage,
