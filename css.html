@@ -1439,5 +1439,215 @@
   text-align: left;
 }
 
+/* ========== */
+.dropdown-info {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+}
+
+.info-btn.active + .dropdown-content {
+    border-color: rgba(0, 195, 255, 0.5);
+}
+
+.info-btn i.fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.info-btn.active i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.table-footer-note {
+  padding: 10px 15px;
+  font-size: 0.85em;
+  color: #bdc3c7;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 10px 10px; /* Agar sudut bawahnya melengkung */
+  margin-top: -1px; /* Menempel dengan tabel di atasnya */
+}
+
+/* === GAYA FINAL TABEL KEADAAN PTK PAUD (FIXED HEADER) === */
+
+#tableWrapper .table-container {
+  max-height: 70vh;
+}
+
+#keadaanPtkPaudTable {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Aturan umum & header wrap */
+#keadaanPtkPaudTable th { white-space: normal; text-align: center; vertical-align: middle; }
+#keadaanPtkPaudTable td { text-align: center; vertical-align: middle; }
+#keadaanPtkPaudTable td.cell-align-left { text-align: left; }
+#keadaanPtkPaudTable td.cell-font-bold { font-weight: bold; }
+
+/* --- Pengaturan Lebar Kolom --- */
+#keadaanPtkPaudTable th:nth-child(1), td:nth-child(1) { width: 30px; }
+#keadaanPtkPaudTable th:nth-child(2), td:nth-child(2) { width: 210px; }
+#keadaanPtkPaudTable th:nth-child(n+3), td:nth-child(n+3) { width: 50px; }
+
+/* --- Pengaturan Sticky & Warna Latar --- */
+
+/* Pengaturan Header Sticky (atas) untuk SEMUA kolom */
+#keadaanPtkPaudTable thead th {
+  position: sticky; top: 0; z-index: 10;
+  background-color: #101E26;
+}
+
+/* Pengaturan Footer Sticky (bawah) */
+#keadaanPtkPaudTable tfoot {
+  position: sticky; bottom: -1px; z-index: 10;
+}
+#keadaanPtkPaudTable tfoot td {
+  font-weight: bold;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
+  background-color: #101E26;
+}
+
+/* Pengaturan Freeze Pane (Kolom Kiri) untuk SEL BODY */
+#keadaanPtkPaudTable tbody td:nth-child(1) {
+  position: sticky; left: 0; z-index: 4;
+  background-color: #1a2c38;
+}
+#keadaanPtkPaudTable tbody td:nth-child(2) {
+  position: sticky; left: 60px; z-index: 4;
+  background-color: #1a2c38;
+}
+
+/* --- PERBAIKAN UTAMA DI SINI --- */
+/* Pengaturan Freeze Kiri untuk HEADER dan FOOTER */
+#keadaanPtkPaudTable thead th:nth-child(1),
+#keadaanPtkPaudTable tfoot td:first-child {
+  position: sticky; left: 0; z-index: 15;
+}
+#keadaanPtkPaudTable thead th:nth-child(2) {
+  position: sticky; left: 50px; z-index: 15;
+}
+/* ------------------------------------ */
+
+/* Efek Hover */
+#keadaanPtkPaudTable tbody tr:hover td {
+  background-color: rgba(42, 65, 82, 0.5);
+}
+#keadaanPtkPaudTable tbody tr:hover td:nth-child(1),
+#keadaanPtkPaudTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ============== GAYA TABEL KEADAAN PTK SD ==================== */
+/* =================================================================== */
+
+#keadaanPtkSdTable {
+  border-collapse: collapse;
+}
+
+#keadaanPtkSdTable th,
+#keadaanPtkSdTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+#keadaanPtkSdTable td:nth-child(2) {
+  text-align: left;
+}
+
+/* --- Pengaturan Lebar Kolom --- */
+#keadaanPtkSdTable th:nth-child(1), td:nth-child(1) { width: 50px; }
+#keadaanPtkSdTable th:nth-child(2), td:nth-child(2) { width: 250px; }
+
+
+/* --- LOGIKA STICKY DAN FREEZE YANG DISEMPURNAKAN --- */
+
+/* Aturan Umum untuk SEMUA header */
+#keadaanPtkSdTable thead th {
+  position: sticky;
+  background-color: #101E26;
+  white-space: normal;
+}
+
+/* Baris Header Pertama */
+#keadaanPtkSdTable thead tr:first-child th {
+  top: 0;
+  z-index: 12; /* Lapisan dasar untuk baris atas */
+}
+
+/* Baris Header Kedua */
+#keadaanPtkSdTable thead tr:last-child th {
+  top: 35px; /* Sesuaikan tinggi header pertama */
+  z-index: 11; /* Lapisan di bawah baris atas */
+}
+
+/* PERBAIKAN UTAMA: Aturan Freeze KHUSUS untuk header di baris PERTAMA */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(1),
+#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
+  left: 0;
+  z-index: 15 !important; /* Lapisan paling atas, paksa dengan !important */
+}
+#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
+  left: 50px; /* Jarak untuk kolom kedua */
+}
+
+
+/* Aturan Freeze untuk sel BODY */
+#keadaanPtkSdTable tbody td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  background-color: #1a2c38;
+  z-index: 5;
+}
+#keadaanPtkSdTable tbody td:nth-child(2) {
+  position: sticky;
+  left: 50px;
+  background-color: #1a2c38;
+  z-index: 5;
+}
+/* --- AKHIR PERBAIKAN --- */
+
+/* Efek Hover */
+#keadaanPtkSdTable tbody tr:hover td {
+  background-color: rgba(42, 65, 82, 0.5);
+}
+#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* --- GAYA UNTUK BARIS JUMLAH (TOTAL) --- */
+#keadaanPtkSdTable tfoot {
+  position: sticky;
+  bottom: -1px; /* Sembunyikan border bawah scrollbar */
+  z-index: 10;
+}
+#keadaanPtkSdTable tfoot td {
+  background-color: #101E26;
+  font-weight: bold;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
+}
+
+/* Aturan Freeze untuk sel di baris Jumlah */
+#keadaanPtkSdTable tfoot td:nth-child(1) {
+  position: sticky; left: 0; z-index: 15;
+}
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  position: sticky; left: 50px; z-index: 15;
+}
+
+
 </style>
 
