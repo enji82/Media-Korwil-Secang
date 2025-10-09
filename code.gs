@@ -1002,3 +1002,37 @@ function getUnduhFormatInfo() {
     }
   });
 }
+
+function getKeadaanPtkPaudData() {
+  try {
+    // ID Spreadsheet dari URL yang Anda berikan
+    const ss = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs");
+    const sheet = ss.getSheetByName("Keadaan PTK PAUD");
+    
+    if (!sheet) {
+      throw new Error("Sheet 'Keadaan PTK PAUD' tidak ditemukan.");
+    }
+    
+    // Mengambil semua data dari sheet
+    return sheet.getDataRange().getDisplayValues();
+
+  } catch (e) {
+    return handleError('getKeadaanPtkPaudData', e);
+  }
+}
+
+function getKeadaanPtkSdData() {
+  try {
+    const ss = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s");
+    const sheet = ss.getSheetByName("Keadaan PTK SD");
+    
+    if (!sheet) {
+      throw new Error("Sheet 'Keadaan PTK SD' tidak ditemukan.");
+    }
+    
+    return sheet.getDataRange().getDisplayValues();
+
+  } catch (e) {
+    return handleError('getKeadaanPtkSdData', e);
+  }
+}
