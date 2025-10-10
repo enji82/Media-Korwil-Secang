@@ -159,14 +159,27 @@ function getRiwayatPengirimanSKData() {
     const data = getDataFromSheet('SK_FORM_RESPONSES');
     if (data.length < 2) return data;
     
-    const headers = data[0].map(h => String(h).trim());
+    let headers = data[0].map(h => String(h).trim());
     let dataRows = data.slice(1);
     
-    const timestampIndex = headers.indexOf('Tanggal Unggah');
+    // Pindahkan kolom "Tanggal Unggah" ke paling akhir
+    const tglUnggahIndex = headers.indexOf('Tanggal Unggah');
+    if (tglUnggahIndex > -1) {
+      const [tglUnggahHeader] = headers.splice(tglUnggahIndex, 1);
+      headers.push(tglUnggahHeader);
+
+      dataRows = dataRows.map(row => {
+        const [tglUnggahData] = row.splice(tglUnggahIndex, 1);
+        row.push(tglUnggahData);
+        return row;
+      });
+    }
+
+    // --- PERUBAHAN PENGURUTAN DI SINI ---
+    // Dapatkan indeks baru dari "Tanggal Unggah" setelah dipindahkan
+    const tglUnggahSortIndex = headers.indexOf('Tanggal Unggah'); 
     const tglSKIndex = headers.indexOf('Tanggal SK');
     
-    const sortIndex = (timestampIndex > -1) ? timestampIndex : 0;
-
     const parseDate = (value) => {
         if (!value) return new Date(0);
         if (value instanceof Date && !isNaN(value)) return value;
@@ -174,12 +187,13 @@ function getRiwayatPengirimanSKData() {
         return isNaN(date) ? new Date(0) : date;
     };
     
+    // Urutkan dataRows berdasarkan kolom "Tanggal Unggah" (terbaru di atas)
     dataRows.sort((a, b) => {
-      const dateA = parseDate(a[sortIndex]);
-      const dateB = parseDate(b[sortIndex]);
-      return dateB - dateA;
+      const dateA = parseDate(a[tglUnggahSortIndex]);
+      const dateB = parseDate(b[tglUnggahSortIndex]);
+      return dateB - dateA; // Mengurutkan descending
     });
-    
+
     const formattedDataRows = dataRows.map(row => {
         return row.map((cell, index) => {
             if (cell instanceof Date) {
