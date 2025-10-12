@@ -95,30 +95,40 @@ function updateActiveMenu(pageName) {
     document.querySelectorAll('.sidebar-menu a').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.sidebar-menu .has-submenu').forEach(el => el.classList.remove('open'));
 
-    // 2. Temukan link yang sesuai dengan halaman yang dibuka
-    const activeLink = document.querySelector(`.sidebar-menu a[data-page="${pageName}"]`);
-    if (!activeLink) return;
+    // 2. Coba temukan tautan langsung yang cocok dengan halaman
+    let activeLink = document.querySelector(`.sidebar-menu a[data-page="${pageName}"]`);
+    let startElement = null;
 
-    // 3. Aktifkan link itu sendiri
-    activeLink.classList.add('active');
-
-    // 4. Telusuri ke atas untuk membuka semua menu induknya
-    let parent = activeLink.parentElement; 
-    while (parent && !parent.classList.contains('sidebar-menu')) {
-        // Jika elemen induk adalah sebuah submenu (punya class .submenu)
-        if (parent.classList.contains('submenu')) {
-            const parentLi = parent.closest('li.has-submenu');
-            if (parentLi) {
-                // Buka lipatan menunya
-                parentLi.classList.add('open');
-                // Aktifkan juga link induknya
-                const parentAnchor = parentLi.querySelector('a[data-page-parent]');
-                if (parentAnchor) {
-                    parentAnchor.classList.add('active');
-                }
-            }
+    if (activeLink) {
+        // KASUS 1: Tautan langsung ditemukan (misal: "Keadaan PTK")
+        activeLink.classList.add('active');
+        startElement = activeLink;
+    } else {
+        // [PERBAIKAN] KASUS 2: Tidak ada tautan langsung, mungkin ini halaman menu perantara.
+        // Kita cari tombol submenu induk yang cocok.
+        // Contoh: "ptk_paud_menu" -> "ptk_paud"
+        const parentPageName = pageName.replace('_menu', '');
+        const parentLink = document.querySelector(`.sidebar-menu a[data-page-parent="${parentPageName}"]`);
+        
+        if (parentLink) {
+            parentLink.classList.add('active'); // Aktifkan tombol submenu (misal: "PAUD")
+            parentLink.parentElement.classList.add('open'); // Buka submenu tersebut
+            startElement = parentLink;
         }
-        parent = parent.parentElement;
+    }
+
+    if (!startElement) return; // Jika tidak ada yang cocok, hentikan.
+
+    // 3. Telusuri ke atas dari elemen yang ditemukan untuk membuka semua induknya
+    let parent = startElement.closest('.has-submenu');
+    while (parent) {
+        parent.classList.add('open');
+        const parentAnchor = parent.querySelector('a[data-page-parent]');
+        if (parentAnchor) {
+            parentAnchor.classList.add('active');
+        }
+        // Pindah ke induk berikutnya yang merupakan submenu
+        parent = parent.parentElement.closest('.has-submenu');
     }
 }
 
@@ -490,34 +500,42 @@ function initSkKelolaPage() {
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
+
         if (paginatedRows.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${allHeaders.length + 2}">Tidak ada data yang cocok.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${allHeaders.length + 1}">Tidak ada data yang cocok.</td></tr>`;
         } else {
             paginatedRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
-                let rowHTML = `<td>${start + index + 1}</td>`;
+                tr.innerHTML = `<td>${start + index + 1}</td>`;
+
+                // Loop melalui header (yang sudah termasuk "Aksi")
                 allHeaders.forEach(header => {
-                    let cellData = row.data[header] || '-';
-                    if (header === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
-                        rowHTML += `<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`;
+                    const td = document.createElement('td');
+                    if (header === 'Aksi') {
+                        td.className = 'action-buttons';
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'action-btn edit-btn';
+                        editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
+                        editBtn.onclick = (e) => loadPage(e, 'sk_edit', { rowIndex: row.rowIndex });
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'action-btn delete-btn';
+                        deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
+                        deleteBtn.onclick = () => showDeleteConfirmation(row);
+                        
+                        td.appendChild(editBtn);
+                        td.appendChild(deleteBtn);
                     } else {
-                        rowHTML += `<td>${cellData}</td>`;
+                        let cellData = row.data[header] || '-';
+                        if (header === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
+                            td.className = 'view-btn-container';
+                            td.innerHTML = `<a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a>`;
+                        } else {
+                            td.textContent = cellData;
+                        }
                     }
+                    tr.appendChild(td);
                 });
-                tr.innerHTML = rowHTML;
-                const actionCell = document.createElement('td');
-                actionCell.className = 'action-buttons';
-                const editBtn = document.createElement('button');
-                editBtn.className = 'action-btn edit-btn';
-                editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
-                editBtn.onclick = (e) => loadPage(e, 'sk_edit', { rowIndex: row.rowIndex });
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'action-btn delete-btn';
-                deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
-                deleteBtn.onclick = () => showDeleteConfirmation(row);
-                actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
-                tr.appendChild(actionCell);
                 tableBody.appendChild(tr);
             });
         }
@@ -562,6 +580,7 @@ function initSkKelolaPage() {
         buildTable();
     }
  
+    // [PERBAIKAN] Memastikan fungsi-fungsi ini ada dan lengkap
     function showDeleteConfirmation(rowInfo) {
         const modal = document.getElementById('deleteModal');
         if (!modal) return;
@@ -614,26 +633,24 @@ function initSkKelolaPage() {
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
         const tableHead = document.getElementById('kelolaTable').querySelector('thead');
-        const tableBody = document.getElementById('kelolaTable').querySelector('tbody');
         if (data.error || !data.rows || data.rows.length === 0) {
             loadingStatus.innerHTML = `<p>Tidak ada data untuk dikelola.</p>`; return;
         }
+
         allHeaders = data.headers;
         allDataRows = data.rows;
         
-        const updateIndexClient = allHeaders.indexOf('Update');
-        if (updateIndexClient > -1) {
-          const [updateHeader] = allHeaders.splice(updateIndexClient, 1);
-          allHeaders.push(updateHeader);
+        // [PERUBAHAN 3] Menyisipkan "Aksi" ke dalam array header di posisi yang benar
+        const docIndex = allHeaders.indexOf('Dokumen');
+        if (docIndex > -1) {
+            allHeaders.splice(docIndex + 1, 0, 'Aksi');
         }
-
-        let headerHTML = '<tr><th>No.</th>';
-        allHeaders.forEach(h => headerHTML += `<th>${h}</th>`);
-        headerHTML += '<th>Aksi</th></tr>';
-        tableHead.innerHTML = headerHTML;
+        
+        tableHead.innerHTML = `<tr><th>No.</th>${allHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
         
         rowsPerPage = calculateRowsPerPage('kelolaTable');
-        tableBody.innerHTML = '';
+        
+        // Sisa fungsi (populasi filter, dll) tidak berubah
         const uniqueValues = { tahun: [], semester: [], nama: [] };
         allDataRows.forEach(row => {
             uniqueValues.tahun.push(row.data['Tahun Ajaran']);
@@ -653,11 +670,9 @@ function initSkKelolaPage() {
         populateSelect('filterSemester', uniqueValues.semester);
         populateSelect('filterNamaSekolah', uniqueValues.nama);
         loadingStatus.style.display = 'none';
-        
         document.querySelector('.filter-container').style.display = 'flex';
         tableWrapper.style.display = 'block'; 
         document.getElementById('pagination-container').style.display = 'flex';
-        
         applyFilters();
     }
  
@@ -1209,6 +1224,7 @@ function initLapbulFormSdPage() {
 
 function initLapbulRiwayatPage() {
     let allDataRows = [], headerCols = [], filterIndices = {}, currentPage = 1, rowsPerPage = 15, currentFilteredRows = [];
+    let jenjangIndex = -1; // Variabel baru untuk menyimpan posisi kolom Jenjang
 
     function buildTable() {
         const tableBody = document.getElementById('lapbulRiwayatTable').querySelector('tbody');
@@ -1219,13 +1235,20 @@ function initLapbulRiwayatPage() {
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
+        
+        // Menghitung jumlah kolom yang akan ditampilkan (tanpa Jenjang)
+        const visibleColsCount = jenjangIndex > -1 ? headerCols.length - 1 : headerCols.length;
+
         if (paginatedRows.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${visibleColsCount + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
             paginatedRows.forEach((cols, index) => {
                 const tr = document.createElement('tr');
                 let rowHTML = `<td>${start + index + 1}</td>`;
                 cols.forEach((cellData, i) => {
+                    // [KUNCI PERUBAHAN] Lewati (jangan render) sel jika itu adalah kolom Jenjang
+                    if (i === jenjangIndex) return;
+
                     cellData = cellData || '-';
                     if (headerCols[i] === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
                         rowHTML += `<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`;
@@ -1241,6 +1264,7 @@ function initLapbulRiwayatPage() {
     }
     
     function setupPagination() {
+        // ... (Fungsi ini tidak perlu diubah)
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
@@ -1265,6 +1289,7 @@ function initLapbulRiwayatPage() {
     }
     
     function applyFilters() {
+        // ... (Fungsi ini tidak perlu diubah)
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterNama = document.getElementById('filterNamaSekolah').value;
@@ -1287,13 +1312,26 @@ function initLapbulRiwayatPage() {
         }
         headerCols = dataArray[0].map(h => String(h).trim());
         allDataRows = dataArray.slice(1);
+
+        // [KUNCI PERUBAHAN] Cari tahu di mana posisi kolom "Jenjang" berada
+        jenjangIndex = headerCols.indexOf('Jenjang');
+
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = '<th>No.</th>';
-        headerCols.forEach(header => { headerRow.innerHTML += `<th>${header}</th>`; });
+        headerCols.forEach((header, i) => {
+            // [KUNCI PERUBAHAN] Hanya tambahkan header ke tabel jika bukan "Jenjang"
+            if (i !== jenjangIndex) {
+                headerRow.innerHTML += `<th>${header}</th>`;
+            }
+        });
         tableHead.innerHTML = '';
         tableHead.appendChild(headerRow);
+        
         rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable');
+
+        // Logika filter tetap sama, karena `headerCols` masih berisi "Jenjang"
         filterIndices = { tahun: headerCols.indexOf('Tahun'), jenjang: headerCols.indexOf('Jenjang'), nama: headerCols.indexOf('Nama Sekolah') };
+        
         const populateFilter = (elementId, colIndex, sortReverse = false) => {
             const select = document.getElementById(elementId);
             if (!select) return;
@@ -1307,6 +1345,7 @@ function initLapbulRiwayatPage() {
         populateFilter('filterTahun', filterIndices.tahun, true);
         populateFilter('filterJenjang', filterIndices.jenjang);
         populateFilter('filterNamaSekolah', filterIndices.nama);
+        
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         applyFilters();
@@ -1332,7 +1371,8 @@ function initLapbulStatusPage() {
         const tableHead = document.getElementById('lapbulStatusTable').querySelector('thead');
         if (!tableBody || !tableHead) return;
 
-        let headerHTML = '<tr><th>No.</th>';
+        // [PERBAIKAN] Menambahkan header "No." secara manual
+        let headerHTML = '<tr><th>No.</th>'; 
         headerCols.forEach(header => {
             headerHTML += `<th>${header}</th>`;
         });
@@ -1346,12 +1386,14 @@ function initLapbulStatusPage() {
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
 
+        // [PERBAIKAN] Menyesuaikan colspan jika tidak ada data
         if (paginatedRows.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok.</td></tr>`;
         } else {
             paginatedRows.forEach((rowData, index) => {
                 const tr = document.createElement('tr');
-                let rowHTML = `<td>${start + index + 1}</td>`;
+                // [PERBAIKAN] Menambahkan sel untuk kolom "No."
+                let rowHTML = `<td>${start + index + 1}</td>`; 
                 rowData.values.forEach(cellData => {
                     let displayCell = cellData;
                     if (cellData === 'T') {
@@ -1369,6 +1411,7 @@ function initLapbulStatusPage() {
     }
     
     function setupPagination() {
+        // ... (fungsi ini tidak perlu diubah)
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
@@ -1400,6 +1443,7 @@ function initLapbulStatusPage() {
     }
 
     function applyFilters() {
+        // ... (fungsi ini tidak perlu diubah)
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterStatus = document.getElementById('filterStatus').value;
@@ -1415,6 +1459,7 @@ function initLapbulStatusPage() {
     }
 
     function initializePage(serverData) {
+        // ... (fungsi ini tidak perlu diubah)
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
 
@@ -1443,9 +1488,18 @@ function initLapbulStatusPage() {
         populateFilter('filterJenjang', serverData.filters.jenjang);
         populateFilter('filterStatus', serverData.filters.status);
         
+        const tahunSelect = document.getElementById('filterTahun');
+        if (tahunSelect) {
+            const currentYear = new Date().getFullYear().toString();
+            if ([...tahunSelect.options].some(opt => opt.value === currentYear)) {
+                tahunSelect.value = currentYear;
+            }
+        }
+        
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         document.getElementById('pagination-container').style.display = 'flex';
+        
         applyFilters();
     }
 
@@ -1586,65 +1640,56 @@ function initLapbulArsipPage() {
 }
 
 function initLapbulKelolaPage() {
-    let allDataRows = [],
-        headerCols = [],
-        currentFilteredRows = [],
-        currentPage = 1,
-        rowsPerPage = 15;
+    let allDataRows = [], allHeaders = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
 
-    // --- FUNGSI BARU UNTUK MENGURUTKAN DATA ---
-    const sortFunction = (a, b) => {
-        const parseDate = (d) => {
-            if (!d || typeof d !== 'string') return null;
-            let parts = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
-            if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
-            parts = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-            if (parts) return new Date(parts[3], parts[2] - 1, parts[1]);
-            return null;
-        };
-
-        const dateA = parseDate(a.data['Update']) || parseDate(a.data['Tanggal Unggah']);
-        const dateB = parseDate(b.data['Update']) || parseDate(b.data['Tanggal Unggah']);
-        return (dateB || 0) - (dateA || 0);
-    };
     function buildTable() {
         const tableBody = document.getElementById('lapbulKelolaTable').querySelector('tbody');
-        const tableHead = document.getElementById('lapbulKelolaTable').querySelector('thead');
-        tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}<th>Aksi</th></tr>`;
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
         const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
         if (currentPage > pageCount) currentPage = pageCount;
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
-        tableBody.innerHTML = '';
+
         if (paginatedRows.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 2}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${allHeaders.length + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
             paginatedRows.forEach((rowInfo, index) => {
                 const tr = document.createElement('tr');
-                let rowHTML = `<td>${start + index + 1}</td>`;
-                headerCols.forEach(header => {
-                    let cellData = rowInfo.data[header] || '-';
-                    if (header === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
-                        rowHTML += `<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`;
+                tr.innerHTML = `<td>${start + index + 1}</td>`; // Tambahkan sel No.
+
+                // Loop melalui header dan buat setiap sel satu per satu
+                allHeaders.forEach(header => {
+                    const td = document.createElement('td');
+                    let cellData = rowInfo.data[header];
+
+                    if (header === 'Aksi') {
+                        td.className = 'action-buttons';
+                        const editPage = rowInfo.source === 'PAUD' ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'action-btn edit-btn';
+                        editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
+                        editBtn.onclick = (e) => loadPage(e, editPage, { rowIndex: rowInfo.rowIndex, source: rowInfo.source });
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'action-btn delete-btn';
+                        deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
+                        deleteBtn.onclick = () => showDeleteConfirmation(rowInfo);
+                        
+                        td.appendChild(editBtn);
+                        td.appendChild(deleteBtn);
+
+                    } else if (header === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
+                        td.className = 'view-btn-container';
+                        td.innerHTML = `<a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a>`;
+                    
                     } else {
-                        rowHTML += `<td>${cellData}</td>`;
+                        td.textContent = cellData || '-';
                     }
+                    tr.appendChild(td);
                 });
-                tr.innerHTML = rowHTML;
-                const actionCell = document.createElement('td');
-                actionCell.className = 'action-buttons';
-                const editBtn = document.createElement('button');
-                editBtn.className = 'action-btn edit-btn';
-                editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
-                const editPage = rowInfo.source === 'PAUD' ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
-                editBtn.onclick = (e) => loadPage(e, editPage, { rowIndex: rowInfo.rowIndex, source: rowInfo.source });
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'action-btn delete-btn';
-                deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
-                actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
-                tr.appendChild(actionCell);
                 tableBody.appendChild(tr);
             });
         }
@@ -1675,67 +1720,106 @@ function initLapbulKelolaPage() {
         paginationContainer.appendChild(nextBtn);
     }
     
+    // [KUNCI PERBAIKAN] Fungsi ini dikembalikan
+    function updateNamaSekolahFilter() {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        if (!namaSekolahFilter) return;
+        
+        // Simpan nilai yang sedang dipilih
+        const currentNamaSekolah = namaSekolahFilter.value;
+
+        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
+        const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
+        
+        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
+        uniqueSekolah.forEach(nama => { namaSekolahFilter.add(new Option(nama, nama)); });
+
+        // Coba set kembali nilai yang tadi dipilih jika masih ada di opsi baru
+        if ([...namaSekolahFilter.options].some(opt => opt.value === currentNamaSekolah)) {
+            namaSekolahFilter.value = currentNamaSekolah;
+        }
+    }
+
     function applyFilters() {
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterNama = document.getElementById('filterNamaSekolah').value;
         
-        let filteredRows = allDataRows.filter(row => {
-            // --- PERBAIKAN UTAMA DI SINI ---
-            // Tambahkan .trim() untuk memastikan tidak ada spasi ekstra
+        currentFilteredRows = allDataRows.filter(row => {
             const tahunMatch = (filterTahun === "") || (String(row.data['Tahun']).trim() === filterTahun);
-            const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === filterJenjang);
+            const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === jenjangFilter);
             const namaMatch = (filterNama === "") || (row.data['Nama Sekolah'] === filterNama);
             return tahunMatch && jenjangMatch && namaMatch;
         });
-
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // Urutkan kembali hasil filter sebelum ditampilkan
-        filteredRows.sort(sortFunction);
-        
-        currentFilteredRows = filteredRows;
         currentPage = 1;
         buildTable();
     }
     
-    function updateNamaSekolahFilter() {
-        const jenjangFilter = document.getElementById('filterJenjang').value;
-        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
-        if (!namaSekolahFilter) return;
-        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
-        const uniqueSekolah = [...new Set(filteredData.map(row => row.data['Nama Sekolah']))].filter(Boolean).sort();
-        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
-        uniqueSekolah.forEach(nama => { namaSekolahFilter.add(new Option(nama, nama)); });
+    // [BARU] Fungsi-fungsi untuk proses penghapusan
+    function showDeleteConfirmation(rowInfo) {
+        const modal = document.getElementById('deleteModal');
+        if (!modal) return;
+        const modalTitle = modal.querySelector('#deleteModalTitle');
+        const modalBody = modal.querySelector('#deleteModalBody');
+        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+        const cancelBtn = modal.querySelector('#cancelDeleteBtn');
+        modalTitle.textContent = 'Konfirmasi Hapus';
+        modalBody.innerHTML = `<p>Yakin ingin menghapus Laporan Bulan ini?</p><div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">Sekolah: ${rowInfo.data['Nama Sekolah']}<br>Bulan: ${rowInfo.data['Bulan']} ${rowInfo.data['Tahun']}</div>`;
+        confirmBtn.style.display = 'inline-flex';
+        confirmBtn.textContent = 'Ya, Hapus';
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.onclick = () => showDeletePrompt(rowInfo);
+        cancelBtn.onclick = () => modal.classList.remove('show');
+        modal.classList.add('show');
+    }
+ 
+    function showDeletePrompt(rowInfo) {
+        const modal = document.getElementById('deleteModal');
+        const modalTitle = modal.querySelector('#deleteModalTitle');
+        const modalBody = modal.querySelector('#deleteModalBody');
+        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+        modalTitle.textContent = 'Masukkan Kode Hapus';
+        modalBody.innerHTML = `<p>Kode hapus dapat ditanyakan ke admin Korwil.</p><input type="password" id="kodeHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Masukkan Kode Hapus">`;
+        confirmBtn.textContent = 'Konfirmasi & Hapus';
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.onclick = () => processDeletion(rowInfo);
+        setTimeout(() => document.getElementById('kodeHapusInput').focus(), 100);
+    }
+ 
+    function processDeletion(rowInfo) {
+        const deleteCode = document.getElementById('kodeHapusInput').value;
+        if (!deleteCode) { 
+            showAppModal('error', 'Kode hapus tidak boleh kosong.');
+            return; 
+        }
+        showAppModal('loading', 'Menghapus data dan file terkait...');
+        google.script.run
+            .withSuccessHandler(response => {
+                document.getElementById('deleteModal').classList.remove('show');
+                showAppModal('success', response, 'lapbul_kelola'); // Muat ulang halaman setelah sukses
+            })
+            .withFailureHandler(error => showAppModal('error', error.message))
+            .deleteLapbulData(rowInfo.rowIndex, rowInfo.source, deleteCode); // Panggil fungsi backend
     }
 
     function initializePage(serverData) {
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
-        if (serverData && serverData.error) {
-            loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${serverData.error}</p>`;
-            return;
+        const tableHead = document.getElementById('lapbulKelolaTable').querySelector('thead');
+        if (serverData.error || !serverData.rows || serverData.rows.length === 0) {
+            loadingStatus.innerHTML = `<p>Tidak ada data untuk dikelola.</p>`; return;
         }
-        if (!serverData || !serverData.rows || !serverData.rows.length === 0) {
-            loadingStatus.innerHTML = `<p>Tidak ada data untuk dikelola.</p>`;
-            return;
+        allHeaders = serverData.headers;
+        allDataRows = serverData.rows;
+        const docIndex = allHeaders.indexOf('Dokumen');
+        if (docIndex > -1) {
+            allHeaders.splice(docIndex + 1, 0, 'Aksi');
         }
-
-        headerCols = serverData.headers;
-        
-        allDataRows = serverData.rows.map(rowArray => {
-            const rowData = {};
-            headerCols.forEach((header, i) => {
-                rowData[header] = rowArray[i];
-            });
-            return {
-                source: rowArray[headerCols.length],
-                rowIndex: rowArray[headerCols.length + 1],
-                data: rowData
-            };
-        });
-
+        tableHead.innerHTML = `<tr><th>No.</th>${allHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
         rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
-
         const populateStaticFilter = (elementId, key, sortReverse = false) => {
             const select = document.getElementById(elementId);
             if (!select) return;
@@ -1747,21 +1831,20 @@ function initLapbulKelolaPage() {
         };
         populateStaticFilter('filterTahun', 'Tahun', true);
         populateStaticFilter('filterJenjang', 'Jenjang');
-
         document.getElementById('filterJenjang').addEventListener('change', () => {
-            updateNamaSekolahFilter();
+            updateNamaSekolahFilter(); 
             applyFilters();
         });
         document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
         document.getElementById('filterTahun').addEventListener('change', applyFilters);
-
         updateNamaSekolahFilter();
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
         document.getElementById('pagination-container').style.display = 'flex';
-        applyFilters(); // Panggilan pertama ini akan menyaring dan mengurutkan
+        applyFilters();
     }
-
+    
+    // Panggilan eksekusi utama
     google.script.run
         .withFailureHandler(err => {
             document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Error komunikasi: ${err.message}</p>`;
@@ -2108,6 +2191,8 @@ function initLapbulUnduhFormatPage() {
     };
 }
 
+// --- Modul Data PTK ---
+
 function initPtkKeadaanPaudPage() {
     let allDataRows = [], headerCols = [], filterIndices = {}, currentFilteredRows = [];
 
@@ -2119,22 +2204,23 @@ function initPtkKeadaanPaudPage() {
         tableBody.innerHTML = '';
         tableFoot.innerHTML = ''; 
 
+        const namaSekolahIndex = headerCols.indexOf('Nama Sekolah');
+        const jmlPtkIndex = headerCols.indexOf('JML PTK');
+
         if (currentFilteredRows.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
             return;
         }
         
-        const namaSekolahIndex = headerCols.indexOf('Nama Sekolah');
-        const bulanIndex = headerCols.indexOf('Bulan');
-
+        // Render baris data
         currentFilteredRows.forEach((cols, index) => {
             const tr = document.createElement('tr');
             let rowHTML = `<td>${index + 1}</td>`;
             cols.forEach((cellData, colIndex) => {
-                let displayData = (String(cellData) === '0') ? '-' : (cellData || '-');
+                let displayData = (String(cellData) === '0' || !cellData) ? '-' : cellData;
                 let cellClasses = [];
-                if (colIndex === namaSekolahIndex || colIndex === bulanIndex) cellClasses.push('cell-align-left');
-                if (colIndex === cols.length - 1) cellClasses.push('cell-font-bold');
+                if (colIndex === namaSekolahIndex) cellClasses.push('cell-align-left');
+                if (colIndex === jmlPtkIndex) cellClasses.push('cell-font-bold');
                 const classString = cellClasses.length > 0 ? ` class="${cellClasses.join(' ')}"` : '';
                 rowHTML += `<td${classString}>${displayData}</td>`;
             });
@@ -2142,35 +2228,34 @@ function initPtkKeadaanPaudPage() {
             tableBody.appendChild(tr);
         });
 
-        // --- PERBAIKAN LOGIKA BARIS JUMLAH ---
+        // --- Logika Baru untuk Baris "Jumlah" ---
         const totals = new Array(headerCols.length).fill(0);
+        const sumStartIndex = headerCols.indexOf('Jumlah Rombel');
+
         currentFilteredRows.forEach(row => {
-            // POIN 1: Penjumlahan sekarang dimulai dari kolom ke-6 (indeks 5: Jumlah Rombel)
-            for (let i = 5; i < headerCols.length; i++) {
+            // Memastikan penjumlahan hanya untuk data numerik
+            for (let i = sumStartIndex; i < headerCols.length; i++) {
                 const value = parseInt(row[i], 10);
                 if (!isNaN(value)) totals[i] += value;
             }
         });
 
         let totalRowHTML = '<tr>';
-        // POIN 2: Label "JUMLAH TOTAL" hanya menggabungkan 2 kolom beku.
-        totalRowHTML += '<td colspan="2" class="cell-align-left">JUMLAH TOTAL</td>'; 
-        
-        // POIN 2: Kolom 3, 4, 5, 6 (indeks 2, 3, 4) dikosongkan.
-        totalRowHTML += '<td>-</td>'; // Kolom Jer
-        totalRowHTML += '<td>-</td>'; // Kolom Sta
-        totalRowHTML += '<td>-</td>'; // Kolom Bul
-        totalRowHTML += '<td>-</td>'; // Kolom Tah
+        totalRowHTML += '<td>-</td>'; // Sel untuk kolom "No."
 
-        // Loop untuk menampilkan hasil penjumlahan (sekarang dimulai dari indeks 5)
-        for (let i = 5; i < headerCols.length; i++) {
-            let displayTotal = (totals[i] === 0) ? '-' : totals[i];
-            let totalClass = (i === headerCols.length - 1) ? ' class="cell-font-bold"' : '';
-            totalRowHTML += `<td${totalClass}>${displayTotal}</td>`;
-        }
+        headerCols.forEach((header, i) => {
+            if (i === namaSekolahIndex) {
+                totalRowHTML += '<td class="cell-align-left">JUMLAH</td>';
+            } else if (i >= sumStartIndex) {
+                const totalClass = (i === jmlPtkIndex) ? ' class="cell-font-bold"' : '';
+                totalRowHTML += `<td${totalClass}>${totals[i] || '-'}</td>`;
+            } else {
+                totalRowHTML += '<td>-</td>';
+            }
+        });
+
         totalRowHTML += '</tr>';
         tableFoot.innerHTML = totalRowHTML;
-        // --- AKHIR PERBAIKAN ---
     }
     
     function applyFilters() {
@@ -2372,6 +2457,430 @@ function initPtkKeadaanSdPage() {
         .getKeadaanPtkSdData();
 }
 
+function initPtkJumlahBulananPaudPage() {
+    let allDataRows = [], headerCols = [], filterIndices = {}, currentPage = 1, rowsPerPage = 15, currentFilteredRows = [];
+    let hiddenColumnIndices = [];
+
+    function buildTable() {
+        const tableBody = document.getElementById('ptkJumlahBulananPaudTable').querySelector('tbody');
+        const tableFoot = document.getElementById('ptkJumlahBulananPaudTable').querySelector('tfoot');
+        if (!tableBody || !tableFoot) return;
+
+        tableBody.innerHTML = '';
+        tableFoot.innerHTML = '';
+        tableFoot.classList.remove('has-content'); // [BARU] Selalu hapus kelas saat mulai
+
+        const visibleColsCount = headerCols.length - hiddenColumnIndices.length;
+
+        if (currentFilteredRows.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${visibleColsCount + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            setupPagination();
+            return;
+        }
+        
+        const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
+        if (currentPage > pageCount) currentPage = pageCount;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedRows = currentFilteredRows.slice(start, end);
+        
+        const jmlPtkIndex = headerCols.indexOf('JML PTK');
+
+        paginatedRows.forEach((cols, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${start + index + 1}</td>`;
+            cols.forEach((cellData, i) => {
+                if (hiddenColumnIndices.includes(i)) return;
+                const displayData = (cellData === '0' || !cellData) ? '-' : cellData;
+                const isBold = (i === jmlPtkIndex) ? ' class="cell-font-bold"' : '';
+                tr.innerHTML += `<td${isBold}>${displayData}</td>`;
+            });
+            tableBody.appendChild(tr);
+        });
+
+        // ... (Logika pembuatan baris jumlah tidak berubah)
+        const totals = new Array(headerCols.length).fill(0);
+        const sumStartIndex = headerCols.indexOf('Jumlah Rombel');
+        currentFilteredRows.forEach(row => {
+            for (let i = sumStartIndex; i < headerCols.length; i++) {
+                if (!isNaN(parseInt(row[i], 10))) totals[i] += parseInt(row[i], 10);
+            }
+        });
+
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = '<td>-</td>';
+        headerCols.forEach((header, i) => {
+            if (hiddenColumnIndices.includes(i)) return;
+            let cellHTML = '<td>-</td>';
+            if (i === headerCols.indexOf('Nama Sekolah')) {
+                cellHTML = '<td style="text-align: left;">JUMLAH</td>';
+            } else if (i >= sumStartIndex) {
+                const isBold = (i === jmlPtkIndex) ? ' class="cell-font-bold"' : '';
+                cellHTML = `<td${isBold}>${totals[i] || '-'}</td>`;
+            }
+            totalRow.innerHTML += cellHTML;
+        });
+        tableFoot.appendChild(totalRow);
+        tableFoot.classList.add('has-content'); // [BARU] Tambahkan kelas setelah konten siap
+        
+        setupPagination();
+    }
+    
+    function setupPagination() {
+        const paginationContainer = document.getElementById('pagination-container');
+        paginationContainer.innerHTML = '';
+        const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
+        if (pageCount <= 1) { paginationContainer.style.display = 'none'; return; }
+        paginationContainer.style.display = 'flex';
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.textContent = `Halaman ${currentPage} dari ${pageCount}`;
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '«'; prevBtn.className = 'page-btn';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; buildTable(); } };
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '»'; nextBtn.className = 'page-btn';
+        nextBtn.disabled = currentPage === pageCount;
+        nextBtn.onclick = () => { if (currentPage < pageCount) { currentPage++; buildTable(); } };
+        paginationContainer.appendChild(prevBtn);
+        paginationContainer.appendChild(pageInfo);
+        paginationContainer.appendChild(nextBtn);
+    }
+    
+    function applyFilters() {
+        const filterTahun = document.getElementById('filterTahun').value;
+        const filterBulan = document.getElementById('filterBulan').value;
+        const filterJenjang = document.getElementById('filterJenjang').value;
+        currentFilteredRows = allDataRows.filter(cols => {
+            const tahunMatch = (filterTahun === "") || (String(cols[filterIndices.tahun]) === filterTahun);
+            const bulanMatch = (filterBulan === "") || (String(cols[filterIndices.bulan]) === filterBulan);
+            const jenjangMatch = (filterJenjang === "") || (String(cols[filterIndices.jenjang]) === filterJenjang);
+            return tahunMatch && bulanMatch && jenjangMatch;
+        });
+        currentPage = 1;
+        buildTable();
+    }
+
+    function initializePage(dataArray) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('ptkJumlahBulananPaudTable').querySelector('thead');
+        if (!dataArray || dataArray.length < 2) {
+            loadingStatus.innerHTML = "<p>Tidak ada data untuk ditampilkan.</p>"; return;
+        }
+
+        headerCols = dataArray[0];
+        allDataRows = dataArray.slice(1);
+        hiddenColumnIndices = [headerCols.indexOf('Tahun'), headerCols.indexOf('Bulan')];
+        
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>No.</th>' + headerCols.filter((h, i) => !hiddenColumnIndices.includes(i)).map(header => `<th>${header}</th>`).join('');
+        tableHead.innerHTML = ''; tableHead.appendChild(headerRow);
+        
+        rowsPerPage = calculateRowsPerPage('ptkJumlahBulananPaudTable');
+        filterIndices = { tahun: headerCols.indexOf('Tahun'), bulan: headerCols.indexOf('Bulan'), jenjang: headerCols.indexOf('Jenjang')};
+        
+        const populateFilter = (elementId, colIndex, sortReverse = false) => {
+            const select = document.getElementById(elementId);
+            if (!select || colIndex === -1) return;
+            const uniqueValues = [...new Set(allDataRows.map(row => String(row[colIndex])))];
+            select.innerHTML = `<option value="">Semua</option>`;
+            let sorted = uniqueValues.sort((a, b) => {
+                if (elementId === 'filterBulan') {
+                    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                    return monthNames.indexOf(a) - monthNames.indexOf(b);
+                }
+                return a.localeCompare(b, undefined, {numeric: true});
+            });
+            if (sortReverse) sorted.reverse();
+            sorted.forEach(val => select.add(new Option(val, val)));
+            select.addEventListener('change', applyFilters);
+        };
+        
+        populateFilter('filterTahun', filterIndices.tahun, true);
+        populateFilter('filterBulan', filterIndices.bulan);
+        populateFilter('filterJenjang', filterIndices.jenjang);
+
+        const d = new Date();
+        const currentYear = d.getFullYear().toString();
+        const prevMonthIndex = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const lastMonthName = monthNames[prevMonthIndex];
+
+        const tahunSelect = document.getElementById('filterTahun');
+        if (tahunSelect && [...tahunSelect.options].some(opt => opt.value === currentYear)) {
+            tahunSelect.value = currentYear;
+        }
+        const bulanSelect = document.getElementById('filterBulan');
+        if (bulanSelect && [...bulanSelect.options].some(opt => opt.value === lastMonthName)) {
+            bulanSelect.value = lastMonthName;
+        }
+
+        // [KUNCI PERBAIKAN] Panggil applyFilters() SEBELUM menampilkan tabel
+        applyFilters(); 
+        
+        loadingStatus.style.display = 'none';
+        tableWrapper.style.display = 'block';
+    }
+    
+    google.script.run
+        .withSuccessHandler(initializePage)
+        .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })
+        .getJumlahPtkPaudBulananData();
+}
+
+function initPtkDaftarPaudPage() {
+    let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
+    let filterIndices = {};
+    let hiddenColumnIndices = [];
+
+    function buildTable() {
+        const tableBody = document.getElementById('daftarPtkPaudTable').querySelector('tbody');
+        if (!tableBody) return;
+
+        const visibleColsCount = headerCols.length - hiddenColumnIndices.length;
+        
+        tableBody.innerHTML = '';
+        const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
+        if (currentPage > pageCount) currentPage = pageCount;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedRows = currentFilteredRows.slice(start, end);
+
+        if (paginatedRows.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${visibleColsCount + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+        } else {
+            paginatedRows.forEach((cols, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${start + index + 1}</td>`;
+                cols.forEach((cellData, i) => {
+                    if (hiddenColumnIndices.includes(i)) return;
+                    tr.innerHTML += `<td>${cellData || '-'}</td>`;
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+        setupPagination();
+    }
+    
+    function setupPagination() {
+        const paginationContainer = document.getElementById('pagination-container');
+        paginationContainer.innerHTML = '';
+        const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
+        if (pageCount <= 1) { paginationContainer.style.display = 'none'; return; }
+        paginationContainer.style.display = 'flex';
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.textContent = `Halaman ${currentPage} dari ${pageCount}`;
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '«'; prevBtn.className = 'page-btn';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; buildTable(); } };
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '»'; nextBtn.className = 'page-btn';
+        nextBtn.disabled = currentPage === pageCount;
+        nextBtn.onclick = () => { if (currentPage < pageCount) { currentPage++; buildTable(); } };
+        paginationContainer.appendChild(prevBtn);
+        paginationContainer.appendChild(pageInfo);
+        paginationContainer.appendChild(nextBtn);
+    }
+    
+    function applyFilters() {
+        const filterJenjang = document.getElementById('filterJenjang').value;
+        const filterNamaSekolah = document.getElementById('filterNamaSekolah').value;
+        
+        currentFilteredRows = allDataRows.filter(cols => {
+            const jenjangMatch = (filterJenjang === "") || (String(cols[filterIndices.jenjang]) === filterJenjang);
+            const namaSekolahMatch = (filterNamaSekolah === "") || (String(cols[filterIndices.namaSekolah]) === filterNamaSekolah);
+            return jenjangMatch && namaSekolahMatch;
+        });
+        currentPage = 1;
+        buildTable();
+    }
+    
+    function updateNamaSekolahFilter() {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        
+        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row[filterIndices.jenjang] === jenjangFilter);
+        const uniqueSekolah = [...new Set(filteredData.map(row => row[filterIndices.namaSekolah]))].filter(Boolean).sort();
+        
+        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
+        uniqueSekolah.forEach(nama => namaSekolahFilter.add(new Option(nama, nama)));
+    }
+
+    function initializePage(dataArray) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('daftarPtkPaudTable').querySelector('thead');
+        if (!dataArray || dataArray.length < 2) {
+            loadingStatus.innerHTML = "<p>Tidak ada data untuk ditampilkan.</p>"; return;
+        }
+
+        headerCols = dataArray[0];
+        allDataRows = dataArray.slice(1);
+        
+        filterIndices = { jenjang: 0, namaSekolah: 1 };
+        hiddenColumnIndices = [0, 1]; // Sembunyikan kolom A (Jenjang) dan B (Nama Sekolah)
+        
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>No.</th>' + headerCols.filter((h, i) => !hiddenColumnIndices.includes(i)).map(header => `<th>${header}</th>`).join('');
+        tableHead.innerHTML = ''; tableHead.appendChild(headerRow);
+        
+        rowsPerPage = calculateRowsPerPage('daftarPtkPaudTable');
+        
+        // Populate filter Jenjang
+        const jenjangSelect = document.getElementById('filterJenjang');
+        const uniqueJenjang = [...new Set(allDataRows.map(row => row[filterIndices.jenjang]))].filter(Boolean).sort();
+        jenjangSelect.innerHTML = `<option value="">Semua</option>`;
+        uniqueJenjang.forEach(val => jenjangSelect.add(new Option(val, val)));
+
+        jenjangSelect.addEventListener('change', () => {
+            updateNamaSekolahFilter();
+            applyFilters();
+        });
+        document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
+
+        updateNamaSekolahFilter(); // Panggil sekali untuk inisialisasi
+        loadingStatus.style.display = 'none';
+        tableWrapper.style.display = 'block';
+        applyFilters();
+    }
+    
+    google.script.run
+        .withSuccessHandler(initializePage)
+        .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })
+        .getDaftarPtkPaudData();
+}
+
+function initPtkKelolaPaudPage() {
+    let allDataRows = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
+    const displayHeaders = ['Nama', 'NUPTK', 'JK', 'Pangkat, Gol./Ruang', 'Aksi', 'Update'];
+
+    // [PERBAIKAN] Fungsi buildTable yang lebih stabil
+    function buildTable() {
+        const tableBody = document.getElementById('kelolaPtkPaudTable').querySelector('tbody');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
+        if (currentPage > pageCount) currentPage = pageCount;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedRows = currentFilteredRows.slice(start, end);
+
+        if (paginatedRows.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${displayHeaders.length + 1}">Tidak ada data yang cocok.</td></tr>`;
+        } else {
+            paginatedRows.forEach((rowData, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${start + index + 1}</td>`; // Tambahkan sel No.
+                
+                displayHeaders.forEach(header => {
+                    const td = document.createElement('td'); // Buat sel baru
+                    if (header === 'Aksi') {
+                        td.className = 'action-buttons';
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'action-btn edit-btn';
+                        editBtn.innerHTML = `<i class="fas fa-pencil-alt"></i> Edit`;
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'action-btn delete-btn';
+                        deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Hapus`;
+
+                        td.appendChild(editBtn);
+                        td.appendChild(deleteBtn);
+                    } else {
+                        td.textContent = rowData[header] || '-';
+                    }
+                    tr.appendChild(td); // Tambahkan sel ke baris
+                });
+                tableBody.appendChild(tr); // Tambahkan baris ke tabel
+            });
+        }
+        setupPagination();
+    }
+    
+    function setupPagination() {
+        const paginationContainer = document.getElementById('pagination-container');
+        paginationContainer.innerHTML = '';
+        const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
+        if (pageCount <= 1) { paginationContainer.style.display = 'none'; return; }
+        paginationContainer.style.display = 'flex';
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.textContent = `Halaman ${currentPage} dari ${pageCount}`;
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '«'; prevBtn.className = 'page-btn';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; buildTable(); } };
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '»'; nextBtn.className = 'page-btn';
+        nextBtn.disabled = currentPage === pageCount;
+        nextBtn.onclick = () => { if (currentPage < pageCount) { currentPage++; buildTable(); } };
+        paginationContainer.appendChild(prevBtn);
+        paginationContainer.appendChild(pageInfo);
+        paginationContainer.appendChild(nextBtn);
+    }
+    
+    function updateNamaSekolahFilter() {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah');
+        const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row['Jenjang'] === jenjangFilter);
+        const uniqueSekolah = [...new Set(filteredData.map(row => row['Nama Sekolah']))].filter(Boolean).sort();
+        namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
+        uniqueSekolah.forEach(nama => namaSekolahFilter.add(new Option(nama, nama)));
+    }
+
+    function applyFilters() {
+        const jenjangFilter = document.getElementById('filterJenjang').value;
+        const namaSekolahFilter = document.getElementById('filterNamaSekolah').value;
+        currentFilteredRows = allDataRows.filter(row => {
+            const jenjangMatch = (jenjangFilter === "") || (row['Jenjang'] === jenjangFilter);
+            const namaSekolahMatch = (namaSekolahFilter === "") || (row['Nama Sekolah'] === namaSekolahFilter);
+            return jenjangMatch && namaSekolahMatch;
+        });
+        currentPage = 1;
+        buildTable();
+    }
+
+    function initializePage(dataArray) {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('kelolaPtkPaudTable').querySelector('thead');
+        if (!dataArray || dataArray.length === 0) {
+            loadingStatus.innerHTML = "<p>Tidak ada data PTK untuk dikelola.</p>"; return;
+        }
+
+        allDataRows = dataArray;
+        
+        tableHead.innerHTML = `<tr><th>No.</th>${displayHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        rowsPerPage = calculateRowsPerPage('kelolaPtkPaudTable');
+        
+        const jenjangSelect = document.getElementById('filterJenjang');
+        const uniqueJenjang = [...new Set(allDataRows.map(row => row['Jenjang']))].filter(Boolean).sort();
+        jenjangSelect.innerHTML = `<option value="">Semua</option>`;
+        uniqueJenjang.forEach(val => jenjangSelect.add(new Option(val, val)));
+
+        jenjangSelect.addEventListener('change', () => {
+            updateNamaSekolahFilter();
+            applyFilters();
+        });
+        document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
+
+        updateNamaSekolahFilter();
+        loadingStatus.style.display = 'none';
+        tableWrapper.style.display = 'block';
+        applyFilters();
+    }
+    
+    google.script.run
+        .withSuccessHandler(initializePage)
+        .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal: ${error.message}</p>`; })
+        .getKelolaPtkPaudData();
+}
+
 /**
  * ===================================================================
  * =================== 3. OBJEK INISIALISASI & TRIGGER ===============
@@ -2399,13 +2908,18 @@ const pageInitializers = {
     'lapbul_edit_sd': initLapbulEditSdPage,
     'lapbul_unduh_format': initLapbulUnduhFormatPage,
     'ptk_menu': initSubMenuPage,
-    'ptk_keadaan_menu': initSubMenuPage, // Halaman menu baru
-    'ptk_keadaan_paud': initPtkKeadaanPaudPage, // Halaman konten baru
+    'ptk_paud_menu': initSubMenuPage,
+    'ptk_sd_menu': initSubMenuPage,
+    'ptk_keadaan_paud': initPtkKeadaanPaudPage,
     'ptk_keadaan_sd': initPtkKeadaanSdPage,
-    'ptk_data': initSubMenuPage,    // Diasumsikan akan ada konten, bisa diubah nanti
-    'ptk_kelola': initSubMenuPage,  // Diasumsikan akan ada konten, bisa diubah nanti
-    'ptk_kebutuhan': initSubMenuPage, // Diasumsikan akan ada konten, bisa diubah nanti
-    'ptk_bezetting': initSubMenuPage,
+    'ptk_jumlah_bulanan_paud': initPtkJumlahBulananPaudPage,
+    'ptk_daftar_paud': initPtkDaftarPaudPage,
+    'ptk_kelola_paud': initPtkKelolaPaudPage,
+    'ptk_daftar_sd_negeri': initSubMenuPage,
+    'ptk_daftar_sd_swasta': initSubMenuPage,
+    'ptk_kelola_sd': initSubMenuPage,
+    'ptk_kebutuhan_sd_negeri': initSubMenuPage,
+    'ptk_bezetting_sd_negeri': initSubMenuPage,
     'murid_menu': initSubMenuPage,
     'siaba_menu': initSubMenuPage,
     'pns_menu': initSubMenuPage,
