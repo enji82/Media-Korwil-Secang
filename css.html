@@ -1,6 +1,6 @@
 <style>
   /* =================================================================== */
-  /* ===================== GAYA DASAR & TATA LETAK ===================== */
+  /* ===================== 1. GAYA DASAR & GLOBAL ====================== */
   /* =================================================================== */
   :root {
     --color-red: #e74c3c;
@@ -10,7 +10,7 @@
     --color-purple: #9b59b6;
     --color-orange: #e67e22;
     --color-cyan: #1abc9c;
-    --color-cream: #f8f3d4; /* Warna krem yang lebih lembut */
+    --color-cream: #f8f3d4;
     --color-dark-orange: #d35400;
     --color-dark-green: #27ae60;
     --color-dark-red: #c0392b;
@@ -44,13 +44,10 @@
     flex-direction: column;
   }
 
-  /* =================================================================== */
-  /* ======================= GAYA HEADER HALAMAN ======================= */
-  /* =================================================================== */
   .main-content header {
     text-align: center;
-    margin-bottom: 30px; /*asline 20px */
-    padding-top: 20px; /*asline 20px */
+    margin-bottom: 30px;
+    padding-top: 20px;
     flex-shrink: 0;
   }
 
@@ -84,20 +81,47 @@
     border-radius: 1px;
     animation: stretch-bounce 2.5s infinite ease-in-out;
   }
+
+  /* --- Scrollbar Kustom --- */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  /* --- Animasi Global --- */
   @keyframes stretch-bounce {
-    0% {
-        transform: scaleX(0.5); /* Mulai dengan lebar 50% */
+    0% { transform: scaleX(0.5); }
+    50% { transform: scaleX(1); }
+    100% { transform: scaleX(0.5); }
+  }
+  @keyframes cardFadeIn { to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+  @keyframes zoomIn { to { opacity: 1; transform: scale(1); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bounce {
+    0%, 40%, 100% {
+      transform: scaleY(0.4);
     }
-    50% {
-        transform: scaleX(1);   /* Mencapai lebar penuh di tengah */
+    20% {
+      transform: scaleY(1.0);
     }
-    100% {
-        transform: scaleX(0.5); /* Kembali ke lebar 50% */
-    }
-}
+  }
 
   /* =================================================================== */
-  /* =========================== GAYA SIDEBAR ========================== */
+  /* ======================== 2. GAYA SIDEBAR ========================== */
   /* =================================================================== */
   .sidebar {
     width: 260px;
@@ -139,18 +163,8 @@
     animation: fadeInUp 0.5s ease-out 0.3s forwards;
   }
 
-  .title-main {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: #ffffff;
-    line-height: 1.2;
-  }
-
-  .title-sub {
-    font-size: 0.85em;
-    color: #bdc3c7;
-    line-height: 1.2;
-  }
+  .title-main { font-size: 1.1em; font-weight: 600; color: #ffffff; line-height: 1.2; }
+  .title-sub { font-size: 0.85em; color: #bdc3c7; line-height: 1.2; }
 
   .sidebar-menu {
     list-style: none;
@@ -196,35 +210,12 @@
     z-index: -1;
   }
 
-  .sidebar-menu a:hover::before {
-    transform: translateX(0);
-  }
-
-  .sidebar-menu a.active {
-    background-color: #3a5d82;
-    color: #ffffff;
-    font-weight: bold;
-  }
-
-  .sidebar-menu i {
-    font-size: 1.1em;
-    width: 20px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-
-  .has-submenu > a {
-    justify-content: space-between;
-  }
-
-  .submenu-icon {
-    transition: transform 0.3s ease;
-    font-size: 0.8em !important;
-  }
-
-  .has-submenu.open > a .submenu-icon {
-    transform: rotate(90deg);
-  }
+  .sidebar-menu a:hover::before { transform: translateX(0); }
+  .sidebar-menu a.active { background-color: #3a5d82; color: #ffffff; font-weight: bold; }
+  .sidebar-menu i { font-size: 1.1em; width: 20px; text-align: center; flex-shrink: 0; }
+  .has-submenu > a { justify-content: space-between; }
+  .submenu-icon { transition: transform 0.3s ease; font-size: 0.8em !important; }
+  .has-submenu.open > a .submenu-icon { transform: rotate(90deg); }
 
   .submenu {
     list-style: none;
@@ -234,15 +225,8 @@
     transition: max-height 0.4s ease-out;
   }
 
-  .has-submenu.open > .submenu {
-    max-height: 500px;
-    margin-top: 5px;
-  }
-
-  .submenu a {
-    padding-left: 22px;
-    font-size: 0.95em;
-  }
+  .has-submenu.open > .submenu { max-height: 500px; margin-top: 5px; }
+  .submenu a { padding-left: 22px; font-size: 0.95em; }
 
   .sidebar-footer {
     padding: 15px;
@@ -254,7 +238,7 @@
   }
 
   /* =================================================================== */
-  /* ===================== GAYA MENU UTAMA & SUBMENU =================== */
+  /* ================= 3. GAYA MENU UTAMA & SUBMENU ================== */
   /* =================================================================== */
   .menu-grid {
     display: flex;
@@ -290,24 +274,15 @@
     transform: scale(0.5);
     animation: zoomIn 0.4s ease-out forwards;
   }
-  
+
   .menu-button:active {
     transform: translateY(-2px) scale(0.95);
     filter: brightness(0.9);
     transition-duration: 0.1s;
   }
 
-  .menu-button i {
-    font-size: 2.8em;
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
-  }
-
-  .menu-button span {
-    font-size: 0.9em;
-    font-weight: 500;
-    line-height: 1.2;
-  }
+  .menu-button i { font-size: 2.8em; margin-bottom: 12px; transition: all 0.3s ease; }
+  .menu-button span { font-size: 0.9em; font-weight: 500; line-height: 1.2; }
 
   /* --- Pewarnaan & Efek Hover Tombol Menu --- */
   .menu-button[data-page="sk_menu"] { color: var(--color-blue); }
@@ -328,17 +303,14 @@
   .menu-button:hover {
     background: rgba(0, 0, 0, 0.3);
     transform: translateY(-8px);
-    border-color: currentColor; /* Mengambil warna dari properti 'color' */
+    border-color: currentColor;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px currentColor;
   }
 
-  .menu-button:hover i {
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 10px currentColor);
-  }
+  .menu-button:hover i { transform: scale(1.1); filter: drop-shadow(0 0 10px currentColor); }
 
   /* =================================================================== */
-  /* ======================= GAYA FORMULIR & FILTER ==================== */
+  /* =============== 4. GAYA FORMULIR & FILTER UMUM ================== */
   /* =================================================================== */
   .filter-container {
     max-width: none;
@@ -358,18 +330,10 @@
     flex-shrink: 0;
   }
 
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .filter-group label {
-    font-weight: 500;
-    color: #ffffff;
-    flex-shrink: 0;
-  }
-
+  .filter-group { display: flex; align-items: center; gap: 10px; }
+  .filter-group label { font-weight: 500; color: #ffffff; flex-shrink: 0; }
+  
+  /* PERUBAHAN 1: Menerapkan gaya glassmorphism ke dropdown filter */
   .filter-group select {
     -webkit-appearance: none;
     appearance: none;
@@ -380,10 +344,11 @@
     background-repeat: no-repeat;
     background-position: right 10px center;
     cursor: pointer;
+    color: #e0e0e0;
+    /* Menambahkan properti glassmorphism */
     background-color: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: #e0e0e0;
   }
 
   .manual-form, .edit-form {
@@ -407,25 +372,10 @@
     margin-bottom: 20px;
   }
 
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-  }
-
-  .form-group {
-    margin-bottom: 20px;
-  }
-
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #e0e0e0;
-  }
-
-  .form-group input,
-  .form-group select {
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #e0e0e0; }
+  .form-group input, .form-group select {
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
@@ -436,32 +386,11 @@
     color: #e0e0e0;
   }
 
-  .input-hint {
-    font-size: 0.9em;
-    color: #bdc3c7;
-    margin-top: 8px;
-  }
-  
-   .input-hint a {
-    color: #00c3ff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-  .input-hint a:hover {
-    color: #ffffff;
-    text-decoration: underline;
-  }
-
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  }
-
-  .form-group select option,
-  .filter-group select option {
-    background: #1f2a3a;
-    color: #e0e0e0;
-  }
+  .input-hint { font-size: 0.9em; color: #bdc3c7; margin-top: 8px; }
+  .input-hint a { color: #00c3ff; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+  .input-hint a:hover { color: #ffffff; text-decoration: underline; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+  .form-group select option, .filter-group select option { background: #1f2a3a; color: #e0e0e0; }
 
   .submit-btn {
     width: 100%;
@@ -476,228 +405,15 @@
     border-radius: 8px;
   }
 
-  .submit-btn:hover:not(:disabled) {
-    background-color: rgba(0, 180, 255, 0.5);
-  }
-
-  .submit-btn:disabled {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #888;
-    cursor: not-allowed;
-  }
-  
-  /* =================================================================== */
-  /* ============= GAYA KHUSUS FORMULIR LAPORAN BULAN ============= */
-  /* =================================================================== */
-  .info-button-container {
-    text-align: center;
-    margin-top: 30px;
-  }
-
-  .info-btn {
-    background: rgba(0, 180, 255, 0.2);
-    border: 1px solid rgba(0, 180, 255, 0.5);
-    color: #00c3ff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-    transition: all 0.3s ease;
-  }
-
-  .info-btn:hover {
-    background: rgba(0, 180, 255, 0.4);
-    color: #ffffff;
-  }
-
-  .form-layout-grid-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 25px;
-  }
-  
-  .form-column {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .section-title {
-    font-size: 1.2em;
-    color: #00c3ff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding-bottom: 10px;
-    margin-top: 25px;
-    margin-bottom: 20px;
-  }
-
-  .form-column > .section-title:first-child {
-    margin-top: 0;
-  }
-
-  .murid-grid-vertical {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 7px;/*asline 15px*/
-  }
-
-  .murid-group {
-    background-color: rgba(0, 0, 0, 0.15);
-    padding: 10px 12px;
-    border-radius: 8px;
-  }
-
-  .murid-group-label {
-    font-weight: 500;
-    color: #e0e0e0;
-    margin-bottom: 8px;
-    display: block;
-    text-align: center;
-  }
-
-  .murid-group .form-group label {
-    text-align: center;
-  }
-
-  .murid-input-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .murid-input-pair .form-group {
-    margin-bottom: 0;
-  }
-
-  .murid-input-pair input {
-    text-align: center;
-    width: 100%;
-    padding: 6px 10px;
-  }
-  
-  .ptk-fieldset {
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 5px 15px 10px 15px;/*asline 5px 15px 15px 15px*/
-    margin-bottom: 7px;/*asline 12px*/
-  }
-
-  .ptk-fieldset legend {
-    padding: 0 10px;
-    color: #00c3ff;
-    font-weight: 500;
-    font-size: 1.1em;
-    text-align: center;
-    width: auto;
-    margin: 0 auto;
-  }
-  
-  .ptk-group-grid {
-    display: grid;
-    gap: 15px;
-  }
-  
-  .ptk-grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .ptk-grid-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .ptk-group-grid .form-group label {
-    text-align: center;
-    font-size: 0.9em;
-  }
-  
-  .ptk-group-grid .form-group input {
-    text-align: center;
-  }
-
-/* =================================================================== */
-/* ============== GAYA TABEL STATUS LAPORAN BULAN ================== */
-/* =================================================================== */
-
-#lapbulStatusTable {
-  table-layout: fixed;
-  width: 100%;
-}
-
-/* 1. Atur semua sel agar rata tengah secara default */
-#lapbulStatusTable th,
-#lapbulStatusTable td {
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* Atur lebar kolom "No." */
-#lapbulStatusTable th:nth-child(1),
-#lapbulStatusTable td:nth-child(1) {
-  width: 40px;
-}
-
-/* --- PERUBAHAN DI SINI --- */
-/* Atur HEADER "Nama Sekolah" agar rata tengah */
-#lapbulStatusTable th:nth-child(2) {
-  width: 250px;
-  text-align: center; 
-}
-
-/* Atur ISI KOLOM "Nama Sekolah" agar rata kiri */
-#lapbulStatusTable td:nth-child(2) {
-  width: 250px;
-  text-align: left;
-}
-/* --- AKHIR PERUBAHAN --- */
-
-/* 2. Atur agar semua kolom bulan (dari kolom ke-4 dst.) punya lebar sama */
-#lapbulStatusTable th:nth-child(n+4),
-#lapbulStatusTable td:nth-child(n+4) {
-  width: 70px;
-}
-
-/* 3. Atur freeze pane untuk kolom "No." dan "Nama Sekolah" */
-#lapbulStatusTable th:nth-child(1),
-#lapbulStatusTable td:nth-child(1) {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-  background-color: #1c2e3a; 
-}
-
-#lapbulStatusTable th:nth-child(2),
-#lapbulStatusTable td:nth-child(2) {
-  position: sticky;
-  left: 40px; 
-  z-index: 5;
-  background-color: #1c2e3a;
-}
-
-/* Pastikan header sticky tetap di atas dengan warna latar yang solid */
-#lapbulStatusTable thead th {
-    background-color: #101E26;
-}
-
-/* Pastikan header sticky punya z-index lebih tinggi */
-#lapbulStatusTable thead th:nth-child(1),
-#lapbulStatusTable thead th:nth-child(2) {
-    z-index: 15;
-}
-
-/* Efek hover untuk kolom sticky */
-#lapbulStatusTable tbody tr:hover td:nth-child(1),
-#lapbulStatusTable tbody tr:hover td:nth-child(2) {
-    background-color: #2a4152; /* Warna hover yang sedikit lebih terang */
-}
+  .submit-btn:hover:not(:disabled) { background-color: rgba(0, 180, 255, 0.5); }
+  .submit-btn:disabled { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: #888; cursor: not-allowed; }
 
   /* =================================================================== */
-  /* ========================== GAYA TABEL DATA ======================== */
+  /* ======================= 5. GAYA TABEL DATA ======================== */
   /* =================================================================== */
   .table-view-container {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
     min-height: 0;
   }
 
@@ -712,107 +428,42 @@
     width: 100%;
     box-sizing: border-box;
     margin: 0 auto;
-    flex-grow: 1;
+    /* Properti flex-grow sengaja dihilangkan agar container tidak meregang */
   }
 
   .data-table {
-    border-collapse: collapse;
+    border-collapse: separate; /* Diubah dari collapse */
+    border-spacing: 0; /* Menghilangkan celah antar sel */
     font-size: 13px;
     width: 100%;
   }
 
-  .data-table th,
-  .data-table td {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .data-table th, .data-table td {
+    border: none; /* Border utama dihapus */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Hanya border bawah */
     padding: 8px 12px;
     vertical-align: middle;
     white-space: nowrap;
     height: 24px;
   }
+  
+  /* Menambahkan border kanan ke semua sel KECUALI yang terakhir */
+  .data-table th:not(:last-child),
+  .data-table td:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
   .data-table th {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 5; /* z-index dasar untuk header */
     background-color: #101E26;
     border-bottom: 2px solid rgba(0, 195, 255, 0.5);
     font-weight: 600;
   }
+  .data-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.08); }
 
-  .data-table tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-
-  #riwayatTable td,
-  #kelolaTable td {
-    text-align: center;
-  }
-
-  #riwayatTable td:nth-child(3),
-  #riwayatTable td:nth-child(6),
-  #kelolaTable td:nth-child(3),
-  #kelolaTable td:nth-child(6) {
-    text-align: left;
-  }
-
-  #statusTable {
-    table-layout: fixed;
-    width: 100%;
-  }
-
-  #statusTable td,
-  #statusTable th {
-    text-align: center;
-  }
-
-  #statusTable td:nth-child(2) {
-    text-align: left;
-  }
-
-  #statusTable th:nth-child(1),
-  #statusTable td:nth-child(1) {
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    width: 50px;
-  }
-
-  #statusTable th:nth-child(2),
-  #statusTable td:nth-child(2) {
-    position: sticky;
-    z-index: 5;
-    width: auto;
-  }
-
-  #statusTable th:nth-child(n+3) {
-    white-space: normal;
-  }
-
-  #statusTable th:nth-child(n+3),
-  #statusTable td:nth-child(n+3) {
-    width: 70px;
-  }
-
-  #statusTable thead th:nth-child(1),
-  #statusTable thead th:nth-child(2) {
-    background-color: #101E26;
-    z-index: 15;
-  }
-
-  #statusTable tbody tr:hover td:nth-child(1),
-  #statusTable tbody tr:hover td:nth-child(2) {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-  
-  /* =================================================================== */
-  /* ====================== GAYA TOMBOL AKSI & PAGINASI ================ */
-  /* =================================================================== */
-  .action-buttons {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-  }
+  .action-buttons { display: flex; justify-content: center; align-items: center; gap: 8px; }
   .action-btn {
     display: inline-flex;
     align-items: center;
@@ -832,24 +483,11 @@
     white-space: nowrap;
   }
   .action-btn i { margin-right: 6px; }
-  .view-btn {
-    background-color: rgba(0, 180, 255, 0.2);
-    border-color: rgba(0, 180, 255, 0.5);
-    color: #00b4ff;
-  }
-  .view-btn:hover {
-    color: #ffffff;
-    background-color: rgba(0, 180, 255, 0.4);
-  }
-  .edit-btn {
-    background-color: rgba(255, 183, 77, 0.4);
-    border-color: rgba(255, 183, 77, 0.6);
-  }
+  .view-btn { background-color: rgba(0, 180, 255, 0.2); border-color: rgba(0, 180, 255, 0.5); color: #00b4ff; }
+  .view-btn:hover { color: #ffffff; background-color: rgba(0, 180, 255, 0.4); }
+  .edit-btn { background-color: rgba(255, 183, 77, 0.4); border-color: rgba(255, 183, 77, 0.6); }
   .edit-btn:hover { background-color: rgba(255, 183, 77, 0.6); }
-  .delete-btn {
-    background-color: rgba(229, 115, 115, 0.4);
-    border-color: rgba(229, 115, 115, 0.6);
-  }
+  .delete-btn { background-color: rgba(229, 115, 115, 0.4); border-color: rgba(229, 115, 115, 0.6); }
   .delete-btn:hover { background-color: rgba(229, 115, 115, 0.6); }
 
   .pagination-container {
@@ -861,7 +499,6 @@
     gap: 12px;
     flex-shrink: 0;
   }
-
   .page-btn {
     padding: 6px 12px;
     background: rgba(0, 0, 0, 0.2);
@@ -872,782 +509,688 @@
     transition: all 0.2s ease;
     font-weight: bold;
   }
+  .page-btn:hover:not(:disabled) { background-color: rgba(0, 0, 0, 0.4); color: #ffffff; }
+  .page-info { font-weight: 500; color: #ffffff; }
+  .page-btn:disabled { color: rgba(255, 255, 255, 0.3); cursor: not-allowed; background-color: rgba(0, 0, 0, 0.1); }
 
-  .page-btn:hover:not(:disabled) {
-    background-color: rgba(0, 0, 0, 0.4);
-    color: #ffffff;
+  .table-footer-note {
+    padding: 10px 15px;
+    font-size: 0.85em;
+    color: #bdc3c7;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 10px 10px;
+    margin-top: -1px;
   }
   
-  .page-info {
-    font-weight: 500;
-    color: #ffffff;
+  /* =================================================================== */
+  /* =================== 6. GAYA MODAL & SPINNER ===================== */
+  /* =================================================================== */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000; opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
   }
+  #appModal { z-index: 1001; }
+  .modal-overlay.show { opacity: 1; visibility: visible; }
+  .modal-content {
+    background: rgba(44, 62, 80, 0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center; max-width: 450px; width: 90%;
+    transform: scale(0.9); transition: transform 0.3s ease;
+  }
+  .modal-overlay.show .modal-content { transform: scale(1); }
+  .modal-content h3 { margin-top: 0; color: #ffffff; }
+  .modal-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
+  #deleteModal .modal-actions button {
+    flex-grow: 1; padding: 10px; font-size: 1em; font-weight: 500;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s ease;
+    border: 1px solid transparent; display: flex; align-items: center; justify-content: center;
+  }
+  #deleteModal .cancel-btn { background-color: rgba(144, 164, 174, 0.2); border-color: rgba(144, 164, 174, 0.4); color: #e0e0e0; }
+  #deleteModal .cancel-btn:hover { background-color: rgba(144, 164, 174, 0.4); }
+  #deleteModal .delete-btn-confirm { background-color: rgba(229, 115, 115, 0.3); border-color: rgba(229, 115, 115, 0.5); color: #e0e0e0; }
+  #deleteModal .delete-btn-confirm:hover { background-color: rgba(229, 115, 115, 0.5); color: #ffffff; }
+  .custom-modal-input {
+    width: 100%; padding: 12px; box-sizing: border-box; font-size: 1.2em; text-align: center;
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    border-radius: 8px; color: #ffffff; margin-top: 15px; transition: all 0.3s ease;
+  }
+  .custom-modal-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+  .custom-modal-input:focus { outline: none; border-color: #00c3ff; box-shadow: 0 0 10px rgba(0, 195, 255, 0.5); background: rgba(0, 0, 0, 0.3); }
 
-  .page-btn:disabled {
-    color: rgba(255, 255, 255, 0.3);
-    cursor: not-allowed;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
+  .loading-container { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
+  .spinner-container { display: flex; justify-content: center; align-items: center; gap: 6px; height: 50px; }
+  .spinner-bar { width: 8px; height: 100%; border-radius: 4px; animation: bounce 1.2s infinite ease-in-out; }
+  .spinner-bar:nth-child(1) { background-color: #e74c3c; }
+  .spinner-bar:nth-child(2) { background-color: #2ecc71; animation-delay: -1.1s; }
+  .spinner-bar:nth-child(3) { background-color: #f1c40f; animation-delay: -1.0s; }
+  .spinner-bar:nth-child(4) { background-color: #3498db; animation-delay: -0.9s; }
 
   /* =================================================================== */
-  /* ================== GAYA ARSIP & FILE BROWSER ====================== */
+  /* ===================== 7. GAYA SPESIFIK HALAMAN ==================== */
   /* =================================================================== */
-  .arsip-container {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 25px;
+
+  /* --- MODUL: SK Pembagian Tugas --- */
+
+  /* Gaya umum untuk tabel Riwayat SK */
+  #riwayatTable th, #riwayatTable td { text-align: center; }
+  #riwayatTable td:nth-child(2), #riwayatTable td:nth-child(5) { text-align: left; }
+
+  /* [PERBAIKAN FINAL] Freeze Pane dengan z-index yang benar */
+
+  #riwayatTable th:nth-child(1), #riwayatTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+    background-color: #1c2e3a;
+    z-index: 2; /* Lapisan dasar untuk kolom beku */
+  }
+
+  #riwayatTable th:nth-child(2), #riwayatTable td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+    background-color: #1c2e3a;
+    z-index: 2; /* Lapisan dasar untuk kolom beku */
+  }
+
+  /* Header beku harus di atas body beku */
+  #riwayatTable thead th:nth-child(1),
+  #riwayatTable thead th:nth-child(2) {
+    z-index: 6; /* Lapisan tertinggi untuk header beku */
+    background-color: #101E26;
+  }
+
+  /* Aturan hover yang benar */
+  #riwayatTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  #riwayatTable tbody tr:hover td:nth-child(1),
+  #riwayatTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+  /* Gaya untuk tabel lain di modul SK (tidak diubah) */
+  #kelolaTable td { text-align: center; }
+  #kelolaTable td:nth-child(3), #kelolaTable td:nth-child(6) { text-align: left; }
+
+  /* --- MODUL : Status Pengiriman SK --- */
+
+  #statusTable {
+    table-layout: fixed;
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
   }
-  .breadcrumb {
-    margin-bottom: 25px;
-    font-weight: 500;
-    color: #bdc3c7;
-    flex-shrink: 0;
+  #statusTable td, #statusTable th {
+    text-align: center;
   }
-  .breadcrumb span {
-    color: #00c3ff;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-  .breadcrumb span:hover {
-    color: #ffffff;
-    text-decoration: underline;
-  }
-  .breadcrumb .inactive {
-    color: #ffffff;
-    cursor: default;
-    text-decoration: none;
-  }
-  #view-container {
-  flex-grow: 1;
-  /* overflow-y: auto; DIHAPUS DARI SINI */
+  #statusTable td:nth-child(2) {
+    text-align: left;
   }
 
-  /* KELAS BARU UNTUK MENGAKTIFKAN SCROLLBAR */
-  .view-container-scrollable {
-  overflow-y: auto;
+  /* Mengatur posisi dan lebar kolom beku */
+  #statusTable th:nth-child(1), #statusTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
   }
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 20px;
+  #statusTable th:nth-child(2), #statusTable td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+    width: 250px;
+    min-width: 250px;
   }
-  .card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+
+  /* Memberi warna solid pada SEMUA sel beku */
+  #statusTable thead th:nth-child(1),
+  #statusTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #statusTable tbody td:nth-child(1),
+  #statusTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* [KUNCI PERBAIKAN] Menukar nilai z-index */
+  #statusTable thead th:nth-child(1) { z-index: 11; } /* Lapisan lebih rendah */
+  #statusTable thead th:nth-child(2) { z-index: 12; } /* Lapisan lebih tinggi */
+  #statusTable tbody td:nth-child(1) { z-index: 9; }  /* Lapisan lebih rendah */
+  #statusTable tbody td:nth-child(2) { z-index: 10; } /* Lapisan lebih tinggi */
+  
+  /* Aturan hover yang benar */
+  #statusTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  #statusTable tbody tr:hover td:nth-child(1),
+  #statusTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+  /* Aturan untuk lebar kolom sisanya (tidak berubah) */
+  #statusTable th:nth-child(n+3) {
+    white-space: normal;
+    width: 70px;
+  }
+
+/* --- MODUL : Kelola Data SK --- */
+
+/* Gaya untuk tabel Kelola Data SK */
+  #kelolaTable th, #kelolaTable td {
+    text-align: center; /* Rata tengah untuk semua kolom */
+  }
+  
+  /* Rata kiri untuk kolom Nama SD (ke-2) dan Nomor SK (ke-5) */
+  #kelolaTable td:nth-child(2),
+  #kelolaTable td:nth-child(5) {
+    text-align: left;
+  }
+
+  /* Aturan Freeze Pane (Kolom Beku) */
+  #kelolaTable th:nth-child(1), #kelolaTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #kelolaTable th:nth-child(2), #kelolaTable td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* Lebar kolom pertama */
+  }
+
+  /* Memberi warna solid pada SEMUA sel beku */
+  #kelolaTable thead th:nth-child(1),
+  #kelolaTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #kelolaTable tbody td:nth-child(1),
+  #kelolaTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* [PERBAIKAN] Menukar nilai z-index agar Nama SD di atas */
+  #kelolaTable thead th:nth-child(1) { z-index: 11; }
+  #kelolaTable thead th:nth-child(2) { z-index: 12; }
+  #kelolaTable tbody td:nth-child(1) { z-index: 9; }
+  #kelolaTable tbody td:nth-child(2) { z-index: 10; }
+  
+  /* Aturan hover yang benar */
+  #kelolaTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08); /* Warna hover umum */
+  }
+  #kelolaTable tbody tr:hover td:nth-child(1),
+  #kelolaTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152; /* Warna hover solid untuk kolom beku */
+  }
+
+  /* --- MODUL: Laporan Bulan --- */
+  .info-button-container { text-align: center; margin-top: 30px; }
+  .info-btn { background: rgba(0, 180, 255, 0.2); border: 1px solid rgba(0, 180, 255, 0.5); color: #00c3ff; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.3s ease; }
+  .info-btn:hover { background: rgba(0, 180, 255, 0.4); color: #ffffff; }
+  .form-layout-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+  .form-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+  .form-column { display: flex; flex-direction: column; min-width: 0; }
+  .section-title { font-size: 1.2em; color: #00c3ff; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; margin-top: 25px; margin-bottom: 20px; }
+  .form-column > .section-title:first-child { margin-top: 0; }
+  .murid-grid-vertical { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .murid-group { background-color: rgba(0, 0, 0, 0.15); padding: 10px 12px; border-radius: 8px; }
+  .murid-group-label { font-weight: 500; color: #e0e0e0; margin-bottom: 8px; display: block; text-align: center; }
+  .murid-group .form-group label { text-align: center; }
+  .murid-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .murid-input-pair .form-group { margin-bottom: 0; }
+  .murid-input-pair input { text-align: center; width: 100%; padding: 6px 10px; }
+  .ptk-fieldset { border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 15px 10px 15px; margin-bottom: 7px; }
+  .ptk-fieldset legend { padding: 0 10px; color: #00c3ff; font-weight: 500; font-size: 1.1em; text-align: center; width: auto; margin: 0 auto; }
+  .ptk-group-grid { display: grid; gap: 15px; }
+  .ptk-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .ptk-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .ptk-group-grid .form-group label, .ptk-group-grid .form-group input { text-align: center; }
+  .tabs-container { display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-link { padding: 10px 15px; cursor: pointer; background: none; border: none; color: #bdc3c7; font-size: 0.95em; font-weight: 500; transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+  .tab-link.active, .tab-link:hover { color: #00c3ff; border-bottom-color: #00c3ff; }
+  .sub-section-title { font-size: 1em; color: #e0e0e0; margin-top: 20px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .rombel-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+  .rombel-input-group { background-color: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; }
+  .rombel-group-label { text-align: center; font-weight: 500; display: block; margin-bottom: 10px; }
+  .agama-row { grid-template-columns: 1fr 2fr; gap: 20px; align-items: center; }
+  .agama-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ptk-sub-fieldset { border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 15px; margin-top: 20px; }
+  .ptk-sub-fieldset legend { padding: 0 10px; font-size: 1.1em; font-weight: bold; color: #00c3ff; text-align: left; margin-left: 0; width: auto; }
+  .ptk-row { display: grid; gap: 10px; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
+  .ptk-row > label { font-weight: bold; color: #e0e0e0; }
+  .ptk-row .form-group label { font-weight: normal; color: #bdc3c7; }
+  .ptk-row .form-group { margin-bottom: 0; }
+  .ptk-row.has-label { grid-template-columns: 120px 1fr 1fr 1fr 1fr; }
+
+  /* --- STATUS PENGIRIMAN LAPBUL --- */
+
+  /* [PERBAIKAN] Freeze Pane untuk 2 kolom pada Tabel Status Lapbul */
+  #lapbulStatusTable {
+    table-layout: fixed;
+    width: 100%;
+  }
+  #lapbulStatusTable th, #lapbulStatusTable td {
     text-align: center;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    opacity: 0;
-    transform: translateY(20px);
+    white-space: nowrap;
+  }
+
+  /* Mengatur posisi dan lebar untuk DUA kolom beku */
+  #lapbulStatusTable th:nth-child(1), #lapbulStatusTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 40px;
+    min-width: 40px;
+  }
+  #lapbulStatusTable th:nth-child(2), #lapbulStatusTable td:nth-child(2) {
+    position: sticky;
+    left: 40px; /* Lebar kolom pertama */
+    width: 250px;
+    min-width: 250px;
+  }
+
+  /* Aturan perataan teks khusus */
+  #lapbulStatusTable th:nth-child(2) { text-align: center; }
+  #lapbulStatusTable td:nth-child(2) { text-align: left; }
+  
+  /* Memberi warna solid pada sel beku */
+  #lapbulStatusTable thead th:nth-child(1),
+  #lapbulStatusTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #lapbulStatusTable tbody td:nth-child(1),
+  #lapbulStatusTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* Mengatur lapisan z-index agar "Nama Sekolah" di atas "No." */
+  #lapbulStatusTable thead th:nth-child(1) { z-index: 11; }
+  #lapbulStatusTable thead th:nth-child(2) { z-index: 12; }
+  #lapbulStatusTable tbody td:nth-child(1) { z-index: 9; }
+  #lapbulStatusTable tbody td:nth-child(2) { z-index: 10; }
+  
+  /* Aturan hover yang benar */
+  #lapbulStatusTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  #lapbulStatusTable tbody tr:hover td:nth-child(1),
+  #lapbulStatusTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+  /* Aturan untuk lebar kolom sisanya */
+  #lapbulStatusTable th:nth-child(n+3), #lapbulStatusTable td:nth-child(n+3) {
+    width: 70px;
+  }
+
+  /* --- KELOLA DATA LAPBUL ---*/
+
+  /* [BARU] Gaya untuk tabel Kelola Data Laporan Bulan */
+  #lapbulKelolaTable th, #lapbulKelolaTable td {
+    text-align: center; /* Default: Semua kolom rata tengah */
+  }
+  
+  /* [PERBAIKAN] Aturan perataan teks yang lebih spesifik */
+  #lapbulKelolaTable td:nth-child(2) {
+    text-align: left; /* Pengecualian: Kolom "Nama Sekolah" rata kiri */
+  }
+  #lapbulKelolaTable td:nth-child(3) {
+    text-align: center !important; /* Paksa kolom "Status" agar selalu rata tengah */
+  }
+
+  /* Aturan Freeze Pane (Kolom Beku) */
+  #lapbulKelolaTable th:nth-child(1), #lapbulKelolaTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #lapbulKelolaTable th:nth-child(2), #lapbulKelolaTable td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+  }
+
+  /* Memberi warna solid pada sel beku */
+  #lapbulKelolaTable thead th:nth-child(1),
+  #lapbulKelolaTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #lapbulKelolaTable tbody td:nth-child(1),
+  #lapbulKelolaTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* Mengatur z-index agar "Nama Sekolah" di atas "No." */
+  #lapbulKelolaTable thead th:nth-child(1) { z-index: 11; }
+  #lapbulKelolaTable thead th:nth-child(2) { z-index: 12; }
+  #lapbulKelolaTable tbody td:nth-child(1) { z-index: 9; }
+  #lapbulKelolaTable tbody td:nth-child(2) { z-index: 10; }
+  
+  /* Aturan hover */
+  #lapbulKelolaTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  #lapbulKelolaTable tbody tr:hover td:nth-child(1),
+  #lapbulKelolaTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+  /* --- LAPBUL RIWAYAT --- */
+
+  /* Gaya untuk tabel Riwayat Laporan Bulan */
+  #lapbulRiwayatTable th, #lapbulRiwayatTable td {
+    text-align: center; /* Rata tengah untuk semua kolom */
+  }
+  
+  /* Rata kiri untuk kolom "Nama Sekolah" (ke-2) dan "Bulan" (ke-5) */
+  #lapbulRiwayatTable td:nth-child(2),
+  #lapbulRiwayatTable td:nth-child(5) {
+    text-align: left;
+  }
+
+  /* Aturan Freeze Pane (Kolom Beku) untuk "No." dan "Nama Sekolah" */
+  #lapbulRiwayatTable th:nth-child(1), #lapbulRiwayatTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #lapbulRiwayatTable th:nth-child(2), #lapbulRiwayatTable td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* Lebar kolom pertama */
+  }
+
+  /* Memberi warna solid pada SEMUA sel beku */
+  #lapbulRiwayatTable thead th:nth-child(1),
+  #lapbulRiwayatTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #lapbulRiwayatTable tbody td:nth-child(1),
+  #lapbulRiwayatTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* [PERBAIKAN] Menukar nilai z-index agar "Nama Sekolah" di atas */
+  #lapbulRiwayatTable thead th:nth-child(1) { z-index: 11; } /* Lapisan lebih rendah */
+  #lapbulRiwayatTable thead th:nth-child(2) { z-index: 12; } /* Lapisan lebih tinggi */
+  #lapbulRiwayatTable tbody td:nth-child(1) { z-index: 9; }  /* Lapisan lebih rendah */
+  #lapbulRiwayatTable tbody td:nth-child(2) { z-index: 10; } /* Lapisan lebih tinggi */
+  
+  /* Aturan hover yang benar */
+  #lapbulRiwayatTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08); /* Warna hover umum */
+  }
+  #lapbulRiwayatTable tbody tr:hover td:nth-child(1),
+  #lapbulRiwayatTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152; /* Warna hover solid untuk kolom beku */
+  }
+
+  #lapbulKelolaTable th, #lapbulKelolaTable td { text-align: center; }
+  #lapbulKelolaTable td:nth-child(3), #lapbulKelolaTable td:nth-child(6) { text-align: left; }
+  .dropdown-info { position: relative; display: inline-block; }
+  .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
+  .info-btn.active + .dropdown-content { border-color: rgba(0, 195, 255, 0.5); }
+  .info-btn i.fa-chevron-down { transition: transform 0.3s ease; }
+  .info-btn.active i.fa-chevron-down { transform: rotate(180deg); }
+
+  /* --- MODUL: Data PTK --- */
+
+  /* --- DAFTAR PTK PAUD ---*/
+
+  /* [PERBAIKAN] Gaya lengkap untuk tabel Daftar PTK PAUD */
+  #daftarPtkPaudTable th, #daftarPtkPaudTable td {
+    text-align: center; /* 1. Default: Semua sel rata tengah */
+  }
+
+  /* 2. Pengecualian: Kolom-kolom tertentu dibuat rata kiri */
+  #daftarPtkPaudTable td:nth-child(2),  /* C: Nama */
+  #daftarPtkPaudTable td:nth-child(5),  /* F: Status Kepegawaian */
+  #daftarPtkPaudTable td:nth-child(7),  /* H: Pangkat, Gol./Ruang */
+  #daftarPtkPaudTable td:nth-child(10), /* K: Tempat, Tanggal Lahir */
+  #daftarPtkPaudTable td:nth-child(11) { /* L: Pendidikan */
+    text-align: left;
+  }
+
+  /* Aturan Freeze Pane (Kolom Beku) */
+  #daftarPtkPaudTable th:nth-child(1), #daftarPtkPaudTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #daftarPtkPaudTable th:nth-child(2), #daftarPtkPaudTable td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* Lebar kolom pertama */
+  }
+
+  /* Memberi warna solid pada sel beku */
+  #daftarPtkPaudTable thead th:nth-child(1),
+  #daftarPtkPaudTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #daftarPtkPaudTable tbody td:nth-child(1),
+  #daftarPtkPaudTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* 3. Mengatur z-index agar "Nama" di atas "No." */
+  #daftarPtkPaudTable thead th:nth-child(1) { z-index: 11; } /* Lapisan lebih rendah */
+  #daftarPtkPaudTable thead th:nth-child(2) { z-index: 12; } /* Lapisan lebih tinggi */
+  #daftarPtkPaudTable tbody td:nth-child(1) { z-index: 9; }  /* Lapisan lebih rendah */
+  #daftarPtkPaudTable tbody td:nth-child(2) { z-index: 10; } /* Lapisan lebih tinggi */
+  
+  /* Aturan hover */
+  #daftarPtkPaudTable tbody tr:hover td:nth-child(1),
+  #daftarPtkPaudTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+  /* --- KELOLA PTK PAUD */
+  
+  /* Gaya Freeze Pane untuk tabel Kelola PTK PAUD */
+  #kelolaPtkPaudTable th:nth-child(1), #kelolaPtkPaudTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #kelolaPtkPaudTable th:nth-child(2), #kelolaPtkPaudTable td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+    text-align: left;
+  }
+  #kelolaPtkPaudTable thead th:nth-child(1),
+  #kelolaPtkPaudTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #kelolaPtkPaudTable tbody td:nth-child(1),
+  #kelolaPtkPaudTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+  #kelolaPtkPaudTable thead th:nth-child(1) { z-index: 11; }
+  #kelolaPtkPaudTable thead th:nth-child(2) { z-index: 12; }
+  #kelolaPtkPaudTable tbody td:nth-child(1) { z-index: 9; }
+  #kelolaPtkPaudTable tbody td:nth-child(2) { z-index: 10; }
+  #kelolaPtkPaudTable tbody tr:hover td:nth-child(1),
+  #kelolaPtkPaudTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+
+
+  /* --- KEADAAN PTK PAUD --- */
+
+  /* [PERBAIKAN DEFINITIF] Gaya Freeze Pane dengan z-index yang benar untuk Keadaan PTK PAUD */
+  #keadaanPtkPaudTable {
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  /* Aturan umum & perataan teks */
+  #keadaanPtkPaudTable th { white-space: normal; text-align: center; vertical-align: middle; }
+  #keadaanPtkPaudTable td { text-align: center; vertical-align: middle; }
+  #keadaanPtkPaudTable td.cell-align-left { text-align: left; }
+  #keadaanPtkPaudTable .cell-font-bold { font-weight: bold; }
+
+  /* Pengaturan Lebar Kolom */
+  #keadaanPtkPaudTable th:nth-child(1), #keadaanPtkPaudTable td:nth-child(1) { width: 50px; min-width: 50px; }
+  #keadaanPtkPaudTable th:nth-child(2), #keadaanPtkPaudTable td:nth-child(2) { width: 210px; min-width: 210px; }
+  #keadaanPtkPaudTable th:nth-child(n+3), #keadaanPtkPaudTable td:nth-child(n+3) { width: 50px; }
+
+  /* --- STICKY & Z-INDEX LOGIC --- */
+
+  /* 1. Mendefinisikan semua elemen sticky */
+  #keadaanPtkPaudTable thead th { position: sticky; top: 0; }
+  #keadaanPtkPaudTable tfoot { position: sticky; bottom: -1px; } /* Terapkan sticky ke tfoot, bukan tr */
+  #keadaanPtkPaudTable tbody td:nth-child(1),
+  #keadaanPtkPaudTable tfoot td:nth-child(1) { position: sticky; left: 0; }
+  #keadaanPtkPaudTable tbody td:nth-child(2),
+  #keadaanPtkPaudTable tfoot td:nth-child(2) { position: sticky; left: 50px; }
+  #keadaanPtkPaudTable thead th:nth-child(1) { position: sticky; left: 0; }
+  #keadaanPtkPaudTable thead th:nth-child(2) { position: sticky; left: 50px; }
+
+  /* 2. Memberi warna latar solid untuk semua elemen sticky */
+  #keadaanPtkPaudTable thead th { background-color: #101E26; }
+  #keadaanPtkPaudTable tfoot td { background-color: #101E26; border-top: 2px solid rgba(0, 195, 255, 0.5); font-weight: bold; }
+  #keadaanPtkPaudTable tbody td:nth-child(1),
+  #keadaanPtkPaudTable tbody td:nth-child(2) { background-color: #1c2e3a; }
+  #keadaanPtkPaudTable tbody tr:hover td:nth-child(1),
+  #keadaanPtkPaudTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
+
+  /* 3. [KUNCI PERBAIKAN] Mengatur lapisan z-index secara hirarkis */
+  #keadaanPtkPaudTable tbody td:nth-child(1),
+  #keadaanPtkPaudTable tbody td:nth-child(2) {
+    z-index: 1; /* Lapisan dasar untuk kolom body yang beku */
+  }
+  #keadaanPtkPaudTable thead,
+  #keadaanPtkPaudTable tfoot {
+    z-index: 2; /* Header & Footer berada di atas body */
+  }
+  #keadaanPtkPaudTable thead th:nth-child(1),
+  #keadaanPtkPaudTable thead th:nth-child(2),
+  #keadaanPtkPaudTable tfoot td:nth-child(1),
+  #keadaanPtkPaudTable tfoot td:nth-child(2) {
+    z-index: 3; /* Sudut (pertemuan sticky) berada di lapisan paling atas */
+  }
+
+  /* --- KEADAAN PTK SD ---*/
+
+    #tableWrapper .table-container { max-height: 70vh; }
+  #keadaanPtkSdTable { border-collapse: collapse; table-layout: fixed; }
+  #keadaanPtkSdTable th { white-space: normal; text-align: center; vertical-align: middle; }
+  #keadaanPtkSdTable td { text-align: center; vertical-align: middle; }
+  #keadaanPtkSdTable td:nth-child(2) { text-align: left; }
+  #keadaanPtkSdTable thead th { position: sticky; top: 0; z-index: 10; background-color: #101E26; }
+  #keadaanPtkSdTable tfoot { position: sticky; bottom: -1px; z-index: 10; }
+  #keadaanPtkSdTable tfoot td { font-weight: bold; border-top: 2px solid rgba(0, 195, 255, 0.5); background-color: #101E26; }
+  #keadaanPtkSdTable th:nth-child(1), #keadaanPtkSdTable td:nth-child(1) { width: 50px; }
+  #keadaanPtkSdTable th:nth-child(2), #keadaanPtkSdTable td:nth-child(2) { width: 250px; }
+  #keadaanPtkSdTable thead tr:first-child th { top: 0; z-index: 12; }
+  #keadaanPtkSdTable thead tr:last-child th { top: 35px; z-index: 11; }
+  #keadaanPtkSdTable thead tr:first-child th:nth-child(1), #keadaanPtkSdTable thead tr:first-child th:nth-child(2) { z-index: 15 !important; }
+  #keadaanPtkSdTable thead tr:first-child th:nth-child(2) { left: 50px; }
+  #keadaanPtkSdTable tbody td:nth-child(1) { position: sticky; left: 0; background-color: #1a2c38; z-index: 5; }
+  #keadaanPtkSdTable tbody td:nth-child(2) { position: sticky; left: 50px; background-color: #1a2c38; z-index: 5; }
+  #keadaanPtkSdTable tbody tr:hover td:nth-child(1), #keadaanPtkSdTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
+  #keadaanPtkSdTable tfoot td:nth-child(1) { position: sticky; left: 0; z-index: 15; }
+  #keadaanPtkSdTable tfoot td:nth-child(2) { position: sticky; left: 50px; z-index: 15; }
+
+/* --- JUMLAH PTK BULANAN PAUD --- */
+
+  /* [PERBAIKAN] Gaya Freeze Pane untuk tabel Jumlah PTK Bulanan PAUD */
+  #ptkJumlahBulananPaudTable th, #ptkJumlahBulananPaudTable td {
+    text-align: center; /* Default: Semua kolom rata tengah */
+  }
+
+  #ptkJumlahBulananPaudTable td:nth-child(2) {
+    text-align: left; /* Pengecualian: Kolom "Nama Sekolah" rata kiri */
+  }
+
+  /* Aturan Freeze Pane (Kolom Beku) */
+  #ptkJumlahBulananPaudTable th:nth-child(1), #ptkJumlahBulananPaudTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+  }
+  #ptkJumlahBulananPaudTable th:nth-child(2), #ptkJumlahBulananPaudTable td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* Lebar kolom pertama */
+  }
+
+  /* Memberi warna solid pada sel beku */
+  #ptkJumlahBulananPaudTable thead th:nth-child(1),
+  #ptkJumlahBulananPaudTable thead th:nth-child(2) {
+    background-color: #101E26;
+  }
+  #ptkJumlahBulananPaudTable tbody td:nth-child(1),
+  #ptkJumlahBulananPaudTable tbody td:nth-child(2) {
+    background-color: #1c2e3a;
+  }
+
+  /* Mengatur z-index agar "Nama Sekolah" di atas "No." */
+  #ptkJumlahBulananPaudTable thead th:nth-child(1) { z-index: 11; } /* Lapisan lebih rendah */
+  #ptkJumlahBulananPaudTable thead th:nth-child(2) { z-index: 12; } /* Lapisan lebih tinggi */
+  #ptkJumlahBulananPaudTable tbody td:nth-child(1) { z-index: 9; }  /* Lapisan lebih rendah */
+  #ptkJumlahBulananPaudTable tbody td:nth-child(2) { z-index: 10; } /* Lapisan lebih tinggi */
+  
+  /* Aturan hover */
+  #ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(1),
+  #ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+  #ptkJumlahBulananPaudTable tfoot {
+    position: sticky;
+    bottom: -1px;
+    z-index: 10;
+  }
+  #ptkJumlahBulananPaudTable tfoot td {
+    background-color: #101E26;
+    font-weight: bold;
+    border-top: 2px solid rgba(0, 195, 255, 0.5);
+  }
+
+  /* --- MODUL: Arsip (Drive Browser) --- */
+  .arsip-container {
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px; padding: 25px; width: 100%; max-width: 900px;
+    margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0;
+  }
+  .breadcrumb { margin-bottom: 25px; font-weight: 500; color: #bdc3c7; flex-shrink: 0; }
+  .breadcrumb span { color: #00c3ff; cursor: pointer; transition: color 0.2s ease; }
+  .breadcrumb span:hover { color: #ffffff; text-decoration: underline; }
+  .breadcrumb .inactive { color: #ffffff; cursor: default; text-decoration: none; }
+  #view-container { flex-grow: 1; }
+  .view-container-scrollable { overflow-y: auto; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+  .card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center; background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer;
+    transition: all 0.2s ease; opacity: 0; transform: translateY(20px);
     animation: cardFadeIn 0.5s ease-out forwards;
   }
-  .card:hover {
-    transform: translateY(-5px);
-    border-color: #00c3ff;
-    background: rgba(0, 0, 0, 0.3);
-  }
-  .card i {
-    font-size: 2.5em;
-    margin-bottom: 15px;
-    color: #00c3ff;
-  }
-  .card span {
-    font-weight: 500;
-    color: #e0e0e0;
-  }
-  .file-list-container {
-    list-style-type: none;
-    padding: 0;
-  }
+  .card:hover { transform: translateY(-5px); border-color: #00c3ff; background: rgba(0, 0, 0, 0.3); }
+  .card i { font-size: 2.5em; margin-bottom: 15px; color: #00c3ff; }
+  .card span { font-weight: 500; color: #e0e0e0; }
+  .file-list-container { list-style-type: none; padding: 0; }
   .file-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
-    opacity: 0;
-    transform: translateY(15px);
+    display: flex; align-items: center; padding: 12px; border-radius: 6px;
+    transition: background-color 0.2s ease; opacity: 0; transform: translateY(15px);
     animation: cardFadeIn 0.5s ease-out forwards;
   }
   .file-item:hover { background-color: rgba(255, 255, 255, 0.08); }
-  .file-item i {
-    color: #e74c3c;
-    font-size: 1.5em;
-    margin-right: 15px;
-  }
-  .file-item a {
-    color: #e0e0e0;
-    text-decoration: none;
-    font-weight: 500;
-  }
+  .file-item i { color: #e74c3c; font-size: 1.5em; margin-right: 15px; }
+  .file-item a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
   .file-item a:hover { text-decoration: underline; }
-
-  /* =================================================================== */
-  /* =================== GAYA MODAL, SPINNER, & STATUS ================= */
-  /* =================================================================== */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+  .cell-font-bold {
+    font-weight: bold;
   }
-  
-  #appModal {
-    z-index: 1001;
-  }
-
-  .modal-overlay.show {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .modal-content {
-    background: rgba(44, 62, 80, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 30px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    max-width: 450px;
-    width: 90%;
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
-  }
-
-  .modal-overlay.show .modal-content {
-    transform: scale(1);
-  }
-
-  .modal-content h3 {
-    margin-top: 0;
-    color: #ffffff;
-  }
-
-  .modal-actions {
-    margin-top: 25px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-  }
-  
-  #deleteModal .modal-actions button {
-    flex-grow: 1;
-    padding: 10px;
-    font-size: 1em;
-    font-weight: 500;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #deleteModal .cancel-btn {
-    background-color: rgba(144, 164, 174, 0.2);
-    border-color: rgba(144, 164, 174, 0.4);
-    color: #e0e0e0;
-  }
-
-  #deleteModal .cancel-btn:hover {
-    background-color: rgba(144, 164, 174, 0.4);
-  }
-
-  #deleteModal .delete-btn-confirm {
-    background-color: rgba(229, 115, 115, 0.3);
-    border-color: rgba(229, 115, 115, 0.5);
-    color: #e0e0e0;
-  }
-
-  #deleteModal .delete-btn-confirm:hover {
-    background-color: rgba(229, 115, 115, 0.5);
-    color: #ffffff;
-  }
-  
-  .custom-modal-input {
-    width: 100%;
-    padding: 12px;
-    box-sizing: border-box;
-    font-size: 1.2em;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border-radius: 8px;
-    color: #ffffff;
-    margin-top: 15px;
-    transition: all 0.3s ease;
-  }
-
-  .custom-modal-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  .custom-modal-input:focus {
-    outline: none;
-    border-color: #00c3ff;
-    box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
-    background: rgba(0, 0, 0, 0.3);
-  }
-
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
-    text-align: center;
-  }
-
-  .loading-container .spinner {
-    margin: 0 0 15px 0;
-  }
-
-  .spinner-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    height: 50px;
-  }
-  .spinner-bar {
-    width: 8px;
-    height: 100%;
-    border-radius: 4px;
-    animation: bounce 1.2s infinite ease-in-out;
-  }
-  .spinner-bar:nth-child(1) {
-    background-color: #e74c3c;
-  }
-  .spinner-bar:nth-child(2) {
-    background-color: #2ecc71;
-    animation-delay: -1.1s;
-  }
-  .spinner-bar:nth-child(3) {
-    background-color: #f1c40f;
-    animation-delay: -1.0s;
-  }
-  .spinner-bar:nth-child(4) {
-    background-color: #3498db;
-    animation-delay: -0.9s;
-  }
-  @keyframes bounce {
-    0%, 40%, 100% {
-      transform: scaleY(0.4);
-    }
-    20% {
-      transform: scaleY(1.0);
-    }
-  }
-  
-  /* =================================================================== */
-  /* ===================== GAYA SCROLLBAR KUSTOM ======================= */
-  /* =================================================================== */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.4);
-  }
-  
-  /* =================================================================== */
-  /* ========================== ANIMASI GLOBAL ========================= */
-  /* =================================================================== */
-  @keyframes cardFadeIn {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes slideInFromLeft {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-  }
-  @keyframes fadeInUp {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes zoomIn {
-    to { opacity: 1; transform: scale(1); }
-  }
-  /* Laporan Bulan SD*/
-  .ptk-row .form-group {
-  margin-bottom: 0;
-  flex-grow: 1;
-}
-
-.form-column {
-  min-width: 0; /* Mencegah overflow pada grid */
-}
-
-#form-col-2 input[type="number"],
-#form-col-3 input[type="number"] {
-    text-align: center;
-}
-
-.tabs-container {
-  display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 20px;
-  flex-wrap: wrap; /* Agar rapi di layar kecil */
-}
-
-.tab-link {
-  padding: 10px 15px;
-  cursor: pointer;
-  background: none;
-  border: none;
-  color: #bdc3c7;
-  font-size: 0.95em;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 3px solid transparent;
-}
-
-.tab-link.active, .tab-link:hover {
-  color: #00c3ff;
-  border-bottom-color: #00c3ff;
-}
-
-.sub-section-title {
-  font-size: 1em;
-  color: #e0e0e0;
-  margin-top: 20px;
-  margin-bottom: 15px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.rombel-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
-}
-
-.agama-row {
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
-  align-items: center;
-}
-
-/* =================================================================== */
-/* ============= GAYA KHUSUS UNTUK FORM LAPORAN BULAN SD ============= */
-/* =================================================================== */
-
-/* GAYA BARU UNTUK FORM SD */
-.form-layout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-  gap: 25px;
-}
-.form-column {
-    min-width: 0; /* Mencegah kolom merusak layout saat mengecil */
-}
-/* Membuat semua input angka di kolom 2 & 3 menjadi rata tengah */
-#form-col-2 input[type="number"],
-#form-col-3 input[type="number"] {
-    text-align: center;
-}
-/* Perbaikan kecil agar form di kolom 1 lebih rapi */
-.form-grid-1 .form-group {
-    margin-bottom: 15px;
-}
-/* 2. GAYA UNTUK TAB KELAS (KOLOM TENGAH) */
-.tabs-container {
-    display: flex;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 20px;
-    flex-wrap: wrap; /* Agar tab tidak rusak di layar kecil */
-}
-.tab-link {
-    padding: 10px 15px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    color: #bdc3c7;
-    font-size: 0.95em;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border-bottom: 3px solid transparent;
-}
-.tab-link.active, .tab-link:hover {
-    color: #00c3ff;
-    border-bottom-color: #00c3ff;
-}
-.tab-content {
-    animation: fadeIn 0.5s ease;
-}
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-/* 3. GAYA UNTUK GRUP ISIAN DI DALAM TAB */
-.sub-section-title {
-    font-size: 1em;
-    color: #e0e0e0;
-    margin-top: 20px;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.rombel-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-}
-.rombel-input-group {
-    background-color: rgba(0,0,0,0.15);
-    padding: 10px;
-    border-radius: 6px;
-}
-.rombel-group-label {
-    text-align: center;
-    font-weight: 500;
-    display: block;
-    margin-bottom: 10px;
-}
-.agama-row {
-    grid-template-columns: 1fr 2fr;
-    gap: 20px;
-    align-items: center;
-}
-.agama-input-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-/* 4. GAYA UNTUK GRUP PTK (KOLOM KANAN) */
-.ptk-sub-fieldset {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  padding: 15px;
-  margin-top: 20px;
-}
-
-.ptk-sub-fieldset legend {
-  padding: 0 10px;
-  font-size: 1.1em;
-  font-weight: bold; /* DIUBAH: Menjadi tebal */
-  color: #00c3ff; /* Warna biru yang konsisten */
-  text-align: left;
-  margin-left: 0;
-  width: auto;
-}
-
-.ptk-row {
-  display: grid;
-  gap: 10px;
-  align-items: center;
-  font-size: 0.9em;
-  margin-bottom: 10px;
-}
-
-.ptk-row > label { /* Label baris seperti "Guru Kelas" */
-  font-weight: bold;
-  color: #e0e0e0;
-}
-
-.ptk-row .form-group label { /* Label di atas input seperti "PNS" */
-  font-weight: normal;
-  color: #bdc3c7;
-}
-
-.ptk-row .form-group {
-  margin-bottom: 0;
-}
-
-/* Aturan untuk setiap jumlah kolom */
-.ptk-grid-2 { grid-template-columns: 1fr 1fr; }
-.ptk-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-.ptk-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-/* Aturan khusus untuk baris yang punya label di depannya */
-.ptk-row.has-label {
-    grid-template-columns: 120px 1fr 1fr 1fr 1fr; /* 1 kolom untuk label, 4 untuk input */
-}
-
-/* =================================================================== */
-/* ============== GAYA KHUSUS TABEL RIWAYAT LAPBUL ================= */
-/* =================================================================== */
-
-/* Atur semua sel di tabel riwayat lapbul agar rata tengah */
-#lapbulRiwayatTable th,
-#lapbulRiwayatTable td {
-  text-align: center;
-}
-
-/* Atur sel pada kolom ke-3 (Bulan) dan ke-6 (Nama Sekolah) agar rata kiri */
-#lapbulRiwayatTable td:nth-child(3),
-#lapbulRiwayatTable td:nth-child(6) {
-  text-align: left;
-}
-
-/* =================================================================== */
-/* ============== GAYA TABEL KELOLA DATA LAPBUL ==================== */
-/* =================================================================== */
-
-/* 1. Atur semua sel di tabel agar rata tengah secara default */
-#lapbulKelolaTable th,
-#lapbulKelolaTable td {
-  text-align: center;
-}
-
-/* 2. Atur sel pada kolom ke-3 (Bulan) dan ke-6 (Nama Sekolah) agar rata kiri */
-/* Ingat: Kolom No. adalah anak ke-1 */
-#lapbulKelolaTable td:nth-child(3),
-#lapbulKelolaTable td:nth-child(6) {
-  text-align: left;
-}
-
-/* ========== */
-.dropdown-info {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s ease-out;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    margin-top: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
-}
-
-.info-btn.active + .dropdown-content {
-    border-color: rgba(0, 195, 255, 0.5);
-}
-
-.info-btn i.fa-chevron-down {
-    transition: transform 0.3s ease;
-}
-
-.info-btn.active i.fa-chevron-down {
-    transform: rotate(180deg);
-}
-
-.table-footer-note {
-  padding: 10px 15px;
-  font-size: 0.85em;
-  color: #bdc3c7;
-  text-align: left;
-  background: rgba(0, 0, 0, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0 0 10px 10px; /* Agar sudut bawahnya melengkung */
-  margin-top: -1px; /* Menempel dengan tabel di atasnya */
-}
-
-/* === GAYA FINAL TABEL KEADAAN PTK PAUD (FIXED HEADER) === */
-
-#tableWrapper .table-container {
-  max-height: 70vh;
-}
-
-#keadaanPtkPaudTable {
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-/* Aturan umum & header wrap */
-#keadaanPtkPaudTable th { white-space: normal; text-align: center; vertical-align: middle; }
-#keadaanPtkPaudTable td { text-align: center; vertical-align: middle; }
-#keadaanPtkPaudTable td.cell-align-left { text-align: left; }
-#keadaanPtkPaudTable td.cell-font-bold { font-weight: bold; }
-
-/* --- Pengaturan Lebar Kolom --- */
-#keadaanPtkPaudTable th:nth-child(1), td:nth-child(1) { width: 30px; }
-#keadaanPtkPaudTable th:nth-child(2), td:nth-child(2) { width: 210px; }
-#keadaanPtkPaudTable th:nth-child(n+3), td:nth-child(n+3) { width: 50px; }
-
-/* --- Pengaturan Sticky & Warna Latar --- */
-
-/* Pengaturan Header Sticky (atas) untuk SEMUA kolom */
-#keadaanPtkPaudTable thead th {
-  position: sticky; top: 0; z-index: 10;
-  background-color: #101E26;
-}
-
-/* Pengaturan Footer Sticky (bawah) */
-#keadaanPtkPaudTable tfoot {
-  position: sticky; bottom: -1px; z-index: 10;
-}
-#keadaanPtkPaudTable tfoot td {
-  font-weight: bold;
-  border-top: 2px solid rgba(0, 195, 255, 0.5);
-  background-color: #101E26;
-}
-
-/* Pengaturan Freeze Pane (Kolom Kiri) untuk SEL BODY */
-#keadaanPtkPaudTable tbody td:nth-child(1) {
-  position: sticky; left: 0; z-index: 4;
-  background-color: #1a2c38;
-}
-#keadaanPtkPaudTable tbody td:nth-child(2) {
-  position: sticky; left: 60px; z-index: 4;
-  background-color: #1a2c38;
-}
-
-/* --- PERBAIKAN UTAMA DI SINI --- */
-/* Pengaturan Freeze Kiri untuk HEADER dan FOOTER */
-#keadaanPtkPaudTable thead th:nth-child(1),
-#keadaanPtkPaudTable tfoot td:first-child {
-  position: sticky; left: 0; z-index: 15;
-}
-#keadaanPtkPaudTable thead th:nth-child(2) {
-  position: sticky; left: 50px; z-index: 15;
-}
-/* ------------------------------------ */
-
-/* Efek Hover */
-#keadaanPtkPaudTable tbody tr:hover td {
-  background-color: rgba(42, 65, 82, 0.5);
-}
-#keadaanPtkPaudTable tbody tr:hover td:nth-child(1),
-#keadaanPtkPaudTable tbody tr:hover td:nth-child(2) {
-  background-color: #2a4152;
-}
-
-/* =================================================================== */
-/* ============== GAYA TABEL KEADAAN PTK SD ==================== */
-/* =================================================================== */
-
-#keadaanPtkSdTable {
-  border-collapse: collapse;
-}
-
-#keadaanPtkSdTable th,
-#keadaanPtkSdTable td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-#keadaanPtkSdTable td:nth-child(2) {
-  text-align: left;
-}
-
-/* --- Pengaturan Lebar Kolom --- */
-#keadaanPtkSdTable th:nth-child(1), td:nth-child(1) { width: 50px; }
-#keadaanPtkSdTable th:nth-child(2), td:nth-child(2) { width: 250px; }
-
-
-/* --- LOGIKA STICKY DAN FREEZE YANG DISEMPURNAKAN --- */
-
-/* Aturan Umum untuk SEMUA header */
-#keadaanPtkSdTable thead th {
-  position: sticky;
-  background-color: #101E26;
-  white-space: normal;
-}
-
-/* Baris Header Pertama */
-#keadaanPtkSdTable thead tr:first-child th {
-  top: 0;
-  z-index: 12; /* Lapisan dasar untuk baris atas */
-}
-
-/* Baris Header Kedua */
-#keadaanPtkSdTable thead tr:last-child th {
-  top: 35px; /* Sesuaikan tinggi header pertama */
-  z-index: 11; /* Lapisan di bawah baris atas */
-}
-
-/* PERBAIKAN UTAMA: Aturan Freeze KHUSUS untuk header di baris PERTAMA */
-#keadaanPtkSdTable thead tr:first-child th:nth-child(1),
-#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
-  left: 0;
-  z-index: 15 !important; /* Lapisan paling atas, paksa dengan !important */
-}
-#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
-  left: 50px; /* Jarak untuk kolom kedua */
-}
-
-
-/* Aturan Freeze untuk sel BODY */
-#keadaanPtkSdTable tbody td:nth-child(1) {
-  position: sticky;
-  left: 0;
-  background-color: #1a2c38;
-  z-index: 5;
-}
-#keadaanPtkSdTable tbody td:nth-child(2) {
-  position: sticky;
-  left: 50px;
-  background-color: #1a2c38;
-  z-index: 5;
-}
-/* --- AKHIR PERBAIKAN --- */
-
-/* Efek Hover */
-#keadaanPtkSdTable tbody tr:hover td {
-  background-color: rgba(42, 65, 82, 0.5);
-}
-#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
-#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
-  background-color: #2a4152;
-}
-
-/* --- GAYA UNTUK BARIS JUMLAH (TOTAL) --- */
-#keadaanPtkSdTable tfoot {
-  position: sticky;
-  bottom: -1px; /* Sembunyikan border bawah scrollbar */
-  z-index: 10;
-}
-#keadaanPtkSdTable tfoot td {
-  background-color: #101E26;
-  font-weight: bold;
-  border-top: 2px solid rgba(0, 195, 255, 0.5);
-}
-
-/* Aturan Freeze untuk sel di baris Jumlah */
-#keadaanPtkSdTable tfoot td:nth-child(1) {
-  position: sticky; left: 0; z-index: 15;
-}
-#keadaanPtkSdTable tfoot td:nth-child(2) {
-  position: sticky; left: 50px; z-index: 15;
-}
-
 
 </style>
-
