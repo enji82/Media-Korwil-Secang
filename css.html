@@ -312,6 +312,11 @@
   /* =================================================================== */
   /* =============== 4. GAYA FORMULIR & FILTER UMUM ================== */
   /* =================================================================== */
+  .required-star {
+    color: var(--color-red); /* Menggunakan variabel warna merah dari tema */
+    margin-left: 4px;
+    font-weight: bold;
+  }
   .filter-container {
     max-width: none;
     width: 100%;
@@ -993,34 +998,34 @@
 
   /* --- KELOLA PTK PAUD */
   
-  /* Gaya Freeze Pane untuk tabel Kelola PTK PAUD */
-  #kelolaPtkPaudTable th:nth-child(1), #kelolaPtkPaudTable td:nth-child(1) {
-    position: sticky;
-    left: 0;
-    width: 50px;
-    min-width: 50px;
+  #kelolaPtkPaudTable th, #kelolaPtkPaudTable td {
+    text-align: center;
   }
-  #kelolaPtkPaudTable th:nth-child(2), #kelolaPtkPaudTable td:nth-child(2) {
-    position: sticky;
-    left: 50px;
+  #kelolaPtkPaudTable td:nth-child(2),
+  #kelolaPtkPaudTable td:nth-child(6) {
     text-align: left;
   }
-  #kelolaPtkPaudTable thead th:nth-child(1),
-  #kelolaPtkPaudTable thead th:nth-child(2) {
-    background-color: #101E26;
-  }
+
+  /* 1. Mendefinisikan semua elemen sticky */
+  #kelolaPtkPaudTable thead th { position: sticky; top: 0; }
+  #kelolaPtkPaudTable tbody td:nth-child(1) { position: sticky; left: 0; }
+  #kelolaPtkPaudTable tbody td:nth-child(2) { position: sticky; left: 50px; }
+  #kelolaPtkPaudTable thead th:nth-child(1) { position: sticky; left: 0; }
+  #kelolaPtkPaudTable thead th:nth-child(2) { position: sticky; left: 50px; }
+
+  /* 2. Memberi warna latar solid untuk semua elemen sticky */
+  #kelolaPtkPaudTable thead th { background-color: #101E26; }
   #kelolaPtkPaudTable tbody td:nth-child(1),
-  #kelolaPtkPaudTable tbody td:nth-child(2) {
-    background-color: #1c2e3a;
-  }
-  #kelolaPtkPaudTable thead th:nth-child(1) { z-index: 11; }
-  #kelolaPtkPaudTable thead th:nth-child(2) { z-index: 12; }
-  #kelolaPtkPaudTable tbody td:nth-child(1) { z-index: 9; }
-  #kelolaPtkPaudTable tbody td:nth-child(2) { z-index: 10; }
+  #kelolaPtkPaudTable tbody td:nth-child(2) { background-color: #1c2e3a; }
   #kelolaPtkPaudTable tbody tr:hover td:nth-child(1),
-  #kelolaPtkPaudTable tbody tr:hover td:nth-child(2) {
-    background-color: #2a4152;
-  }
+  #kelolaPtkPaudTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
+
+  /* 3. Mengatur lapisan z-index secara hirarkis */
+  #kelolaPtkPaudTable tbody td:nth-child(1) { z-index: 1; }
+  #kelolaPtkPaudTable tbody td:nth-child(2) { z-index: 1; }
+  #kelolaPtkPaudTable thead th { z-index: 2; }
+  #kelolaPtkPaudTable thead th:nth-child(1) { z-index: 3; }
+  #kelolaPtkPaudTable thead th:nth-child(2) { z-index: 3; }
 
 
   /* --- KEADAAN PTK PAUD --- */
