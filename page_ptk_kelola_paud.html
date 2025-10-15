@@ -2,24 +2,19 @@
   <h2>KELOLA DAFTAR PTK PAUD</h2>
 </header>
 
-<div class="filter-container-with-button">
-  <div class="filter-group-left">
-    <div class="filter-group">
-      <label for="filterJenjang">Jenjang:</label>
-      <select id="filterJenjang"></select>
-    </div>
-    <div class="filter-group">
-      <label for="filterNamaSekolah">Nama Sekolah:</label>
-      <select id="filterNamaSekolah"></select>
-    </div>
+<div class="filter-container">
+  <div class="filter-group">
+    <label for="filterJenjang">Jenjang:</label>
+    <select id="filterJenjang"></select>
   </div>
-  <div class="action-group-right">
-    <button id="tambahPtkBtn" class="submit-btn" style="width: auto; padding: 10px 20px;">
-      <i class="fas fa-plus" style="margin-right: 8px;"></i> Tambah PTK
-    </button>
+  <div class="filter-group">
+    <label for="filterNamaLembaga">Nama Lembaga:</label>
+    <select id="filterNamaLembaga"></select>
   </div>
+  <button id="tambahPtkBtn" class="submit-btn" style="width: auto; padding: 10px 20px;">
+    <i class="fas fa-plus" style="margin-right: 8px;"></i> Tambah PTK
+  </button>
 </div>
-
 
 <main class="table-view-container">
   <div id="loadingStatus" class="loading-container">
