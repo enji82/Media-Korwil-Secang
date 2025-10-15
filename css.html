@@ -13,7 +13,7 @@
     --color-cream: #f8f3d4;
     --color-dark-orange: #d35400;
     --color-dark-green: #27ae60;
-    --color-dark-red: #c0392b;
+    --color-dark-red: #c03b2b;
     --color-dark-purple: #8e44ad;
     --color-dark-blue: #2980b9;
     --color-dark-yellow: #f39c12;
@@ -301,6 +301,14 @@
   /* =================================================================== */
   /* =============== 4. GAYA FORMULIR & FILTER UMUM ================== */
   /* =================================================================== */
+  
+  /* Gaya untuk bintang merah pada input yang wajib diisi */
+  .required-star {
+    color: var(--color-red);
+    margin-left: 4px;
+    font-weight: bold;
+  }
+
   .filter-container {
     max-width: none;
     width: 100%;
@@ -362,7 +370,7 @@
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
   .form-group { margin-bottom: 20px; }
   .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #e0e0e0; }
-  .form-group input, .form-group select {
+  .form-group input, .form-group select, .form-group textarea {
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
@@ -449,6 +457,18 @@
   .data-table tbody tr:hover td {
     background-color: rgba(255, 255, 255, 0.08);
   }
+  .data-table tfoot.has-content td {
+    position: sticky;
+    bottom: -1px; /* Slight overlap to hide gap */
+    z-index: 5;
+    background-color: #101E26;
+    font-weight: bold;
+    border-top: 2px solid rgba(0, 195, 255, 0.5);
+  }
+  .data-table tbody tr:hover .sticky-col {
+    background-color: #2a4152;
+  }
+
 
   .action-buttons { display: flex; justify-content: center; align-items: center; gap: 8px; }
   .action-btn {
@@ -564,30 +584,52 @@
   /* =================================================================== */
   /* ===================== 7. GAYA SPESIFIK HALAMAN ==================== */
   /* =================================================================== */
+  
+  /* --- GAYA KOLOM BEKU (STICKY) SEDERHANA --- */
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background-color: #1c2e3a; /* Warna latar solid untuk kolom beku */
+    z-index: 2;
+  }
+  .data-table th.sticky-col {
+    z-index: 6; /* Header harus di atas body */
+    background-color: #101E26;
+  }
 
-  /* ------------------------------------------------------------------- */
-  /* ------------------- MODUL: SK Pembagian Tugas --------------------- */
-  /* ------------------------------------------------------------------- */
-
-  /* --- Riwayat Pengiriman SK (Freeze Pane Dihapus) --- */
+  /* --- MODUL: SK Pembagian Tugas --- */
   #riwayatTable th, #riwayatTable td { text-align: center; }
   #riwayatTable td:nth-child(2), #riwayatTable td:nth-child(5) { text-align: left; }
+  #riwayatTable th:nth-child(1), #riwayatTable td:nth-child(1) { 
+    position: sticky; left: 0; width: 50px; min-width: 50px; background-color: #1c2e3a; z-index: 2;
+  }
+  #riwayatTable th:nth-child(2), #riwayatTable td:nth-child(2) { 
+    position: sticky; left: 50px; background-color: #1c2e3a; z-index: 2;
+  }
+  #riwayatTable thead th:nth-child(1), #riwayatTable thead th:nth-child(2) {
+    z-index: 6; background-color: #101E26;
+  }
+  #riwayatTable tbody tr:hover td:nth-child(1), #riwayatTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152;
+  }
+  
+  #kelolaTable td { text-align: center; }
+  #kelolaTable td:nth-child(3), #kelolaTable td:nth-child(6) { text-align: left; }
 
-  /* --- Status Pengiriman SK (Freeze Pane Dihapus) --- */
+  /* --- MODUL : Status Pengiriman SK --- */
   #statusTable { table-layout: fixed; width: 100%; }
   #statusTable td, #statusTable th { text-align: center; }
   #statusTable td:nth-child(2) { text-align: left; }
   #statusTable th:nth-child(n+3) { white-space: normal; width: 70px; }
+  #statusTable th:nth-child(1), #statusTable td:nth-child(1) { width: 50px; min-width: 50px; }
+  #statusTable th:nth-child(2), #statusTable td:nth-child(2) { width: 250px; min-width: 250px; }
 
-  /* --- Kelola Data SK (Freeze Pane Dihapus) --- */
+  /* --- MODUL : Kelola Data SK --- */
   #kelolaTable th, #kelolaTable td { text-align: center; }
   #kelolaTable td:nth-child(2), #kelolaTable td:nth-child(5) { text-align: left; }
-  
-  /* ------------------------------------------------------------------- */
-  /* ---------------------- MODUL: Laporan Bulan ----------------------- */
-  /* ------------------------------------------------------------------- */
+  #kelolaTable th:nth-child(1), #kelolaTable td:nth-child(1) { width: 50px; min-width: 50px; }
 
-  /* --- Gaya Formulir Laporan Bulan --- */
+  /* --- MODUL: Laporan Bulan (Formulir) --- */
   .info-button-container { text-align: center; margin-top: 30px; }
   .info-btn { background: rgba(0, 180, 255, 0.2); border: 1px solid rgba(0, 180, 255, 0.5); color: #00c3ff; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.3s ease; }
   .info-btn:hover { background: rgba(0, 180, 255, 0.4); color: #ffffff; }
@@ -616,7 +658,7 @@
   .rombel-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
   .rombel-input-group { background-color: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; }
   .rombel-group-label { text-align: center; font-weight: 500; display: block; margin-bottom: 10px; }
-  .agama-row { grid-template-columns: 1fr 2fr; gap: 20px; align-items: center; }
+  .agama-row { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: center; }
   .agama-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ptk-sub-fieldset { border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 15px; margin-top: 20px; }
   .ptk-sub-fieldset legend { padding: 0 10px; font-size: 1.1em; font-weight: bold; color: #00c3ff; text-align: left; margin-left: 0; width: auto; }
@@ -626,73 +668,63 @@
   .ptk-row .form-group { margin-bottom: 0; }
   .ptk-row.has-label { grid-template-columns: 120px 1fr 1fr 1fr 1fr; }
 
-  /* --- Status Pengiriman Laporan Bulan (Freeze Pane Dihapus) --- */
+  /* --- MODUL: Laporan Bulan (Tabel) --- */
   #lapbulStatusTable { table-layout: fixed; width: 100%; }
   #lapbulStatusTable th, #lapbulStatusTable td { text-align: center; white-space: nowrap; }
   #lapbulStatusTable td:nth-child(2) { text-align: left; }
   #lapbulStatusTable th:nth-child(n+3), #lapbulStatusTable td:nth-child(n+3) { width: 70px; }
-
-  /* --- Kelola Data Laporan Bulan (Freeze Pane Dihapus) --- */
+  
   #lapbulKelolaTable th, #lapbulKelolaTable td { text-align: center; }
   #lapbulKelolaTable td:nth-child(2) { text-align: left; }
   #lapbulKelolaTable td:nth-child(3) { text-align: center !important; }
 
-  /* --- Riwayat Laporan Bulan (Freeze Pane Dihapus) --- */
   #lapbulRiwayatTable th, #lapbulRiwayatTable td { text-align: center; }
   #lapbulRiwayatTable td:nth-child(2), #lapbulRiwayatTable td:nth-child(5) { text-align: left; }
 
-  /* --- Dropdown Informasi --- */
   .dropdown-info { position: relative; display: inline-block; }
   .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
   .info-btn.active + .dropdown-content { border-color: rgba(0, 195, 255, 0.5); }
   .info-btn i.fa-chevron-down { transition: transform 0.3s ease; }
   .info-btn.active i.fa-chevron-down { transform: rotate(180deg); }
 
-  /* ------------------------------------------------------------------- */
-  /* ------------------------- MODUL: Data PTK ------------------------- */
-  /* ------------------------------------------------------------------- */
+  /* --- MODUL: Data PTK --- */
+  #daftarPtkPaudTable th, #daftarPtkPaudTable td { text-align: center; }
+  #daftarPtkPaudTable td:nth-child(2), #daftarPtkPaudTable td:nth-child(5), #daftarPtkPaudTable td:nth-child(7), #daftarPtkPaudTable td:nth-child(10), #daftarPtkPaudTable td:nth-child(11) { text-align: left; }
 
-  /* --- Daftar PTK PAUD (Freeze Pane Dihapus) --- */
-  #daftarPtkPaudTable th, #daftarPtkPaudTable td {
-    text-align: center;
-  }
-  #daftarPtkPaudTable td:nth-child(2),
-  #daftarPtkPaudTable td:nth-child(5),
-  #daftarPtkPaudTable td:nth-child(7),
-  #daftarPtkPaudTable td:nth-child(10),
-  #daftarPtkPaudTable td:nth-child(11) {
-    text-align: left;
-  }
-
-  /* --- Kelola Daftar PTK PAUD (Freeze Pane Dipertahankan) --- */
+/* --- KELOLA PTK PAUD --- */
+  
   #kelolaPtkPaudTable th, #kelolaPtkPaudTable td {
     text-align: center;
   }
+  /* Kolom Nama (ke-2) dan Nama Lembaga (ke-3) rata kiri */
   #kelolaPtkPaudTable td:nth-child(2),
-  #kelolaPtkPaudTable td:nth-child(6) {
+  #kelolaPtkPaudTable td:nth-child(3) {
     text-align: left;
   }
+
+  /* 1. Mendefinisikan semua elemen sticky */
   #kelolaPtkPaudTable thead th { position: sticky; top: 0; }
   #kelolaPtkPaudTable tbody td:nth-child(1) { position: sticky; left: 0; }
-  #kelolaPtkPaudTable tbody td:nth-child(2) { position: sticky; left: 50px; }
+  #kelolaPtkPaudTable tbody td:nth-child(2) { position: sticky; left: 50px; } /* Lebar kolom 'No.' */
   #kelolaPtkPaudTable thead th:nth-child(1) { position: sticky; left: 0; }
   #kelolaPtkPaudTable thead th:nth-child(2) { position: sticky; left: 50px; }
+
+  /* 2. Memberi warna latar solid untuk semua elemen sticky */
   #kelolaPtkPaudTable thead th { background-color: #101E26; }
   #kelolaPtkPaudTable tbody td:nth-child(1),
   #kelolaPtkPaudTable tbody td:nth-child(2) { background-color: #1c2e3a; }
   #kelolaPtkPaudTable tbody tr:hover td:nth-child(1),
   #kelolaPtkPaudTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
+
+  /* 3. Mengatur lapisan z-index secara hirarkis */
   #kelolaPtkPaudTable tbody td:nth-child(1) { z-index: 1; }
   #kelolaPtkPaudTable tbody td:nth-child(2) { z-index: 1; }
   #kelolaPtkPaudTable thead th { z-index: 2; }
   #kelolaPtkPaudTable thead th:nth-child(1) { z-index: 3; }
   #kelolaPtkPaudTable thead th:nth-child(2) { z-index: 3; }
 
-  /* --- Keadaan PTK PAUD (Freeze Pane Dihapus) --- */
-  #keadaanPtkPaudTable {
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
+  
+  #keadaanPtkPaudTable { border-collapse: collapse; table-layout: fixed; }
   #keadaanPtkPaudTable th { white-space: normal; text-align: center; vertical-align: middle; }
   #keadaanPtkPaudTable td { text-align: center; vertical-align: middle; }
   #keadaanPtkPaudTable td.cell-align-left { text-align: left; }
@@ -700,45 +732,18 @@
   #keadaanPtkPaudTable th:nth-child(1), #keadaanPtkPaudTable td:nth-child(1) { width: 50px; min-width: 50px; }
   #keadaanPtkPaudTable th:nth-child(2), #keadaanPtkPaudTable td:nth-child(2) { width: 210px; min-width: 210px; }
   #keadaanPtkPaudTable th:nth-child(n+3), #keadaanPtkPaudTable td:nth-child(n+3) { width: 50px; }
-  #keadaanPtkPaudTable tfoot td { background-color: #101E26; border-top: 2px solid rgba(0, 195, 255, 0.5); font-weight: bold; }
-
-  /* --- Keadaan PTK SD --- */
-  #tableWrapper .table-container { max-height: 70vh; }
+  
   #keadaanPtkSdTable { border-collapse: collapse; table-layout: fixed; }
   #keadaanPtkSdTable th { white-space: normal; text-align: center; vertical-align: middle; }
   #keadaanPtkSdTable td { text-align: center; vertical-align: middle; }
   #keadaanPtkSdTable td:nth-child(2) { text-align: left; }
-  #keadaanPtkSdTable thead th { position: sticky; top: 0; z-index: 10; background-color: #101E26; }
-  #keadaanPtkSdTable tfoot { position: sticky; bottom: -1px; z-index: 10; }
-  #keadaanPtkSdTable tfoot td { font-weight: bold; border-top: 2px solid rgba(0, 195, 255, 0.5); background-color: #101E26; }
   #keadaanPtkSdTable th:nth-child(1), #keadaanPtkSdTable td:nth-child(1) { width: 50px; }
   #keadaanPtkSdTable th:nth-child(2), #keadaanPtkSdTable td:nth-child(2) { width: 250px; }
-  #keadaanPtkSdTable thead tr:first-child th { top: 0; z-index: 12; }
-  #keadaanPtkSdTable thead tr:last-child th { top: 35px; z-index: 11; }
-  #keadaanPtkSdTable thead tr:first-child th:nth-child(1), #keadaanPtkSdTable thead tr:first-child th:nth-child(2) { z-index: 15 !important; }
-  #keadaanPtkSdTable thead tr:first-child th:nth-child(2) { left: 50px; }
-  #keadaanPtkSdTable tbody td:nth-child(1) { position: sticky; left: 0; background-color: #1a2c38; z-index: 5; }
-  #keadaanPtkSdTable tbody td:nth-child(2) { position: sticky; left: 50px; background-color: #1a2c38; z-index: 5; }
-  #keadaanPtkSdTable tbody tr:hover td:nth-child(1), #keadaanPtkSdTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
-  #keadaanPtkSdTable tfoot td:nth-child(1) { position: sticky; left: 0; z-index: 15; }
-  #keadaanPtkSdTable tfoot td:nth-child(2) { position: sticky; left: 50px; z-index: 15; }
+  
+  #ptkJumlahBulananPaudTable th, #ptkJumlahBulananPaudTable td { text-align: center; }
+  #ptkJumlahBulananPaudTable td:nth-child(2) { text-align: left; }
 
-  /* --- Jumlah PTK Bulanan PAUD (Freeze Pane Dihapus) --- */
-  #ptkJumlahBulananPaudTable th, #ptkJumlahBulananPaudTable td {
-    text-align: center;
-  }
-  #ptkJumlahBulananPaudTable td:nth-child(2) {
-    text-align: left;
-  }
-  #ptkJumlahBulananPaudTable tfoot td {
-    background-color: #101E26;
-    font-weight: bold;
-    border-top: 2px solid rgba(0, 195, 255, 0.5);
-  }
-
-  /* ------------------------------------------------------------------- */
-  /* ---------------------- MODUL: Arsip (Drive) ----------------------- */
-  /* ------------------------------------------------------------------- */
+  /* --- MODUL: Arsip (Drive Browser) --- */
   .arsip-container {
     background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -773,5 +778,17 @@
   .file-item a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
   .file-item a:hover { text-decoration: underline; }
   .cell-font-bold { font-weight: bold; }
+
+/* =================================================================== */
+/* ============== 8. PERBAIKAN BROWSER AUTOCOMPLETE ================== */
+/* =================================================================== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1f2a3a inset !important; /* Memaksa warna latar gelap */
+    -webkit-text-fill-color: #e0e0e0 !important; /* Memaksa warna teks menjadi terang */
+    caret-color: #e0e0e0 !important; /* Mengubah warna kursor ketik */
+}
 
 </style>
