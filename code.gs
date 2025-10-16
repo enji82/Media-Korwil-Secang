@@ -1133,7 +1133,7 @@ function getJumlahPtkPaudBulananData() {
  */
 function getDaftarPtkPaudData() {
   try {
-    const ss = SpreadsheetApp.openById("1XetGkBymmN2NZQlXpzZ2MQyG0nhhZ0sXEPcNsLffhEU");
+    const ss = SpreadsheetApp.openById("1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk");
     const sheet = ss.getSheetByName("PTK PAUD");
     if (!sheet) {
       throw new Error("Sheet 'PTK PAUD' tidak ditemukan.");
@@ -1143,23 +1143,19 @@ function getDaftarPtkPaudData() {
     const headers = allData[0];
     let dataRows = allData.slice(1);
 
-    // Indeks kolom yang akan diambil (A, B, C, D, E, F, G, H, I, J, K, L, M)
-    // A=0, B=1, C=2, ..., M=12
-    const colIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    // Filter header sesuai kolom yang diinginkan
-    const finalHeaders = colIndices.map(index => headers[index]);
-
-    // Urutkan baris data berdasarkan Nama (kolom C, indeks 2)
+    // [PERBAIKAN] Mengurutkan baris data berdasarkan abjad pada kolom "Nama" (indeks 2)
     dataRows.sort((a, b) => {
       // localeCompare digunakan untuk pengurutan abjad yang benar
       return a[2].localeCompare(b[2]);
     });
 
-    // Filter setiap baris untuk hanya menyertakan data dari kolom yang diinginkan
+    const colIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const finalHeaders = colIndices.map(index => headers[index]);
+    
     const finalData = dataRows.map(row => {
       return colIndices.map(index => row[index]);
     });
-    
+
     return [finalHeaders].concat(finalData);
 
   } catch (e) {
