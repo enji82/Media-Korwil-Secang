@@ -820,7 +820,14 @@ input:-webkit-autofill:active {
 #keadaanPtkPaudTable th, #keadaanPtkPaudTable td { text-align: center; }
 #keadaanPtkPaudTable td:nth-child(2) { text-align: left; }
 /* --- Logika Freeze Pane Lengkap (Termasuk thead dan tfoot) --- */
-
+#keadaanPtkPaudTable td:last-child {
+  background-color: rgba(0, 180, 255, 0.15); /* Warna highlight biru lembut */
+  font-weight: bold; /* Menebalkan teks agar lebih menonjol */
+}
+#keadaanPtkPaudTable tfoot td {
+  background-color: rgba(0, 180, 255, 0.15);
+  font-weight: bold;
+}
 /* 1. Definisikan semua elemen header, footer, dan sel yang akan menjadi sticky */
 #keadaanPtkPaudTable thead th,
 #keadaanPtkPaudTable tfoot td { position: sticky; }
@@ -862,81 +869,67 @@ input:-webkit-autofill:active {
 /* ====== 12. FINAL FREEZE PANE: JUMLAH PTK BULANAN PAUD ====== */
 /* =================================================================== */
 
-#ptkJumlahBulananPaudTable { 
-  border-collapse: collapse;
-  table-layout: fixed;
+#ptkJumlahBulananPaudTable th, 
+#ptkJumlahBulananPaudTable td { 
+  text-align: center; /* 1. Membuat semua konten rata tengah */
 }
-#ptkJumlahBulananPaudTable th, #ptkJumlahBulananPaudTable td { 
-  text-align: center;
-  vertical-align: middle; /* Menyamakan dengan tabel referensi */
-}
-#ptkJumlahBulananPaudTable th {
-  white-space: normal; /* Menyamakan dengan tabel referensi */
+#ptkJumlahBulananPaudTable td:nth-child(2) { 
+  text-align: left; /* 2. Kolom ke-2 (Nama Sekolah) dibuat rata kiri */
 }
 
-/* --- Pengaturan Lebar (Meniru Blok Pertama dari Tabel Stabil) --- */
-#ptkJumlahBulananPaudTable th:nth-child(1), #ptkJumlahBulananPaudTable td:nth-child(1) { 
-  width: 50px; 
-  min-width: 50px;
-}
-#ptkJumlahBulananPaudTable th:nth-child(2), #ptkJumlahBulananPaudTable td:nth-child(2) { 
-  width: 210px;
-  min-width: 210px;
-  text-align: left; 
-}
-#ptkJumlahBulananPaudTable th:nth-child(n+3), #ptkJumlahBulananPaudTable td:nth-child(n+3) { 
-  width: 50px;
+#ptkJumlahBulananPaudTable th:last-child,
+#ptkJumlahBulananPaudTable td:last-child {
+  font-weight: bold;
 }
 
-/* --- Logika Freeze Pane (Meniru Blok Kedua dari Tabel Stabil) --- */
-#ptkJumlahBulananPaudTable thead th, 
-#ptkJumlahBulananPaudTable tfoot td { 
-  position: sticky; 
-}
-#ptkJumlahBulananPaudTable thead th { 
-  top: 0; 
-}
-#ptkJumlahBulananPaudTable tfoot td { 
-  bottom: -1px; 
-}
-#ptkJumlahBulananPaudTable tbody td:nth-child(1), 
-#ptkJumlahBulananPaudTable tfoot td:nth-child(1) { 
-  position: sticky; left: 0; 
-}
-#ptkJumlahBulananPaudTable tbody td:nth-child(2), 
-#ptkJumlahBulananPaudTable tfoot td:nth-child(2) { 
-  position: sticky; left: 50px; 
-}
-#ptkJumlahBulananPaudTable thead th:nth-child(1) { 
-  position: sticky; left: 0; 
-}
-#ptkJumlahBulananPaudTable thead th:nth-child(2) { 
-  position: sticky; left: 50px; 
+#ptkJumlahBulananPaudTable td:last-child {
+  background-color: rgba(0, 180, 255, 0.15); /* Warna highlight biru lembut */
+  font-weight: bold; /* Menebalkan teks agar lebih menonjol */
 }
 
-/* --- Warna & Lapisan (Identik dengan Tabel Stabil) --- */
-#ptkJumlahBulananPaudTable thead th, 
-#ptkJumlahBulananPaudTable tfoot td { 
-  background-color: #101E26; 
+#ptkJumlahBulananPaudTable tfoot td {
+  background-color: rgba(0, 180, 255, 0.15);
+  font-weight: bold;
 }
-#ptkJumlahBulananPaudTable tbody td:nth-child(1), #ptkJumlahBulananPaudTable tbody td:nth-child(2),
-#ptkJumlahBulananPaudTable tfoot td:nth-child(1), #ptkJumlahBulananPaudTable tfoot td:nth-child(2) { 
-  background-color: #1c2e3a; 
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#ptkJumlahBulananPaudTable thead th,
+#ptkJumlahBulananPaudTable tfoot td {
+  position: sticky;
+  background-color: #101E26;
 }
-#ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(1), 
-#ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(2) { 
-  background-color: #2a4152; 
+#ptkJumlahBulananPaudTable thead th { top: 0; }
+#ptkJumlahBulananPaudTable tfoot td { bottom: -1px; }
+
+#ptkJumlahBulananPaudTable thead th:nth-child(1),
+#ptkJumlahBulananPaudTable tbody td:nth-child(1),
+#ptkJumlahBulananPaudTable tfoot td:nth-child(1) {
+  position: sticky;
+  left: 0;
 }
-#ptkJumlahBulananPaudTable tbody td, 
-#ptkJumlahBulananPaudTable tfoot td { 
-  z-index: 1; 
+#ptkJumlahBulananPaudTable thead th:nth-child(2),
+#ptkJumlahBulananPaudTable tbody td:nth-child(2),
+#ptkJumlahBulananPaudTable tfoot td:nth-child(2) {
+  position: sticky;
+  left: 50px;
 }
-#ptkJumlahBulananPaudTable thead th { 
-  z-index: 2; 
-} 
+
+/* --- Warna & Lapisan (Tidak Diubah) --- */
+#ptkJumlahBulananPaudTable tbody td:nth-child(1),
+#ptkJumlahBulananPaudTable tbody td:nth-child(2),
+#ptkJumlahBulananPaudTable tfoot td:nth-child(1),
+#ptkJumlahBulananPaudTable tfoot td:nth-child(2) {
+  background-color: #1c2e3a;
+}
+#ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(1),
+#ptkJumlahBulananPaudTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+#ptkJumlahBulananPaudTable tbody td, #ptkJumlahBulananPaudTable tfoot td { z-index: 1; }
+#ptkJumlahBulananPaudTable thead th { z-index: 2; }
 #ptkJumlahBulananPaudTable thead th:nth-child(1), #ptkJumlahBulananPaudTable thead th:nth-child(2),
-#ptkJumlahBulananPaudTable tfoot td:nth-child(1), #ptkJumlahBulananPaudTable tfoot td:nth-child(2) { 
-  z-index: 3; 
+#ptkJumlahBulananPaudTable tfoot td:nth-child(1), #ptkJumlahBulananPaudTable tfoot td:nth-child(2) {
+  z-index: 3;
 }
 
 </style>
