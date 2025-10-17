@@ -605,136 +605,68 @@ function processLapbulFormSd(formData) {
 
 function getLapbulRiwayatData() {
   try {
-    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
-    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+    const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Riwayat");
 
-    // Urutan header baru yang benar
-    const combinedHeaders = ["Nama Sekolah", "Status", "Rombel", "Bulan", "Tahun", "Dokumen", "Tanggal Unggah", "Jenjang"];
-    let combinedData = [];
+    if (!sheet) {
+      throw new Error("Sheet 'Riwayat' di spreadsheet gabungan tidak ditemukan.");
+    }
 
-    const parseDate = (dateString) => {
-        if (!dateString || typeof dateString !== 'string') return null;
-        const parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
-        if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
-        const isoDate = new Date(dateString);
-        return isNaN(isoDate) ? null : isoDate;
-    };
+    const allData = sheet.getDataRange().getDisplayValues();
 
-    const processSheetData = (sheet, jenjangDefault) => {
-      if (!sheet) return;
-      const data = sheet.getDataRange().getDisplayValues();
-      if (data.length < 2) return;
+    // KUNCI PERUBAHAN 1: Tentukan urutan kolom final yang Anda inginkan di sini.
+    // "Jenjang" tetap ada di akhir agar logika penyembunyian kolom di JavaScript tetap berfungsi.
+    const desiredHeaders = ["Nama Sekolah", "Status", "Bulan", "Tahun", "Rombel", "Dokumen", "Tanggal Unggah", "Jenjang"];
 
-      const headers = data[0].map(h => h.trim());
-      const rows = data.slice(1);
+    if (allData.length < 2) {
+      return [desiredHeaders]; // Jika data kosong, kirim header dengan urutan yang benar.
+    }
 
-      // Definisikan nama kolom yang mungkin berbeda di setiap sheet
-      const columnNames = {
-          waktu: 'Tanggal Unggah',
-          bulan: 'Bulan',
-          tahun: 'Tahun',
-          jenjang: 'Jenjang',
-          nama: 'Nama Sekolah',
-          status: 'Status',
-          rombel: 'Jumlah Rombel',
-          doc: 'Dokumen'
-      };
+    const sourceHeaders = allData[0].map(h => h.trim());
+    const dataRows = allData.slice(1);
 
-      const colIndices = {};
-      for (const key in columnNames) {
-          const index = headers.indexOf(columnNames[key]);
-          if (index === -1 && key !== 'jenjang') { // Kolom jenjang boleh tidak ada
-              throw new Error(`Header '${columnNames[key]}' tidak ditemukan di sheet '${jenjangDefault}'.`);
-          }
-          colIndices[key] = index;
-      }
-
-      rows.forEach(row => {
-        if (colIndices.waktu > -1 && row[colIndices.waktu]) {
-          const rowData = [
-            row[colIndices.nama],
-            row[colIndices.status],
-            row[colIndices.rombel],
-            row[colIndices.bulan],
-            row[colIndices.tahun],
-            row[colIndices.doc],
-            row[colIndices.waktu],
-            // Jika kolom jenjang tidak ada, gunakan default
-            colIndices.jenjang > -1 ? row[colIndices.jenjang] : jenjangDefault
-          ];
-          rowData.push(parseDate(row[colIndices.waktu])); 
-          combinedData.push(rowData);
-        }
-      });
-    };
-
-    processSheetData(paudSheet, 'PAUD');
-    processSheetData(sdSheet, 'SD');
-
-    combinedData.sort((a, b) => {
-        const dateA = a[a.length - 1];
-        const dateB = b[b.length - 1];
-        if (!dateA) return 1; if (!dateB) return -1;
-        return dateB - dateA;
+    // KUNCI PERBAIKAN 2: Buat peta untuk menemukan posisi kolom asli di spreadsheet.
+    const headerMap = {};
+    sourceHeaders.forEach((header, index) => {
+      headerMap[header] = index;
     });
 
-    const finalData = combinedData.map(row => row.slice(0, -1));
+    // KUNCI PERBAIKAN 3: Susun ulang setiap baris data sesuai urutan 'desiredHeaders'.
+    const reorderedDataRows = dataRows.map(row => {
+      const newRow = [];
+      desiredHeaders.forEach(header => {
+        const sourceIndex = headerMap[header];
+        // Jika kolom ditemukan di sumber, ambil datanya. Jika tidak, beri placeholder '-'.
+        newRow.push(sourceIndex !== undefined ? row[sourceIndex] : '-');
+      });
+      return newRow;
+    });
 
-    return [combinedHeaders].concat(finalData);
+    // Kirim header baru dan data yang sudah disusun ulang.
+    // Proses pengurutan berdasarkan tanggal akan tetap dilakukan di sisi browser seperti sebelumnya.
+    return [desiredHeaders].concat(reorderedDataRows);
 
   } catch(e) {
     Logger.log(`Error in getLapbulRiwayatData: ${e.message}\nStack: ${e.stack}`);
-    return { error: `Terjadi error di server: ${e.message}` };
+    throw new Error(`Terjadi error di server: ${e.message}`);
   }
 }
 
 function getLapbulStatusData() {
   try {
+    // Membuka spreadsheet dan sheet "Status" yang benar.
     const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Status");
+    
     if (!sheet) {
       throw new Error("Sheet 'Status' tidak ditemukan.");
     }
-    const allData = sheet.getDataRange().getDisplayValues();
-    if (allData.length < 2) {
-      return { headers: [], rows: [], filters: {} };
-    }
+    
+    // Langsung ambil dan kirim semua data yang terlihat (getDisplayValues).
+    // Proses pemilihan kolom dan filter akan dilakukan di javascript.html
+    return sheet.getDataRange().getDisplayValues();
 
-    const headers = allData[0];
-    const dataRows = allData.slice(1);
-
-    // Ekstrak data unik untuk filter
-    const uniqueTahun = [...new Set(dataRows.map(row => row[1]))].filter(Boolean).sort().reverse(); // Kolom B
-    const uniqueJenjang = [...new Set(dataRows.map(row => row[0]))].filter(Boolean).sort(); // Kolom A
-    const uniqueStatus = [...new Set(dataRows.map(row => row[3]))].filter(Boolean).sort(); // Kolom D
-
-    // Ambil header dari kolom C (indeks 2) sampai P (indeks 15)
-    const displayHeaders = headers.slice(2, 16);
-
-    // Proses baris data untuk dikirim ke client
-    const displayRows = dataRows.map(row => {
-      return {
-        // Data ini digunakan untuk filtering di sisi client
-        filters: {
-          jenjang: row[0], // Kolom A
-          tahun: row[1],   // Kolom B
-          status: row[3]   // Kolom D
-        },
-        // Data ini yang akan ditampilkan di tabel (Kolom C s/d P)
-        values: row.slice(2, 16)
-      };
-    });
-
-    return {
-      headers: displayHeaders,
-      rows: displayRows,
-      filters: {
-        tahun: uniqueTahun,
-        jenjang: uniqueJenjang,
-        status: uniqueStatus
-      }
-    };
   } catch (e) {
-    return handleError('getLapbulStatusData', e);
+    Logger.log(`Error in getLapbulStatusData: ${e.message}`);
+    throw new Error(`Terjadi error di server: ${e.message}`);
   }
 }
 
@@ -748,14 +680,20 @@ function getLapbulKelolaData() {
     const parseDateForSort = (dateStr) => {
         if (!dateStr || !(typeof dateStr === 'string' || dateStr instanceof Date)) return new Date(0);
         if (dateStr instanceof Date) return dateStr;
-        const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        if (!parts) return new Date(0);
-        return new Date(parts[3], parts[2] - 1, parts[1]); // yyyy, MM-1, dd
+        const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
+        if (parts) {
+            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+        }
+        const dateOnlyParts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (dateOnlyParts) {
+            return new Date(dateOnlyParts[3], dateOnlyParts[2] - 1, dateOnlyParts[1]);
+        }
+        return new Date(0);
     };
 
     const processSheetData = (sheet, sourceName) => {
       if (!sheet || sheet.getLastRow() < 2) return;
-      const data = sheet.getDataRange().getValues(); // Get raw values to preserve dates
+      const data = sheet.getDataRange().getValues();
       const headers = data[0].map(h => String(h).trim());
       const rows = data.slice(1);
 
@@ -775,7 +713,6 @@ function getLapbulKelolaData() {
             rowData[header] = (header === "Tanggal Unggah" || header === "Update") ? formatDate(row[i]) : row[i];
         });
 
-        // [KUNCI PERBAIKAN] Menambahkan data Jenjang 'SD' secara manual
         if (sourceName === 'SD') {
           rowData['Jenjang'] = 'SD';
         }
@@ -791,10 +728,11 @@ function getLapbulKelolaData() {
     processSheetData(paudSheet, 'PAUD');
     processSheetData(sdSheet, 'SD');
     
+    // KUNCI PERBAIKAN: Logika pengurutan diubah agar HANYA menggunakan "Tanggal Unggah"
     combinedData.sort((a, b) => {
-        const dateB = parseDateForSort(b.data['Update'] || b.data['Tanggal Unggah']);
-        const dateA = parseDateForSort(a.data['Update'] || a.data['Tanggal Unggah']);
-        return dateB - dateA;
+        const dateB = parseDateForSort(b.data['Tanggal Unggah']);
+        const dateA = parseDateForSort(a.data['Tanggal Unggah']);
+        return dateB - dateA; // Mengurutkan dari yang terbaru ke terlama
     });
 
     return { headers: finalHeaders, rows: combinedData };
@@ -847,11 +785,10 @@ function updateLapbulData(formData) {
     const rowIndex = formData.rowIndex;
     if (!source || !rowIndex) throw new Error("Informasi 'source' atau 'rowIndex' tidak ditemukan.");
 
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
-
+    // KUNCI PERBAIKAN: Blok ini dipindahkan ke atas agar variabel 'sheet'
+    // terdefinisi sebelum digunakan.
     if (source === 'PAUD') {
       sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
-      // Dapatkan jenjang dari data yang dikirim jika ada, jika tidak, baca dari sheet
       const jenjang = formData.jenjang || sheet.getRange(rowIndex, headers.indexOf('Jenjang') + 1).getValue();
       FOLDER_ID = jenjang === 'KB' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_TK;
     } else if (source === 'SD') {
@@ -861,6 +798,8 @@ function updateLapbulData(formData) {
       throw new Error("Sumber data tidak valid: " + source);
     }
     
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+
     if (!formData.laporanBulan || !formData.tahun) {
         throw new Error("Informasi 'laporanBulan' atau 'tahun' kosong. Tidak dapat memproses file.");
     }
@@ -899,18 +838,14 @@ function updateLapbulData(formData) {
     });
     range.setValues([newRowValues]);
 
-    // --- PERBAIKAN UTAMA DI SINI ---
-    // 1. Cari posisi kolom "Update"
     const updateColIndex = headers.indexOf('Update');
     if (updateColIndex !== -1) {
-      // 2. Set format sel di kolom tersebut agar selalu menampilkan tanggal dan jam
       sheet.getRange(rowIndex, updateColIndex + 1).setNumberFormat("dd/MM/yyyy HH:mm:ss");
     }
     
     return "Data berhasil diperbarui.";
   } catch (e) {
     Logger.log(`Error in updateLapbulData: ${e.message}\nStack: ${e.stack}`);
-    // Mengembalikan objek error agar bisa ditangkap di client
     return { error: `Terjadi error di server: ${e.message}` };
   }
 }
