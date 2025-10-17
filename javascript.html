@@ -889,7 +889,7 @@ function initSkArsipPage() {
 
 function initLapbulUnggahPage() {
     initSubMenuPage(); 
-    setupInfoDropdown('showInfoBtn', 'infoDropdownContent', 'getLapbulInfo');
+    setupInfoDropdown('infoDropdownBtn', 'infoDropdownContent', 'getLapbulInfo');
 }
 
 
@@ -1166,7 +1166,15 @@ function initLapbulFormSdPage() {
 
 function initLapbulRiwayatPage() {
     let allDataRows = [], headerCols = [], filterIndices = {}, currentPage = 1, rowsPerPage = 15, currentFilteredRows = [];
-    let jenjangIndex = -1; // Variabel baru untuk menyimpan posisi kolom Jenjang
+    let jenjangIndex = -1;
+
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15;
+        const rowHeight = 40;
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180; 
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
 
     function buildTable() {
         const tableBody = document.getElementById('lapbulRiwayatTable').querySelector('tbody');
@@ -1178,7 +1186,6 @@ function initLapbulRiwayatPage() {
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
         
-        // Menghitung jumlah kolom yang akan ditampilkan (tanpa Jenjang)
         const visibleColsCount = jenjangIndex > -1 ? headerCols.length - 1 : headerCols.length;
 
         if (paginatedRows.length === 0) {
@@ -1188,9 +1195,7 @@ function initLapbulRiwayatPage() {
                 const tr = document.createElement('tr');
                 let rowHTML = `<td>${start + index + 1}</td>`;
                 cols.forEach((cellData, i) => {
-                    // [KUNCI PERUBAHAN] Lewati (jangan render) sel jika itu adalah kolom Jenjang
                     if (i === jenjangIndex) return;
-
                     cellData = cellData || '-';
                     if (headerCols[i] === 'Dokumen' && typeof cellData === 'string' && cellData.startsWith('http')) {
                         rowHTML += `<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`;
@@ -1206,7 +1211,6 @@ function initLapbulRiwayatPage() {
     }
     
     function setupPagination() {
-        // ... (Fungsi ini tidak perlu diubah)
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
@@ -1231,15 +1235,17 @@ function initLapbulRiwayatPage() {
     }
     
     function applyFilters() {
-        // ... (Fungsi ini tidak perlu diubah)
         const filterTahun = document.getElementById('filterTahun').value;
+        const filterBulan = document.getElementById('filterBulan').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterNama = document.getElementById('filterNamaSekolah').value;
+
         currentFilteredRows = allDataRows.filter(cols => {
             const tahunMatch = (filterTahun === "") || (String(cols[filterIndices.tahun]) === filterTahun);
+            const bulanMatch = (filterBulan === "") || (String(cols[filterIndices.bulan]) === filterBulan);
             const jenjangMatch = (filterJenjang === "") || (String(cols[filterIndices.jenjang]) === filterJenjang);
             const namaMatch = (filterNama === "") || (String(cols[filterIndices.nama]) === filterNama);
-            return tahunMatch && jenjangMatch && namaMatch;
+            return tahunMatch && bulanMatch && jenjangMatch && namaMatch;
         });
         currentPage = 1;
         buildTable();
@@ -1249,19 +1255,43 @@ function initLapbulRiwayatPage() {
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
         const tableHead = document.getElementById('lapbulRiwayatTable').querySelector('thead');
-        if (!dataArray || dataArray.length < 2) {
-            loadingStatus.innerHTML = "<p>Tidak ada data riwayat untuk ditampilkan.</p>"; return;
-        }
-        headerCols = dataArray[0].map(h => String(h).trim());
-        allDataRows = dataArray.slice(1);
 
-        // [KUNCI PERUBAHAN] Cari tahu di mana posisi kolom "Jenjang" berada
+        if (!dataArray || dataArray.length < 2) {
+            loadingStatus.innerHTML = "<p>Tidak ada data riwayat untuk ditampilkan.</p>";
+            return;
+        }
+        
+        headerCols = dataArray[0].map(h => String(h).trim());
+        let rawDataRows = dataArray.slice(1);
+
+        const tglUnggahIndex = headerCols.indexOf('Tanggal Unggah');
+        if (tglUnggahIndex === -1) {
+            loadingStatus.innerHTML = "<p style='color:red;'>Error: Kolom 'Tanggal Unggah' tidak ditemukan untuk pengurutan.</p>";
+            return;
+        }
+
+        const parseDate = (dateString) => {
+            if (!dateString || typeof dateString !== 'string') return null;
+            const parts = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{2}):(\d{2})/);
+            if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            const isoDate = new Date(dateString);
+            return isNaN(isoDate) ? null : isoDate;
+        };
+
+        rawDataRows.sort((a, b) => {
+            const dateA = parseDate(a[tglUnggahIndex]);
+            const dateB = parseDate(b[tglUnggahIndex]);
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB - dateA;
+        });
+        allDataRows = rawDataRows;
+
         jenjangIndex = headerCols.indexOf('Jenjang');
 
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = '<th>No.</th>';
         headerCols.forEach((header, i) => {
-            // [KUNCI PERUBAHAN] Hanya tambahkan header ke tabel jika bukan "Jenjang"
             if (i !== jenjangIndex) {
                 headerRow.innerHTML += `<th>${header}</th>`;
             }
@@ -1269,27 +1299,46 @@ function initLapbulRiwayatPage() {
         tableHead.innerHTML = '';
         tableHead.appendChild(headerRow);
         
-        rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable');
+        // Baris ini dipindahkan ke bawah
+        // rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable'); 
 
-        // Logika filter tetap sama, karena `headerCols` masih berisi "Jenjang"
-        filterIndices = { tahun: headerCols.indexOf('Tahun'), jenjang: headerCols.indexOf('Jenjang'), nama: headerCols.indexOf('Nama Sekolah') };
+        filterIndices = { 
+            tahun: headerCols.indexOf('Tahun'), 
+            bulan: headerCols.indexOf('Bulan'),
+            jenjang: headerCols.indexOf('Jenjang'), 
+            nama: headerCols.indexOf('Nama Sekolah') 
+        };
         
-        const populateFilter = (elementId, colIndex, sortReverse = false) => {
+        const populateFilter = (elementId, colIndex, specialSort = null) => {
             const select = document.getElementById(elementId);
-            if (!select) return;
+            if (!select || colIndex === -1) return;
             const uniqueValues = [...new Set(allDataRows.map(row => String(row[colIndex])))].filter(Boolean);
             select.innerHTML = `<option value="">Semua</option>`;
-            let sortedValues = uniqueValues.sort();
-            if (sortReverse) sortedValues.reverse();
+            
+            let sortedValues;
+            if (specialSort === 'bulan') {
+                const monthOrder = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                sortedValues = uniqueValues.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+            } else {
+                sortedValues = uniqueValues.sort();
+                if (specialSort === 'reverse') sortedValues.reverse();
+            }
+
             sortedValues.forEach(val => select.add(new Option(val, val)));
             select.addEventListener('change', applyFilters);
         };
-        populateFilter('filterTahun', filterIndices.tahun, true);
+
+        populateFilter('filterTahun', filterIndices.tahun, 'reverse');
+        populateFilter('filterBulan', filterIndices.bulan, 'bulan');
         populateFilter('filterJenjang', filterIndices.jenjang);
         populateFilter('filterNamaSekolah', filterIndices.nama);
         
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
+
+        // KUNCI PERBAIKAN: Panggil kalkulasi SETELAH tabel ditampilkan
+        rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable');
+        
         applyFilters();
     }
 
@@ -1297,29 +1346,29 @@ function initLapbulRiwayatPage() {
         .withSuccessHandler(initializePage)
         .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })
         .getLapbulRiwayatData();
-
-    window.addEventListener('resize', debounce(() => { if (document.getElementById('lapbulRiwayatTable')) { rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable'); buildTable(); } }));
+        
+    window.addEventListener('resize', debounce(() => { 
+        if (document.getElementById('lapbulRiwayatTable')) { 
+            rowsPerPage = calculateRowsPerPage('lapbulRiwayatTable'); 
+            buildTable();
+        } 
+    }));
 }
 
 function initLapbulStatusPage() {
-    let allDataRows = [],
-        headerCols = [],
-        currentFilteredRows = [],
-        currentPage = 1,
-        rowsPerPage = 15;
+    let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
+
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15;
+        const rowHeight = 40;
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
 
     function buildTable() {
         const tableBody = document.getElementById('lapbulStatusTable').querySelector('tbody');
-        const tableHead = document.getElementById('lapbulStatusTable').querySelector('thead');
-        if (!tableBody || !tableHead) return;
-
-        // [PERBAIKAN] Menambahkan header "No." secara manual
-        let headerHTML = '<tr><th>No.</th>'; 
-        headerCols.forEach(header => {
-            headerHTML += `<th>${header}</th>`;
-        });
-        headerHTML += '</tr>';
-        tableHead.innerHTML = headerHTML;
+        if (!tableBody) return;
 
         tableBody.innerHTML = '';
         const pageCount = Math.max(1, Math.ceil(currentFilteredRows.length / rowsPerPage));
@@ -1328,15 +1377,13 @@ function initLapbulStatusPage() {
         const end = start + rowsPerPage;
         const paginatedRows = currentFilteredRows.slice(start, end);
 
-        // [PERBAIKAN] Menyesuaikan colspan jika tidak ada data
         if (paginatedRows.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok.</td></tr>`;
         } else {
             paginatedRows.forEach((rowData, index) => {
                 const tr = document.createElement('tr');
-                // [PERBAIKAN] Menambahkan sel untuk kolom "No."
-                let rowHTML = `<td>${start + index + 1}</td>`; 
-                rowData.values.forEach(cellData => {
+                let rowHTML = `<td>${start + index + 1}</td>`;
+                rowData.displayData.forEach(cellData => {
                     let displayCell = cellData;
                     if (cellData === 'T') {
                         displayCell = '<span style="color: var(--color-green); font-weight: bold;">✓</span>';
@@ -1353,15 +1400,12 @@ function initLapbulStatusPage() {
     }
     
     function setupPagination() {
-        // ... (fungsi ini tidak perlu diubah)
         const paginationContainer = document.getElementById('pagination-container');
         paginationContainer.innerHTML = '';
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
-        if (pageCount <= 1) {
-            paginationContainer.style.display = 'none';
-            return;
-        }
+        if (pageCount <= 1) { paginationContainer.style.display = 'none'; return; }
         paginationContainer.style.display = 'flex';
+
         const pageInfo = document.createElement('span');
         pageInfo.className = 'page-info';
         pageInfo.textContent = `Halaman ${currentPage} dari ${pageCount}`;
@@ -1369,31 +1413,28 @@ function initLapbulStatusPage() {
         prevBtn.innerHTML = '«';
         prevBtn.className = 'page-btn';
         prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => {
-            if (currentPage > 1) { currentPage--; buildTable(); }
-        };
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; buildTable(); } };
         const nextBtn = document.createElement('button');
         nextBtn.innerHTML = '»';
         nextBtn.className = 'page-btn';
         nextBtn.disabled = currentPage === pageCount;
-        nextBtn.onclick = () => {
-            if (currentPage < pageCount) { currentPage++; buildTable(); }
-        };
+        nextBtn.onclick = () => { if (currentPage < pageCount) { currentPage++; buildTable(); } };
+        
         paginationContainer.appendChild(prevBtn);
         paginationContainer.appendChild(pageInfo);
         paginationContainer.appendChild(nextBtn);
     }
 
     function applyFilters() {
-        // ... (fungsi ini tidak perlu diubah)
         const filterTahun = document.getElementById('filterTahun').value;
         const filterJenjang = document.getElementById('filterJenjang').value;
         const filterStatus = document.getElementById('filterStatus').value;
         
         currentFilteredRows = allDataRows.filter(row => {
-            const tahunMatch = (filterTahun === "") || (row.filters.tahun === filterTahun);
-            const jenjangMatch = (filterJenjang === "") || (row.filters.jenjang === filterJenjang);
-            const statusMatch = (filterStatus === "") || (row.filters.status === filterStatus);
+            const tahunMatch = (filterTahun === "") || (row.filterData.tahun === filterTahun);
+            // KUNCI PERBAIKAN: Mengganti 'jenjangMatch' dengan 'filterJenjang'
+            const jenjangMatch = (filterJenjang === "") || (row.filterData.jenjang === filterJenjang);
+            const statusMatch = (filterStatus === "") || (row.filterData.status === filterStatus);
             return tahunMatch && jenjangMatch && statusMatch;
         });
         currentPage = 1;
@@ -1401,34 +1442,54 @@ function initLapbulStatusPage() {
     }
 
     function initializePage(serverData) {
-        // ... (fungsi ini tidak perlu diubah)
         const loadingStatus = document.getElementById('loadingStatus');
         const tableWrapper = document.getElementById('tableWrapper');
+        const tableHead = document.getElementById('lapbulStatusTable').querySelector('thead');
 
-        if (serverData && serverData.error) {
-            loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${serverData.error}</p>`;
-            return;
-        }
-        if (!serverData || !serverData.rows || serverData.rows.length === 0) {
+        if (!serverData || serverData.length < 2) {
             loadingStatus.innerHTML = `<p>Tidak ada data status untuk ditampilkan.</p>`;
             return;
         }
 
-        headerCols = serverData.headers;
-        allDataRows = serverData.rows;
-        rowsPerPage = calculateRowsPerPage('lapbulStatusTable');
+        const sourceHeaders = serverData[0];
+        const sourceRows = serverData.slice(1);
+
+        const filterIndices = {
+            jenjang: 0, // Kolom A
+            tahun: 1,   // Kolom B
+            status: 3   // Kolom D
+        };
+        const displayIndices = [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
+        headerCols = displayIndices.map(index => sourceHeaders[index]);
+
+        allDataRows = sourceRows.map(row => {
+            return {
+                filterData: {
+                    jenjang: row[filterIndices.jenjang],
+                    tahun: row[filterIndices.tahun],
+                    status: row[filterIndices.status]
+                },
+                displayData: displayIndices.map(index => row[index])
+            };
+        });
+
+        tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
         
-        const populateFilter = (elementId, options) => {
+        const populateFilter = (elementId, colIndex, sortReverse = false) => {
             const select = document.getElementById(elementId);
-            if (!select || !options) return;
+            if (!select) return;
             select.innerHTML = '<option value="">Semua</option>';
-            options.forEach(opt => select.add(new Option(opt, opt)));
+            const uniqueValues = [...new Set(sourceRows.map(row => row[colIndex]))].filter(Boolean);
+            let sorted = uniqueValues.sort();
+            if(sortReverse) sorted.reverse();
+            sorted.forEach(opt => select.add(new Option(opt, opt)));
             select.addEventListener('change', applyFilters);
         };
         
-        populateFilter('filterTahun', serverData.filters.tahun);
-        populateFilter('filterJenjang', serverData.filters.jenjang);
-        populateFilter('filterStatus', serverData.filters.status);
+        populateFilter('filterTahun', filterIndices.tahun, true);
+        populateFilter('filterJenjang', filterIndices.jenjang);
+        populateFilter('filterStatus', filterIndices.status);
         
         const tahunSelect = document.getElementById('filterTahun');
         if (tahunSelect) {
@@ -1440,8 +1501,8 @@ function initLapbulStatusPage() {
         
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
-        document.getElementById('pagination-container').style.display = 'flex';
         
+        rowsPerPage = calculateRowsPerPage('lapbulStatusTable');
         applyFilters();
     }
 
@@ -1451,6 +1512,13 @@ function initLapbulStatusPage() {
             document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data dari server: ${error.message}</p>`;
         })
         .getLapbulStatusData();
+        
+    window.addEventListener('resize', debounce(() => {
+        if(document.getElementById('lapbulStatusTable')) {
+            rowsPerPage = calculateRowsPerPage('lapbulStatusTable');
+            buildTable();
+        }
+    }));
 }
 
 function initLapbulArsipPage() {
@@ -1584,6 +1652,14 @@ function initLapbulArsipPage() {
 function initLapbulKelolaPage() {
     let allDataRows = [], allHeaders = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
 
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15;
+        const rowHeight = 40;
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
+
     function buildTable() {
         const tableBody = document.getElementById('lapbulKelolaTable').querySelector('tbody');
         if (!tableBody) return;
@@ -1599,9 +1675,8 @@ function initLapbulKelolaPage() {
         } else {
             paginatedRows.forEach((rowInfo, index) => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${start + index + 1}</td>`; // Tambahkan sel No.
+                tr.innerHTML = `<td>${start + index + 1}</td>`;
 
-                // Loop melalui header dan buat setiap sel satu per satu
                 allHeaders.forEach(header => {
                     const td = document.createElement('td');
                     let cellData = rowInfo.data[header];
@@ -1662,13 +1737,11 @@ function initLapbulKelolaPage() {
         paginationContainer.appendChild(nextBtn);
     }
     
-    // [KUNCI PERBAIKAN] Fungsi ini dikembalikan
     function updateNamaSekolahFilter() {
         const jenjangFilter = document.getElementById('filterJenjang').value;
         const namaSekolahFilter = document.getElementById('filterNamaSekolah');
         if (!namaSekolahFilter) return;
         
-        // Simpan nilai yang sedang dipilih
         const currentNamaSekolah = namaSekolahFilter.value;
 
         const filteredData = (jenjangFilter === "") ? allDataRows : allDataRows.filter(row => row.data['Jenjang'] === jenjangFilter);
@@ -1677,7 +1750,6 @@ function initLapbulKelolaPage() {
         namaSekolahFilter.innerHTML = '<option value="">Semua</option>';
         uniqueSekolah.forEach(nama => { namaSekolahFilter.add(new Option(nama, nama)); });
 
-        // Coba set kembali nilai yang tadi dipilih jika masih ada di opsi baru
         if ([...namaSekolahFilter.options].some(opt => opt.value === currentNamaSekolah)) {
             namaSekolahFilter.value = currentNamaSekolah;
         }
@@ -1690,7 +1762,8 @@ function initLapbulKelolaPage() {
         
         currentFilteredRows = allDataRows.filter(row => {
             const tahunMatch = (filterTahun === "") || (String(row.data['Tahun']).trim() === filterTahun);
-            const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === jenjangFilter);
+            // KUNCI PERBAIKAN: Mengganti 'jenjangFilter' dengan 'filterJenjang'
+            const jenjangMatch = (filterJenjang === "") || (row.data['Jenjang'] === filterJenjang);
             const namaMatch = (filterNama === "") || (row.data['Nama Sekolah'] === filterNama);
             return tahunMatch && jenjangMatch && namaMatch;
         });
@@ -1698,7 +1771,6 @@ function initLapbulKelolaPage() {
         buildTable();
     }
     
-    // [BARU] Fungsi-fungsi untuk proses penghapusan
     function showDeleteConfirmation(rowInfo) {
         const modal = document.getElementById('deleteModal');
         if (!modal) return;
@@ -1741,10 +1813,10 @@ function initLapbulKelolaPage() {
         google.script.run
             .withSuccessHandler(response => {
                 document.getElementById('deleteModal').classList.remove('show');
-                showAppModal('success', response, 'lapbul_kelola'); // Muat ulang halaman setelah sukses
+                showAppModal('success', response, 'lapbul_kelola');
             })
             .withFailureHandler(error => showAppModal('error', error.message))
-            .deleteLapbulData(rowInfo.rowIndex, rowInfo.source, deleteCode); // Panggil fungsi backend
+            .deleteLapbulData(rowInfo.rowIndex, rowInfo.source, deleteCode);
     }
 
     function initializePage(serverData) {
@@ -1761,7 +1833,7 @@ function initLapbulKelolaPage() {
             allHeaders.splice(docIndex + 1, 0, 'Aksi');
         }
         tableHead.innerHTML = `<tr><th>No.</th>${allHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
+        
         const populateStaticFilter = (elementId, key, sortReverse = false) => {
             const select = document.getElementById(elementId);
             if (!select) return;
@@ -1773,26 +1845,37 @@ function initLapbulKelolaPage() {
         };
         populateStaticFilter('filterTahun', 'Tahun', true);
         populateStaticFilter('filterJenjang', 'Jenjang');
+
         document.getElementById('filterJenjang').addEventListener('change', () => {
             updateNamaSekolahFilter(); 
             applyFilters();
         });
         document.getElementById('filterNamaSekolah').addEventListener('change', applyFilters);
         document.getElementById('filterTahun').addEventListener('change', applyFilters);
+        
         updateNamaSekolahFilter();
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
+
+        rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
+        
         document.getElementById('pagination-container').style.display = 'flex';
         applyFilters();
     }
     
-    // Panggilan eksekusi utama
     google.script.run
         .withFailureHandler(err => {
             document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Error komunikasi: ${err.message}</p>`;
         })
         .withSuccessHandler(initializePage)
         .getLapbulKelolaData();
+
+    window.addEventListener('resize', debounce(() => {
+        if (document.getElementById('lapbulKelolaTable')) {
+            rowsPerPage = calculateRowsPerPage('lapbulKelolaTable');
+            buildTable();
+        }
+    }));
 }
 
 function initLapbulEditPaudPage(params) {
@@ -1863,28 +1946,28 @@ function initLapbulEditPaudPage(params) {
         submitButton.disabled = true;
         showAppModal('loading', 'Menyimpan perubahan...');
 
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // Buat objek payload baru dengan kunci yang benar (camelCase)
-        const payload = {
-            rowIndex: form.querySelector('[name="rowIndex"]').value,
-            source: form.querySelector('[name="source"]').value,
-            // Ambil nilai dari field yang terkunci
-            laporanBulan: form.querySelector('[name="Bulan"]').value,
-            tahun: form.querySelector('[name="Tahun"]').value,
-            jenjang: form.querySelector('[name="Jenjang"]').value,
-            namaSekolah: form.querySelector('[name="Nama Sekolah"]').value,
-            // Ambil nilai dari field yang bisa diedit
-            'NPSN': form.querySelector('[name="NPSN"]').value,
-            'Jumlah Rombel': form.querySelector('[name="Jumlah Rombel"]').value,
-            'Status': form.querySelector('[name="Status"]').value
-            // Anda bisa menambahkan field lain yang bisa diedit di sini
-        };
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+        
+        // Ambil nilai dari field yang terkunci secara manual
+        payload.laporanBulan = form.querySelector('[name="Bulan"]').value;
+        payload.tahun = form.querySelector('[name="Tahun"]').value;
+        payload.jenjang = form.querySelector('[name="Jenjang"]').value;
+        payload.namaSekolah = form.querySelector('[name="Nama Sekolah"]').value;
 
         const file = form.querySelector('input[type="file"]').files[0];
 
         const sendData = (data) => {
             google.script.run
-                .withSuccessHandler(res => showAppModal('success', res, 'lapbul_kelola'))
+                // KUNCI PERBAIKAN: Logika ini disamakan dengan fungsi edit SD
+                .withSuccessHandler(res => {
+                    if (res && res.error) {
+                         showAppModal('error', res.error);
+                         if (submitButton) submitButton.disabled = false;
+                    } else {
+                         showAppModal('success', res, 'lapbul_kelola');
+                    }
+                })
                 .withFailureHandler(err => {
                     showAppModal('error', err.message);
                     if (submitButton) submitButton.disabled = false;
