@@ -597,38 +597,6 @@
     background-color: #101E26;
   }
 
-  /* --- MODUL: SK Pembagian Tugas --- */
-  #riwayatTable th, #riwayatTable td { text-align: center; }
-  #riwayatTable td:nth-child(2), #riwayatTable td:nth-child(5) { text-align: left; }
-  #riwayatTable th:nth-child(1), #riwayatTable td:nth-child(1) { 
-    position: sticky; left: 0; width: 50px; min-width: 50px; background-color: #1c2e3a; z-index: 2;
-  }
-  #riwayatTable th:nth-child(2), #riwayatTable td:nth-child(2) { 
-    position: sticky; left: 50px; background-color: #1c2e3a; z-index: 2;
-  }
-  #riwayatTable thead th:nth-child(1), #riwayatTable thead th:nth-child(2) {
-    z-index: 6; background-color: #101E26;
-  }
-  #riwayatTable tbody tr:hover td:nth-child(1), #riwayatTable tbody tr:hover td:nth-child(2) {
-    background-color: #2a4152;
-  }
-  
-  #kelolaTable td { text-align: center; }
-  #kelolaTable td:nth-child(3), #kelolaTable td:nth-child(6) { text-align: left; }
-
-  /* --- MODUL : Status Pengiriman SK --- */
-  #statusTable { table-layout: fixed; width: 100%; }
-  #statusTable td, #statusTable th { text-align: center; }
-  #statusTable td:nth-child(2) { text-align: left; }
-  #statusTable th:nth-child(n+3) { white-space: normal; width: 70px; }
-  #statusTable th:nth-child(1), #statusTable td:nth-child(1) { width: 50px; min-width: 50px; }
-  #statusTable th:nth-child(2), #statusTable td:nth-child(2) { width: 250px; min-width: 250px; }
-
-  /* --- MODUL : Kelola Data SK --- */
-  #kelolaTable th, #kelolaTable td { text-align: center; }
-  #kelolaTable td:nth-child(2), #kelolaTable td:nth-child(5) { text-align: left; }
-  #kelolaTable th:nth-child(1), #kelolaTable td:nth-child(1) { width: 50px; min-width: 50px; }
-
   /* --- MODUL: Laporan Bulan (Formulir) --- */
   .info-button-container { text-align: center; margin-top: 30px; }
   .info-btn { background: rgba(0, 180, 255, 0.2); border: 1px solid rgba(0, 180, 255, 0.5); color: #00c3ff; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.3s ease; }
@@ -667,19 +635,6 @@
   .ptk-row .form-group label { font-weight: normal; color: #bdc3c7; }
   .ptk-row .form-group { margin-bottom: 0; }
   .ptk-row.has-label { grid-template-columns: 120px 1fr 1fr 1fr 1fr; }
-
-  /* --- MODUL: Laporan Bulan (Tabel) --- */
-  #lapbulStatusTable { table-layout: fixed; width: 100%; }
-  #lapbulStatusTable th, #lapbulStatusTable td { text-align: center; white-space: nowrap; }
-  #lapbulStatusTable td:nth-child(2) { text-align: left; }
-  #lapbulStatusTable th:nth-child(n+3), #lapbulStatusTable td:nth-child(n+3) { width: 70px; }
-  
-  #lapbulKelolaTable th, #lapbulKelolaTable td { text-align: center; }
-  #lapbulKelolaTable td:nth-child(2) { text-align: left; }
-  #lapbulKelolaTable td:nth-child(3) { text-align: center !important; }
-
-  #lapbulRiwayatTable th, #lapbulRiwayatTable td { text-align: center; }
-  #lapbulRiwayatTable td:nth-child(2), #lapbulRiwayatTable td:nth-child(5) { text-align: left; }
 
   .dropdown-info { position: relative; display: inline-block; }
   .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
@@ -751,18 +706,6 @@
   #kelolaPtkPaudTable thead th:nth-child(2),
   #daftarPtkPaudTable thead th:nth-child(1),
   #daftarPtkPaudTable thead th:nth-child(2) { z-index: 3; }
-
-
-
-
-
-  
-  #keadaanPtkSdTable { border-collapse: collapse; table-layout: fixed; }
-  #keadaanPtkSdTable th { white-space: normal; text-align: center; vertical-align: middle; }
-  #keadaanPtkSdTable td { text-align: center; vertical-align: middle; }
-  #keadaanPtkSdTable td:nth-child(2) { text-align: left; }
-  #keadaanPtkSdTable th:nth-child(1), #keadaanPtkSdTable td:nth-child(1) { width: 50px; }
-  #keadaanPtkSdTable th:nth-child(2), #keadaanPtkSdTable td:nth-child(2) { width: 250px; }
 
 
   /* --- MODUL: Arsip (Drive Browser) --- */
@@ -930,6 +873,335 @@ input:-webkit-autofill:active {
 #ptkJumlahBulananPaudTable thead th:nth-child(1), #ptkJumlahBulananPaudTable thead th:nth-child(2),
 #ptkJumlahBulananPaudTable tfoot td:nth-child(1), #ptkJumlahBulananPaudTable tfoot td:nth-child(2) {
   z-index: 3;
+}
+
+/* =================================================================== */
+/* ====== 13. FREEZE PANE: RIWAYAT PENGIRIMAN LAPORAN BULAN ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Posisi & Latar Belakang --- */
+#lapbulRiwayatTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+
+#lapbulRiwayatTable tbody td:nth-child(1),
+#lapbulRiwayatTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+
+/* --- Pengaturan Kolom Beku --- */
+#lapbulRiwayatTable thead th:nth-child(1),
+#lapbulRiwayatTable tbody td:nth-child(1) {
+  left: 0; /* Kolom pertama menempel di kiri */
+}
+
+#lapbulRiwayatTable thead th:nth-child(2),
+#lapbulRiwayatTable tbody td:nth-child(2) {
+  left: 50px; /* Posisi kolom kedua (lebar kolom No. sekitar 50px) */
+}
+
+/* --- Pengaturan Lapisan (z-index) --- */
+#lapbulRiwayatTable tbody td { z-index: 1; }
+#lapbulRiwayatTable thead th { z-index: 2; }
+
+#lapbulRiwayatTable thead th:nth-child(1),
+#lapbulRiwayatTable thead th:nth-child(2) {
+  z-index: 3; /* Sudut kiri atas memiliki lapisan tertinggi */
+}
+
+/* --- Efek Hover --- */
+#lapbulRiwayatTable tbody tr:hover td:nth-child(1),
+#lapbulRiwayatTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 15. STYLE & FREEZE PANE: DAFTAR PENGIRIMAN LAP. BULAN ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#lapbulStatusTable th,
+#lapbulStatusTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+}
+#lapbulStatusTable td:nth-child(2) {
+  text-align: left; /* 2. Kolom ke-2 (Nama Sekolah) dibuat rata kiri */
+}
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#lapbulStatusTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#lapbulStatusTable tbody td:nth-child(1),
+#lapbulStatusTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#lapbulStatusTable thead th:nth-child(1),
+#lapbulStatusTable tbody td:nth-child(1) {
+  left: 0;
+}
+#lapbulStatusTable thead th:nth-child(2),
+#lapbulStatusTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#lapbulStatusTable tbody td { z-index: 1; }
+#lapbulStatusTable thead th { z-index: 2; }
+#lapbulStatusTable thead th:nth-child(1),
+#lapbulStatusTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#lapbulStatusTable tbody tr:hover td:nth-child(1),
+#lapbulStatusTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 16. STYLE & FREEZE PANE: KELOLA DATA LAP. BULAN (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#lapbulKelolaTable th,
+#lapbulKelolaTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+}
+#lapbulKelolaTable td:nth-child(2),
+#lapbulKelolaTable td:nth-child(6) {
+  text-align: left; /* 2. Kolom ke-2 (Nama Sekolah) dan ke-6 (Dokumen) rata kiri */
+}
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#lapbulKelolaTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#lapbulKelolaTable tbody td:nth-child(1),
+#lapbulKelolaTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#lapbulKelolaTable thead th:nth-child(1),
+#lapbulKelolaTable tbody td:nth-child(1) {
+  left: 0;
+}
+#lapbulKelolaTable thead th:nth-child(2),
+#lapbulKelolaTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#lapbulKelolaTable tbody td { z-index: 1; }
+#lapbulKelolaTable thead th { z-index: 2; }
+#lapbulKelolaTable thead th:nth-child(1),
+#lapbulKelolaTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#lapbulKelolaTable tbody tr:hover td:nth-child(1),
+#lapbulKelolaTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 17. STYLE & FREEZE PANE: RIWAYAT PENGIRIMAN SK (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#riwayatTable th,
+#riwayatTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+}
+#riwayatTable td:nth-child(2), /* Kolom "Nama Sekolah" */
+#riwayatTable td:nth-child(5), /* Kolom "Nomor SK" */
+#riwayatTable td:nth-child(7) { /* Kolom "Kriteria SK" */
+  text-align: left;   /* 2. Dibuat rata kiri */
+}
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#riwayatTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#riwayatTable tbody td:nth-child(1),
+#riwayatTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#riwayatTable thead th:nth-child(1),
+#riwayatTable tbody td:nth-child(1) {
+  left: 0;
+}
+#riwayatTable thead th:nth-child(2),
+#riwayatTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#riwayatTable tbody td { z-index: 1; }
+#riwayatTable thead th { z-index: 2; }
+#riwayatTable thead th:nth-child(1),
+#riwayatTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#riwayatTable tbody tr:hover td:nth-child(1),
+#riwayatTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 18. STYLE & FREEZE PANE: DAFTAR PENGIRIMAN SK (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#statusTable th,
+#statusTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+  vertical-align: middle; /* Memastikan teks di tengah secara vertikal */
+}
+#statusTable td:nth-child(2) {
+  text-align: left;   /* Kolom ke-2 (Nama Sekolah) dibuat rata kiri */
+}
+
+/* --- KUNCI PERBAIKAN 2: Membuat Header Menjadi 2 Baris --- */
+#statusTable th {
+  white-space: normal; /* Memungkinkan teks header turun baris */
+}
+#statusTable th:nth-child(n+3) { /* Menargetkan header dari kolom ke-3 sampai terakhir */
+  width: 70px; /* Memberi lebar tetap agar teks terpaksa turun */
+}
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#statusTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#statusTable tbody td:nth-child(1),
+#statusTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#statusTable thead th:nth-child(1),
+#statusTable tbody td:nth-child(1) {
+  left: 0;
+}
+#statusTable thead th:nth-child(2),
+#statusTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#statusTable tbody td { z-index: 1; }
+#statusTable thead th { z-index: 2; }
+#statusTable thead th:nth-child(1),
+#statusTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#statusTable tbody tr:hover td:nth-child(1),
+#statusTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 19. STYLE & FREEZE PANE: KELOLA DATA SK (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#kelolaTable th,
+#kelolaTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+}
+#kelolaTable td:nth-child(2), /* Kolom "Nama SD" */
+#kelolaTable td:nth-child(5) { /* Kolom "Nomor SK" */
+  text-align: left;   /* Dibuat rata kiri */
+}
+
+/* --- Pengaturan Freeze Pane Stabil --- */
+#kelolaTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#kelolaTable tbody td:nth-child(1),
+#kelolaTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#kelolaTable thead th:nth-child(1),
+#kelolaTable tbody td:nth-child(1) {
+  left: 0;
+}
+#kelolaTable thead th:nth-child(2),
+#kelolaTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#kelolaTable tbody td { z-index: 1; }
+#kelolaTable thead th { z-index: 2; }
+#kelolaTable thead th:nth-child(1),
+#kelolaTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#kelolaTable tbody tr:hover td:nth-child(1),
+#kelolaTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 20. STYLE & FREEZE PANE: KEADAAN PTK SD (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#keadaanPtkSdTable th,
+#keadaanPtkSdTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+  vertical-align: middle;
+}
+#keadaanPtkSdTable td:nth-child(2), /* Kolom "Nama Sekolah" */
+#keadaanPtkSdTable td:nth-child(4) { /* Kolom "Status" */
+  text-align: left;   /* 2. Dibuat rata kiri */
+}
+
+/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+#keadaanPtkSdTable thead th {
+  position: sticky;
+}
+#keadaanPtkSdTable thead tr:first-child th {
+  top: 0;
+}
+#keadaanPtkSdTable thead tr:nth-child(2) th {
+  top: 40px;
+}
+#keadaanPtkSdTable tbody td:nth-child(1),
+#keadaanPtkSdTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#keadaanPtkSdTable tfoot td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  position: sticky;
+  background-color: #101E26;
+}
+#keadaanPtkSdTable thead th:nth-child(1),
+#keadaanPtkSdTable tbody td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(1) {
+  left: 0;
+}
+#keadaanPtkSdTable thead th:nth-child(2),
+#keadaanPtkSdTable tbody td:nth-child(2),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  left: 50px;
+}
+#keadaanPtkSdTable tbody td, #keadaanPtkSdTable tfoot td { z-index: 1; }
+#keadaanPtkSdTable thead th { z-index: 2; }
+#keadaanPtkSdTable thead th:nth-child(1),
+#keadaanPtkSdTable thead th:nth-child(2),
+#keadaanPtkSdTable tfoot td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  z-index: 3;
+}
+#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
 }
 
 </style>
