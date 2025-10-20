@@ -25,10 +25,27 @@
         <table id="keadaanPtkPaudTable" class="data-table">
           <thead></thead>
           <tbody></tbody>
-          <tfoot></tfoot> </table>
+          <tfoot></tfoot> 
+        </table>
     </div>
     <div class="table-footer-note">
       Sumber data: laporan bulan terakhir.
     </div>
   </div>
 </main>
+
+<style>
+  .main-content {
+    overflow-y: hidden;
+  }
+  main.table-view-container, #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #tableWrapper .table-container {
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+</style>
