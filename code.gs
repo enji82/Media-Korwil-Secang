@@ -1342,3 +1342,364 @@ function deletePtkPaudData(rowIndex, deleteCode) {
     throw new Error(`Gagal menghapus data: ${e.message}`);
   }
 }
+
+function getJumlahPtkSdBulananData() {
+  try {
+    const ss = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s");
+    const sheet = ss.getSheetByName("PTK Bulanan SD");
+    if (!sheet) {
+      throw new Error("Sheet 'PTK Bulanan SD' tidak ditemukan.");
+    }
+    return sheet.getDataRange().getDisplayValues();
+  } catch (e) {
+    return handleError('getJumlahPtkSdBulananData', e);
+  }
+}
+
+/**
+ * Mengambil data daftar PTK SD Negeri dari spreadsheet.
+ */
+function getDaftarPtkSdnData() {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    const sheet = ss.getSheetByName("PTK SDN");
+    if (!sheet) {
+      throw new Error("Sheet 'PTK SDN' tidak ditemukan.");
+    }
+    // Mengirim seluruh data mentah, pemrosesan dilakukan di client-side
+    return sheet.getDataRange().getDisplayValues();
+  } catch (e) {
+    return handleError('getDaftarPtkSdnData', e);
+  }
+}
+
+/**
+ * Mengambil data daftar PTK SD Swasta dari spreadsheet.
+ */
+function getDaftarPtkSdsData() {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    const sheet = ss.getSheetByName("PTK SDS");
+    if (!sheet) {
+      throw new Error("Sheet 'PTK SDS' tidak ditemukan.");
+    }
+    return sheet.getDataRange().getDisplayValues();
+  } catch (e) {
+    return handleError('getDaftarPtkSdsData', e);
+  }
+}
+
+/**
+ * Mengambil data gabungan PTK SDN dan SDS untuk halaman Kelola.
+ */
+function getKelolaPtkSdData() {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    const sdnSheet = ss.getSheetByName("PTK SDN");
+    const sdsSheet = ss.getSheetByName("PTK SDS");
+
+    let combinedData = [];
+
+    const processSheet = (sheet, sourceName) => {
+      if (!sheet || sheet.getLastRow() < 2) return;
+      const data = sheet.getDataRange().getDisplayValues(); // Menggunakan DisplayValues lebih aman
+      const rows = data.slice(1);
+
+      const idx = {
+          unitKerja: 0, nama: 1, status: 3, nipNiy: 4, jabatan: 9, tglInput: 12, update: 13
+      };
+
+      rows.forEach((row, index) => {
+        if (!row[idx.nama]) return; // Lewati baris jika nama kosong
+        
+        combinedData.push({
+          rowIndex: index + 2,
+          source: sourceName,
+          data: {
+            'Unit Kerja': row[idx.unitKerja],
+            'Nama': row[idx.nama],
+            'Status': row[idx.status],
+            'NIP/NIY': row[idx.nipNiy],
+            'Jabatan': row[idx.jabatan],
+            'Tanggal Input': row[idx.tglInput],
+            'Update': row[idx.update]
+          }
+        });
+      });
+    };
+
+    processSheet(sdnSheet, 'SDN');
+    processSheet(sdsSheet, 'SDS');
+    
+    // TIDAK ADA PENGURUTAN DI SINI, HANYA MENGIRIM DATA
+    return { rows: combinedData };
+
+  } catch (e) {
+    Logger.log(`Error in getKelolaPtkSdData: ${e.message}`);
+    return { error: e.message };
+  }
+}
+
+/**
+ * Mengambil opsi-opsi untuk form Tambah PTK SD.
+ */
+function getNewPtkSdOptions() {
+  try {
+    const dataSekolahSS = SpreadsheetApp.openById("1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs");
+    const getValues = (sheetName) => {
+      const sheet = dataSekolahSS.getSheetByName(sheetName);
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      return sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat().filter(Boolean).sort();
+    };
+
+    return {
+      'Nama SDN': getValues('Nama SDN'),
+      'Nama SDS': getValues('Nama SDS'),
+      'Status Kepegawaian': getValues('Status Kepegawaian SD'),
+      'Pangkat': getValues('Pangkat'),
+      'Jabatan': getValues('Jabatan')
+    };
+  } catch (e) {
+    return handleError('getNewPtkSdOptions', e);
+  }
+}
+
+/**
+ * Menambahkan data PTK SD baru ke spreadsheet yang sesuai.
+ */
+function addNewPtkSd(formData) {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    let sheet;
+    
+    if (formData.statusSekolah === 'Negeri') {
+      sheet = ss.getSheetByName("PTK SDN");
+    } else if (formData.statusSekolah === 'Swasta') {
+      sheet = ss.getSheetByName("PTK SDS");
+    } else {
+      throw new Error("Status Sekolah tidak valid.");
+    }
+
+    if (!sheet) throw new Error(`Sheet untuk status '${formData.statusSekolah}' tidak ditemukan.`);
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    
+    // Tambahkan timestamp
+    formData['Tanggal Input'] = new Date();
+
+    const newRow = headers.map(header => formData[header] || ""); // Gunakan string kosong jika tidak ada data
+
+    sheet.appendRow(newRow);
+
+    return "Data PTK baru berhasil disimpan.";
+  } catch (e) {
+    Logger.log(`Error in addNewPtkSd: ${e.message}`);
+    throw new Error(`Gagal menyimpan data: ${e.message}`);
+  }
+}
+
+/**
+ * Mengambil semua opsi dropdown untuk form Tambah/Edit PTK SD.
+ */
+function getNewPtkSdOptions() {
+  try {
+    const ss = SpreadsheetApp.openById("1prqqKQBYzkCNFmuzblNAZE41ag9rZTCiY2a0WvZCTvU");
+    const sheet = ss.getSheetByName("Form SD");
+    if (!sheet) throw new Error("Sheet 'Form SD' tidak ditemukan.");
+
+    const getUniqueValues = (col) => {
+      const data = sheet.getRange(`${col}2:${col}${sheet.getLastRow()}`).getDisplayValues().flat().filter(Boolean);
+      return [...new Set(data)].sort();
+    };
+
+    return {
+      'Unit Kerja Negeri': getUniqueValues('B'),
+      'Unit Kerja Swasta': getUniqueValues('A'),
+      'Status Negeri': getUniqueValues('C'),
+      'Pangkat PNS': getUniqueValues('D'),
+      'Pangkat PPPK': getUniqueValues('E'),
+      'Pangkat PPPK PW': getUniqueValues('F'),
+      'Jabatan': getUniqueValues('G'),
+      'Tugas Tambahan': getUniqueValues('H'),
+      'Status Swasta': getUniqueValues('I'),
+    };
+  } catch (e) {
+    return handleError('getNewPtkSdOptions', e);
+  }
+}
+
+/**
+ * Menambahkan data PTK SD baru ke sheet yang sesuai.
+ */
+function addNewPtkSd(formData) {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    let sheet;
+    
+    if (formData.statusSekolah === 'Negeri') {
+      sheet = ss.getSheetByName("PTK SDN");
+    } else if (formData.statusSekolah === 'Swasta') {
+      sheet = ss.getSheetByName("PTK SDS");
+    } else {
+      throw new Error("Status Sekolah tidak valid.");
+    }
+
+    if (!sheet) throw new Error(`Sheet untuk status '${formData.statusSekolah}' tidak ditemukan.`);
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    
+    formData['Input'] = new Date();
+
+    const newRow = headers.map(header => {
+      let value = formData[header] || "";
+      // KUNCI PERBAIKAN 2: Jika header adalah NUPTK dan ada nilainya, tambahkan apostrof
+      if (header === 'NUPTK' && value) {
+        return "'" + value;
+      }
+      return value;
+    });
+
+    sheet.appendRow(newRow);
+
+    return "Data PTK baru berhasil disimpan.";
+  } catch (e) {
+    Logger.log(`Error in addNewPtkSd: ${e.message}`);
+    throw new Error(`Gagal menyimpan data: ${e.message}`);
+  }
+}
+
+/**
+ * Mengambil data satu baris PTK SD berdasarkan nomor baris dan sumbernya.
+ */
+function getPtkSdDataByRow(rowIndex, source) {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    let sheet;
+    if (source === 'SDN') {
+      sheet = ss.getSheetByName("PTK SDN");
+    } else if (source === 'SDS') {
+      sheet = ss.getSheetByName("PTK SDS");
+    } else {
+      throw new Error("Sumber data tidak valid.");
+    }
+    if (!sheet) throw new Error(`Sheet '${source}' tidak ditemukan.`);
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    const values = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+    const displayValues = sheet.getRange(rowIndex, 1, 1, headers.length).getDisplayValues()[0];
+    
+    const rowData = {};
+    headers.forEach((header, i) => {
+      // Untuk tanggal, ambil nilai mentahnya agar bisa di-format di form
+      if ((header === 'TMT' || header === 'TMT CPNS' || header === 'TMT PNS') && values[i] instanceof Date) {
+        rowData[header] = Utilities.formatDate(values[i], "UTC", "yyyy-MM-dd");
+      } else {
+        rowData[header] = displayValues[i];
+      }
+    });
+    return rowData;
+  } catch (e) {
+    return handleError('getPtkSdDataByRow', e);
+  }
+}
+
+/**
+ * Memperbarui data PTK SD yang ada di spreadsheet.
+ */
+function updatePtkSdData(formData) {
+  try {
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    let sheet;
+    const source = formData.source;
+    
+    if (source === 'SDN') {
+      sheet = ss.getSheetByName("PTK SDN");
+    } else if (source === 'SDS') {
+      sheet = ss.getSheetByName("PTK SDS");
+    } else {
+      throw new Error("Sumber data tidak valid.");
+    }
+
+    if (!sheet) throw new Error(`Sheet '${source}' tidak ditemukan.`);
+    const rowIndex = formData.rowIndex;
+    if (!rowIndex) throw new Error("Nomor baris (rowIndex) tidak ditemukan.");
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+    const range = sheet.getRange(rowIndex, 1, 1, headers.length);
+    const oldValues = range.getValues()[0];
+
+    // Tambahkan timestamp update
+    formData['Update'] = new Date();
+    
+    // NUPTK sebagai teks
+    if (formData['NUPTK']) {
+      formData['NUPTK'] = "'" + formData['NUPTK'];
+    }
+
+    const newRowValues = headers.map((header, index) => {
+      // Jika header ada di form, gunakan nilai baru. Jika tidak, gunakan nilai lama.
+      return formData.hasOwnProperty(header) ? formData[header] : oldValues[index];
+    });
+
+    range.setValues([newRowValues]);
+
+    return "Data PTK berhasil diperbarui.";
+  } catch (e) {
+    Logger.log(`Error in updatePtkSdData: ${e.message}`);
+    throw new Error(`Gagal memperbarui data: ${e.message}`);
+  }
+}
+
+/**
+ * Mengambil data Kebutuhan PTK SD Negeri.
+ */
+function getKebutuhanPtkSdnData() {
+  try {
+    const ss = SpreadsheetApp.openById("1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s");
+    const sheet = ss.getSheetByName("Kebutuhan Guru");
+    if (!sheet) {
+      throw new Error("Sheet 'Kebutuhan Guru' tidak ditemukan.");
+    }
+    return sheet.getDataRange().getDisplayValues();
+  } catch (e) {
+    return handleError('getKebutuhanPtkSdnData', e);
+  }
+}
+
+/**
+ * Menghapus data PTK SD (Negeri atau Swasta) dari spreadsheet.
+ */
+function deletePtkSdData(rowIndex, source, deleteCode) {
+  try {
+    const today = new Date();
+    const todayCode = Utilities.formatDate(today, Session.getScriptTimeZone(), "yyyyMMdd");
+    
+    if (String(deleteCode).trim() !== todayCode) {
+      throw new Error("Kode Hapus salah.");
+    }
+
+    const ss = SpreadsheetApp.openById("1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0");
+    let sheet;
+    if (source === 'SDN') {
+      sheet = ss.getSheetByName("PTK SDN");
+    } else if (source === 'SDS') {
+      sheet = ss.getSheetByName("PTK SDS");
+    } else {
+      throw new Error("Sumber data tidak valid: " + source);
+    }
+
+    if (!sheet) throw new Error("Sheet sumber '" + source + "' tidak ditemukan.");
+    
+    const maxRows = sheet.getLastRow();
+    if (isNaN(rowIndex) || rowIndex < 2 || rowIndex > maxRows) {
+      throw new Error("Nomor baris tidak valid atau di luar jangkauan.");
+    }
+
+    sheet.deleteRow(rowIndex);
+    
+    return "Data PTK berhasil dihapus.";
+  } catch (e) {
+    Logger.log(`Error in deletePtkSdData: ${e.message}`);
+    throw new Error(`Gagal menghapus data: ${e.message}`);
+  }
+}
