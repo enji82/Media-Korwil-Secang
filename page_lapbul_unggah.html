@@ -3,7 +3,6 @@
 </header>
 
 <main class="menu-grid" style="max-width: 550px;">
-  <!-- PERUBAHAN: Menggunakan <a> tag dengan data-page untuk konsistensi -->
   <a href="#" data-page="lapbul_form_paud" class="menu-button">
     <i class="fas fa-cubes" style="color: #3498db;"></i>
     <span>PAUD (KB/TK)</span>
@@ -16,8 +15,16 @@
 </main>
 
 <div class="info-button-container">
-    <button id="showInfoBtn" class="info-btn">
-        <i class="fas fa-info-circle"></i>
-        Informasi Penting
-    </button>
+    <div class="dropdown-info">
+        <button id="infoDropdownBtn" class="info-btn">
+            <i class="fas fa-info-circle"></i>
+            Informasi Penting
+            <i class="fas fa-chevron-down" style="margin-left: 8px;"></i>
+        </button>
+        <div id="infoDropdownContent" class="dropdown-content">
+            <div class="loading-container" style="padding: 10px;">
+                <p>Memuat...</p>
+            </div>
+        </div>
+    </div>
 </div>
