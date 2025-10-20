@@ -1153,33 +1153,43 @@ input:-webkit-autofill:active {
 /* --- Pengaturan Perataan Konten --- */
 #keadaanPtkSdTable th,
 #keadaanPtkSdTable td {
-  text-align: center; /* 1. Membuat semua konten rata tengah */
+  text-align: center;
   vertical-align: middle;
 }
-#keadaanPtkSdTable td:nth-child(2), /* Kolom "Nama Sekolah" */
-#keadaanPtkSdTable td:nth-child(4) { /* Kolom "Status" */
-  text-align: left;   /* 2. Dibuat rata kiri */
+#keadaanPtkSdTable td:nth-child(2),
+#keadaanPtkSdTable tfoot td:nth-child(2),
+#keadaanPtkSdTable td:nth-child(4) {
+  text-align: left;
 }
 
-/* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
+/* --- Pengaturan Freeze Pane & Border --- */
+
 #keadaanPtkSdTable thead th {
-  position: sticky;
+    border: none;
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.1);
 }
+
+/* KUNCI PERBAIKAN: Menambahkan garis biru di bawah KEDUA baris header */
 #keadaanPtkSdTable thead tr:first-child th {
-  top: 0;
+    border-bottom: 2px solid rgba(0, 195, 255, 0.5);
 }
 #keadaanPtkSdTable thead tr:nth-child(2) th {
-  top: 40px;
+    border-bottom: 2px solid rgba(0, 195, 255, 0.5);
+}
+
+#keadaanPtkSdTable thead th,
+#keadaanPtkSdTable tfoot td {
+  position: sticky;
+}
+#keadaanPtkSdTable thead tr:first-child th { top: 0; }
+#keadaanPtkSdTable thead tr:nth-child(2) th { top: 40px; }
+#keadaanPtkSdTable tfoot td {
+  bottom: 0;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
 }
 #keadaanPtkSdTable tbody td:nth-child(1),
 #keadaanPtkSdTable tbody td:nth-child(2) {
   position: sticky;
-  background-color: #1c2e3a;
-}
-#keadaanPtkSdTable tfoot td:nth-child(1),
-#keadaanPtkSdTable tfoot td:nth-child(2) {
-  position: sticky;
-  background-color: #101E26;
 }
 #keadaanPtkSdTable thead th:nth-child(1),
 #keadaanPtkSdTable tbody td:nth-child(1),
@@ -1191,16 +1201,579 @@ input:-webkit-autofill:active {
 #keadaanPtkSdTable tfoot td:nth-child(2) {
   left: 50px;
 }
-#keadaanPtkSdTable tbody td, #keadaanPtkSdTable tfoot td { z-index: 1; }
+
+/* --- Hirarki z-index & Warna Solid --- */
+#keadaanPtkSdTable tbody td { z-index: 1; }
 #keadaanPtkSdTable thead th { z-index: 2; }
-#keadaanPtkSdTable thead th:nth-child(1),
-#keadaanPtkSdTable thead th:nth-child(2),
+#keadaanPtkSdTable tfoot td { 
+  z-index: 3; 
+  background-color: #101E26 !important;
+}
+#keadaanPtkSdTable thead tr:first-child th:nth-child(1),
+#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
+  z-index: 4;
+}
 #keadaanPtkSdTable tfoot td:nth-child(1),
 #keadaanPtkSdTable tfoot td:nth-child(2) {
-  z-index: 3;
+  z-index: 5;
+}
+#keadaanPtkSdTable tbody td:nth-child(1),
+#keadaanPtkSdTable tbody td:nth-child(2) {
+  background-color: #1c2e3a;
 }
 #keadaanPtkSdTable tbody tr:hover td:nth-child(1),
 #keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 21. PENATAAN HEADER: KEADAAN PTK SEKOLAH DASAR ====== */
+/* =================================================================== */
+
+/* Mengizinkan teks header untuk turun baris */
+#keadaanPtkSdTable th {
+  white-space: normal;
+}
+
+/* Menargetkan header dari kolom ke-51 hingga ke-61.
+  Angka nth-child di sini adalah hasil penambahan 2 (karena ada kolom "No." dan "Nama Sekolah" sebelumnya).
+*/
+#keadaanPtkSdTable th:nth-child(n+53):nth-child(-n+63) {
+  width: 80px; /* Atur lebar kolom agar teks terpaksa turun baris */
+  min-width: 80px;
+}
+
+/* =================================================================== */
+/* ====== 22. PEWARNAAN KOLOM: KEADAAN PTK SD (FINAL & AKURAT) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Warna Latar Belakang untuk Grup Kolom --- */
+/* (Script yang Anda berikan sudah benar, jadi tidak diubah) */
+
+/* Grup 'Kepala Sekolah' (Biru) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(7),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+1):nth-child(-n+4),
+#keadaanPtkSdTable tbody td:nth-child(n+7):nth-child(-n+10),
+#keadaanPtkSdTable tfoot td:nth-child(n+7):nth-child(-n+10) {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Grup 'Guru Kelas' (Hijau) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(8),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+5):nth-child(-n+9),
+#keadaanPtkSdTable tbody td:nth-child(n+11):nth-child(-n+15),
+#keadaanPtkSdTable tfoot td:nth-child(n+11):nth-child(-n+15) {
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+/* Grup 'Guru PAI' (Ungu) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(9),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+10):nth-child(-n+14),
+#keadaanPtkSdTable tbody td:nth-child(n+16):nth-child(-n+20),
+#keadaanPtkSdTable tfoot td:nth-child(n+16):nth-child(-n+20) {
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+/* Grup 'Guru PJOK' (Kuning) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(10),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+15):nth-child(-n+19),
+#keadaanPtkSdTable tbody td:nth-child(n+21):nth-child(-n+25),
+#keadaanPtkSdTable tfoot td:nth-child(n+21):nth-child(-n+25) {
+  background-color: rgba(241, 196, 15, 0.1);
+}
+
+/* Grup 'Guru PA Kristen' (Oranye) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(11),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+20):nth-child(-n+24),
+#keadaanPtkSdTable tbody td:nth-child(n+26):nth-child(-n+30),
+#keadaanPtkSdTable tfoot td:nth-child(n+26):nth-child(-n+30) {
+  background-color: rgba(230, 126, 34, 0.1);
+}
+
+/* Grup 'Guru B. Inggris' (Tosca) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(12),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+25):nth-child(-n+26),
+#keadaanPtkSdTable tbody td:nth-child(n+31):nth-child(-n+32),
+#keadaanPtkSdTable tfoot td:nth-child(n+31):nth-child(-n+32) {
+  background-color: rgba(26, 188, 156, 0.1);
+}
+
+/* Grup 'Guru Mapel Lain' (Merah) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(13),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+27):nth-child(-n+28),
+#keadaanPtkSdTable tbody td:nth-child(n+33):nth-child(-n+34),
+#keadaanPtkSdTable tfoot td:nth-child(n+33):nth-child(-n+34) {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Grup 'Operator' (Biru Tua) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(14),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+29):nth-child(-n+32),
+#keadaanPtkSdTable tbody td:nth-child(n+35):nth-child(-n+38),
+#keadaanPtkSdTable tfoot td:nth-child(n+35):nth-child(-n+38) {
+  background-color: rgba(41, 128, 185, 0.1);
+}
+
+/* Grup 'Pengelola Umum' (Hijau Tua) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(15),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+33):nth-child(-n+36),
+#keadaanPtkSdTable tbody td:nth-child(n+39):nth-child(-n+42),
+#keadaanPtkSdTable tfoot td:nth-child(n+39):nth-child(-n+42) {
+  background-color: rgba(39, 174, 96, 0.1);
+}
+
+/* Grup 'Tendik Lainnya' (Ungu Tua) */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(n+16):nth-child(-n+19),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+37):nth-child(-n+44),
+#keadaanPtkSdTable tbody td:nth-child(n+43):nth-child(-n+50),
+#keadaanPtkSdTable tfoot td:nth-child(n+43):nth-child(-n+50) {
+  background-color: rgba(142, 68, 173, 0.1);
+}
+
+/* Kolom Terakhir (Total) */
+#keadaanPtkSdTable th:last-child,
+#keadaanPtkSdTable td:last-child {
+  font-weight: bold;
+  background-color: rgba(0, 180, 255, 0.2);
+}
+
+/* KUNCI PERBAIKAN: 
+   Selector diubah agar HANYA menargetkan header di baris PERTAMA.
+*/
+#keadaanPtkSdTable thead tr:first-child th:nth-child(1),
+#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
+  background-color: #101E26 !important;
+}
+#keadaanPtkSdTable tbody td:nth-child(1),
+#keadaanPtkSdTable tbody td:nth-child(2) {
+  background-color: #1c2e3a;
+}
+#keadaanPtkSdTable tfoot td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  background-color: #101E26;
+}
+#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+#keadaanPtkSdTable tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Mengembalikan warna solid untuk kolom beku saat di-hover */
+#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152 !important;
+}
+#keadaanPtkSdTable thead th {
+  background-color: #101E26 !important;
+}
+
+/* Mengembalikan warna solid untuk kolom beku (Freeze Pane) */
+#keadaanPtkSdTable tbody td:nth-child(1),
+#keadaanPtkSdTable tbody td:nth-child(2) {
+  background-color: #1c2e3a;
+}
+#keadaanPtkSdTable tfoot td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  background-color: #101E26;
+}
+#keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+#keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 23. STYLE & FREEZE PANE: JUMLAH PTK SD BULANAN (FINAL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Dasar & Anti-Jitter --- */
+#jumlahPtkSdBulananTable {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* --- Pengaturan Perataan Konten --- */
+#jumlahPtkSdBulananTable th,
+#jumlahPtkSdBulananTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+#jumlahPtkSdBulananTable td:nth-child(2),
+#jumlahPtkSdBulananTable tfoot td:nth-child(2),
+#jumlahPtkSdBulananTable td:nth-child(4) {
+  text-align: left;
+}
+
+/* --- Pengaturan Freeze Pane & Border --- */
+#jumlahPtkSdBulananTable thead th {
+  border: none; /* Hapus border asli penyebab jitter */
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.1); /* Simulasi border-right */
+}
+/* KUNCI PERBAIKAN: Menambahkan garis biru di bawah KEDUA baris header */
+#jumlahPtkSdBulananTable thead tr:first-child th {
+    border-bottom: 2px solid rgba(0, 195, 255, 0.5);
+}
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th {
+    border-bottom: 2px solid rgba(0, 195, 255, 0.5);
+}
+
+#jumlahPtkSdBulananTable thead th,
+#jumlahPtkSdBulananTable tfoot td {
+  position: sticky;
+}
+#jumlahPtkSdBulananTable thead tr:first-child th { top: 0; }
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th { top: 40px; }
+#jumlahPtkSdBulananTable tfoot td {
+  bottom: 0;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
+}
+#jumlahPtkSdBulananTable tbody td:nth-child(1),
+#jumlahPtkSdBulananTable tbody td:nth-child(2) {
+  position: sticky;
+}
+#jumlahPtkSdBulananTable thead th:nth-child(1),
+#jumlahPtkSdBulananTable tbody td:nth-child(1),
+#jumlahPtkSdBulananTable tfoot td:nth-child(1) {
+  left: 0;
+}
+#jumlahPtkSdBulananTable thead th:nth-child(2),
+#jumlahPtkSdBulananTable tbody td:nth-child(2),
+#jumlahPtkSdBulananTable tfoot td:nth-child(2) {
+  left: 50px;
+}
+
+/* --- Hirarki z-index & Warna Solid --- */
+#jumlahPtkSdBulananTable tbody td { z-index: 1; }
+#jumlahPtkSdBulananTable thead th { z-index: 2; }
+#jumlahPtkSdBulananTable tfoot td { 
+  z-index: 3; 
+  background-color: #101E26 !important;
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(1),
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(2) {
+  z-index: 4;
+}
+#jumlahPtkSdBulananTable tfoot td:nth-child(1),
+#jumlahPtkSdBulananTable tfoot td:nth-child(2) {
+  z-index: 5;
+}
+#jumlahPtkSdBulananTable tbody td:nth-child(1),
+#jumlahPtkSdBulananTable tbody td:nth-child(2) {
+  background-color: #1c2e3a;
+}
+#jumlahPtkSdBulananTable tbody tr:hover td:nth-child(1),
+#jumlahPtkSdBulananTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* --- Penataan Header Lebar --- */
+#jumlahPtkSdBulananTable th {
+  white-space: normal;
+}
+#jumlahPtkSdBulananTable th:nth-child(n+53):nth-child(-n+63) {
+  width: 80px;
+  min-width: 80px;
+}
+
+/* --- Pewarnaan Kolom --- */
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(7),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+1):nth-child(-n+4),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+7):nth-child(-n+10),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+7):nth-child(-n+10) {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(8),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+5):nth-child(-n+9),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+11):nth-child(-n+15),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+11):nth-child(-n+15) {
+  background-color: rgba(46, 204, 113, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(9),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+10):nth-child(-n+14),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+16):nth-child(-n+20),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+16):nth-child(-n+20) {
+  background-color: rgba(155, 89, 182, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(10),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+15):nth-child(-n+19),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+21):nth-child(-n+25),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+21):nth-child(-n+25) {
+  background-color: rgba(241, 196, 15, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(11),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+20):nth-child(-n+24),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+26):nth-child(-n+30),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+26):nth-child(-n+30) {
+  background-color: rgba(230, 126, 34, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(12),
+#keadaanPtkSdTable thead tr:nth-child(2) th:nth-child(n+25):nth-child(-n+26),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+31):nth-child(-n+32),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+31):nth-child(-n+32) {
+  background-color: rgba(26, 188, 156, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(13),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+27):nth-child(-n+28),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+33):nth-child(-n+34),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+33):nth-child(-n+34) {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(14),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+29):nth-child(-n+32),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+35):nth-child(-n+38),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+35):nth-child(-n+38) {
+  background-color: rgba(41, 128, 185, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(15),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+33):nth-child(-n+36),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+39):nth-child(-n+42),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+39):nth-child(-n+42) {
+  background-color: rgba(39, 174, 96, 0.1);
+}
+#jumlahPtkSdBulananTable thead tr:first-child th:nth-child(n+16):nth-child(-n+19),
+#jumlahPtkSdBulananTable thead tr:nth-child(2) th:nth-child(n+37):nth-child(-n+44),
+#jumlahPtkSdBulananTable tbody td:nth-child(n+43):nth-child(-n+50),
+#jumlahPtkSdBulananTable tfoot td:nth-child(n+43):nth-child(-n+50) {
+  background-color: rgba(142, 68, 173, 0.1);
+}
+#jumlahPtkSdBulananTable th:last-child,
+#jumlahPtkSdBulananTable td:last-child {
+  font-weight: bold;
+  background-color: rgba(0, 180, 255, 0.2);
+}
+#jumlahPtkSdBulananTable thead th {
+  background-color: #101E26 !important;
+}
+#jumlahPtkSdBulananTable tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+#jumlahPtkSdBulananTable tbody tr:hover td:nth-child(1),
+#jumlahPtkSdBulananTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152 !important;
+}
+
+/* =================================================================== */
+/* ====== 24. STYLE: DAFTAR PTK SD NEGERI ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#daftarPtkSdnTable th,
+#daftarPtkSdnTable td {
+  text-align: center; /* 1. Membuat semua konten rata tengah */
+  vertical-align: middle;
+}
+
+#daftarPtkSdnTable td:nth-child(2),  /* Kolom "Nama" */
+#daftarPtkSdnTable td:nth-child(3),  /* Kolom "Status" */
+#daftarPtkSdnTable td:nth-child(5),  /* Kolom "Pangkat" */
+#daftarPtkSdnTable td:nth-child(6),  /* Kolom "Jabatan" */
+#daftarPtkSdnTable td:nth-child(8),  /* Kolom "NIP" */
+#daftarPtkSdnTable td:nth-child(9),  /* Kolom "TMT CPNS" */
+#daftarPtkSdnTable td:nth-child(12) { /* Kolom "Tugas Tambahan" */
+  text-align: left; /* 2. Kolom-kolom ini dibuat rata kiri */
+}
+
+/* =================================================================== */
+/* ====== 25. FREEZE PANE: DAFTAR PTK SD NEGERI (STABIL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Posisi & Latar Belakang --- */
+#daftarPtkSdnTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+
+#daftarPtkSdnTable tbody td:nth-child(1),
+#daftarPtkSdnTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+
+/* --- Pengaturan Kolom Beku --- */
+#daftarPtkSdnTable thead th:nth-child(1),
+#daftarPtkSdnTable tbody td:nth-child(1) {
+  left: 0; /* Kolom pertama menempel di kiri */
+}
+
+#daftarPtkSdnTable thead th:nth-child(2),
+#daftarPtkSdnTable tbody td:nth-child(2) {
+  left: 50px; /* Posisi kolom kedua (disesuaikan dengan lebar kolom No.) */
+}
+
+/* --- Pengaturan Lapisan (z-index) --- */
+#daftarPtkSdnTable tbody td { z-index: 1; }
+#daftarPtkSdnTable thead th { z-index: 2; }
+
+#daftarPtkSdnTable thead th:nth-child(1),
+#daftarPtkSdnTable thead th:nth-child(2) {
+  z-index: 3; /* Sudut kiri atas memiliki lapisan tertinggi */
+}
+
+/* --- Efek Hover --- */
+#daftarPtkSdnTable tbody tr:hover td:nth-child(1),
+#daftarPtkSdnTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 26. STYLE & FREEZE PANE: DAFTAR PTK SD SWASTA ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#daftarPtkSdsTable th,
+#daftarPtkSdsTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+#daftarPtkSdsTable td:nth-child(2),
+#daftarPtkSdsTable td:nth-child(3),
+#daftarPtkSdsTable td:nth-child(5),
+#daftarPtkSdsTable td:nth-child(6),
+#daftarPtkSdsTable td:nth-child(8),
+#daftarPtkSdsTable td:nth-child(9),
+#daftarPtkSdsTable td:nth-child(12) {
+  text-align: left;
+}
+
+/* --- Pengaturan Freeze Pane --- */
+#daftarPtkSdsTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#daftarPtkSdsTable tbody td:nth-child(1),
+#daftarPtkSdsTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#daftarPtkSdsTable thead th:nth-child(1),
+#daftarPtkSdsTable tbody td:nth-child(1) {
+  left: 0;
+}
+#daftarPtkSdsTable thead th:nth-child(2),
+#daftarPtkSdsTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#daftarPtkSdsTable tbody td { z-index: 1; }
+#daftarPtkSdsTable thead th { z-index: 2; }
+#daftarPtkSdsTable thead th:nth-child(1),
+#daftarPtkSdsTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#daftarPtkSdsTable tbody tr:hover td:nth-child(1),
+#daftarPtkSdsTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 27. STYLE & FREEZE PANE: KELOLA PTK SD ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#kelolaPtkSdTable th,
+#kelolaPtkSdTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+#kelolaPtkSdTable td:nth-child(2), /* Nama */
+#kelolaPtkSdTable td:nth-child(3), /* Unit Kerja (baru) */
+#kelolaPtkSdTable td:nth-child(5), /* NIP/NIY (baru) */
+#kelolaPtkSdTable td:nth-child(6) { /* Jabatan (posisi baru) */
+  text-align: left;
+}
+
+/* --- Pengaturan Freeze Pane (Tidak Diubah) --- */
+#kelolaPtkSdTable thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
+#kelolaPtkSdTable tbody td:nth-child(1),
+#kelolaPtkSdTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#kelolaPtkSdTable thead th:nth-child(1),
+#kelolaPtkSdTable tbody td:nth-child(1) {
+  left: 0;
+}
+#kelolaPtkSdTable thead th:nth-child(2),
+#kelolaPtkSdTable tbody td:nth-child(2) {
+  left: 50px;
+}
+#kelolaPtkSdTable tbody td { z-index: 1; }
+#kelolaPtkSdTable thead th { z-index: 2; }
+#kelolaPtkSdTable thead th:nth-child(1),
+#kelolaPtkSdTable thead th:nth-child(2) {
+  z-index: 3;
+}
+#kelolaPtkSdTable tbody tr:hover td:nth-child(1),
+#kelolaPtkSdTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
+
+/* =================================================================== */
+/* ====== 24. STYLE & FREEZE PANE: KEBUTUHAN PTK SD (STABIL) ====== */
+/* =================================================================== */
+
+/* --- Pengaturan Perataan Konten --- */
+#kebutuhanPtkSdnTable th,
+#kebutuhanPtkSdnTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+#kebutuhanPtkSdnTable td:nth-child(2),
+#kebutuhanPtkSdnTable tfoot td:nth-child(2) {
+  text-align: left;
+}
+
+/* --- Pengaturan Freeze Pane Stabil --- */
+#kebutuhanPtkSdnTable thead th,
+#kebutuhanPtkSdnTable tfoot td {
+  position: sticky;
+}
+#kebutuhanPtkSdnTable thead tr:first-child th {
+  top: 0;
+}
+#kebutuhanPtkSdnTable thead tr:nth-child(2) th {
+  top: 40px; /* Jarak untuk baris header pertama */
+}
+#kebutuhanPtkSdnTable tfoot td {
+  bottom: 0;
+  background-color: #101E26;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
+}
+#kebutuhanPtkSdnTable tbody td:nth-child(1),
+#kebutuhanPtkSdnTable tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
+#kebutuhanPtkSdnTable tfoot td:nth-child(1),
+#kebutuhanPtkSdnTable tfoot td:nth-child(2) {
+  position: sticky;
+}
+#kebutuhanPtkSdnTable thead th:nth-child(1),
+#kebutuhanPtkSdnTable tbody td:nth-child(1),
+#kebutuhanPtkSdnTable tfoot td:nth-child(1) {
+  left: 0;
+}
+#kebutuhanPtkSdnTable thead th:nth-child(2),
+#kebutuhanPtkSdnTable tbody td:nth-child(2),
+#kebutuhanPtkSdnTable tfoot td:nth-child(2) {
+  left: 50px;
+}
+#kebutuhanPtkSdnTable tbody td, #kebutuhanPtkSdnTable tfoot td { z-index: 1; }
+#kebutuhanPtkSdnTable thead th { z-index: 2; }
+#kebutuhanPtkSdnTable thead th:nth-child(1),
+#kebutuhanPtkSdnTable thead th:nth-child(2),
+#kebutuhanPtkSdnTable tfoot td:nth-child(1),
+#kebutuhanPtkSdnTable tfoot td:nth-child(2) {
+  z-index: 3;
+}
+#kebutuhanPtkSdnTable tbody tr:hover td:nth-child(1),
+#kebutuhanPtkSdnTable tbody tr:hover td:nth-child(2) {
   background-color: #2a4152;
 }
 
