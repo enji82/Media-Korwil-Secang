@@ -42,3 +42,19 @@
   
   <div id="pagination-container" class="pagination-container"></div>
 </main>
+
+<style>
+  .main-content {
+    overflow-y: hidden;
+  }
+  main.table-view-container, #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #tableWrapper .table-container {
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+</style>
