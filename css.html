@@ -1728,8 +1728,11 @@ input:-webkit-autofill:active {
 #kebutuhanPtkSdnTable tfoot td:nth-child(2) {
   text-align: left;
 }
+#kebutuhanPtkSdnTable th {
+  white-space: normal; /* Mengizinkan teks header turun baris */
+}
 
-/* --- Pengaturan Freeze Pane Stabil --- */
+/* --- Pengaturan Freeze Pane Stabil (Direferensikan dari PTK Bulanan) --- */
 #kebutuhanPtkSdnTable thead th,
 #kebutuhanPtkSdnTable tfoot td {
   position: sticky;
@@ -1764,17 +1767,101 @@ input:-webkit-autofill:active {
 #kebutuhanPtkSdnTable tfoot td:nth-child(2) {
   left: 50px;
 }
-#kebutuhanPtkSdnTable tbody td, #kebutuhanPtkSdnTable tfoot td { z-index: 1; }
+
+/* --- Hirarki z-index Final (Direferensikan dari PTK Bulanan) & Efek Hover --- */
+#kebutuhanPtkSdnTable tbody td { z-index: 1; }
 #kebutuhanPtkSdnTable thead th { z-index: 2; }
-#kebutuhanPtkSdnTable thead th:nth-child(1),
-#kebutuhanPtkSdnTable thead th:nth-child(2),
+#kebutuhanPtkSdnTable tfoot td { 
+  z-index: 3; 
+}
+#kebutuhanPtkSdnTable thead tr:first-child th:nth-child(1),
+#kebutuhanPtkSdnTable thead tr:first-child th:nth-child(2) {
+  z-index: 4;
+}
 #kebutuhanPtkSdnTable tfoot td:nth-child(1),
 #kebutuhanPtkSdnTable tfoot td:nth-child(2) {
-  z-index: 3;
+  z-index: 5;
 }
+
 #kebutuhanPtkSdnTable tbody tr:hover td:nth-child(1),
 #kebutuhanPtkSdnTable tbody tr:hover td:nth-child(2) {
   background-color: #2a4152;
 }
+main.table-view-container, #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Memberikan scrollbar HANYA pada pembungkus tabel di dalamnya */
+  #tableWrapper .table-container {
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  /* Memastikan header bisa tampil 2 baris */
+  #kebutuhanPtkSdnTable th {
+    white-space: normal;
+  }
+
+/* =================================================================== */
+/* ====== 25. PEWARNAAN KOLOM (KHUSUS BODY - PERBAIKAN AKURAT) ====== */
+/* =================================================================== */
+
+/* Grup 'Kepala Sekolah' (Biru): Kolom 5 s/d 9 */
+#kebutuhanPtkSdnTable tbody td:nth-child(n+5):nth-child(-n+9) {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Grup 'Guru Kelas' (Hijau): Kolom 10 s/d 16 */
+#kebutuhanPtkSdnTable tbody td:nth-child(n+10):nth-child(-n+16) {
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+/* Grup 'Guru PJOK' (Kuning): Kolom 17 s/d 23 */
+#kebutuhanPtkSdnTable tbody td:nth-child(n+17):nth-child(-n+23) {
+  background-color: rgba(241, 196, 15, 0.1);
+}
+
+/* Grup 'Guru PAI' (Ungu): Kolom 24 s/d 30 */
+#kebutuhanPtkSdnTable tbody td:nth-child(n+24):nth-child(-n+30) {
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+/* Grup 'Guru PA Kristen' (Oranye): Kolom 31 s/d 37 */
+#kebutuhanPtkSdnTable tbody td:nth-child(n+31):nth-child(-n+37) {
+  background-color: rgba(230, 126, 34, 0.1);
+}
+
+/* Memastikan efek hover tetap berfungsi di atas warna latar */
+#kebutuhanPtkSdnTable tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+#kebutuhanPtkSdnTable tbody tr:hover td:nth-child(1),
+#kebutuhanPtkSdnTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152 !important;
+}
+
+/* =================================================================== */
+  /* ====== 26. KONDISIONAL FORMAT UNTUK KOLOM "KURANG" (WARNA SOFT) ====== */
+  /* =================================================================== */
+  
+  .cell-negative {
+    background-color: rgba(231, 76, 60, 0.25) !important; /* Merah (lebih transparan) */
+    font-weight: bold;
+  }
+  .cell-positive {
+    background-color: rgba(46, 204, 113, 0.25) !important; /* Hijau (lebih transparan) */
+    font-weight: bold;
+  }
+  
+  /* Aturan hover yang juga dibuat lebih lembut */
+  #kebutuhanPtkSdnTable tbody tr:hover .cell-negative {
+    background-color: rgba(231, 76, 60, 0.4) !important;
+  }
+  #kebutuhanPtkSdnTable tbody tr:hover .cell-positive {
+    background-color: rgba(46, 204, 113, 0.4) !important;
+  }
 
 </style>
