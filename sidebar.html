@@ -72,13 +72,44 @@
                     <li><a href="#" data-page="ptk_daftar_sd_swasta">Daftar PTK SD Swasta</a></li>
                     <li><a href="#" data-page="ptk_kelola_sd">Kelola Daftar PTK</a></li>
                     <li><a href="#" data-page="ptk_kebutuhan_sd_negeri">Kebutuhan Guru SD Negeri</a></li>
-                    <li><a href="#" data-page="ptk_bezetting_sd_negeri">Bezetting SD Negeri</a></li>
                 </ul>
             </li>
         </ul>
     </li>
     
-    <li><a href="#" data-page="murid_menu"><i class="fas fa-user-graduate"></i> Data Murid</a></li>
+    <li class="has-submenu">
+        <a href="#" data-page-parent="murid" data-page="murid_menu">
+            <span><i class="fas fa-user-graduate"></i> Data Murid</span>
+            <i class="fas fa-chevron-right submenu-icon"></i>
+        </a>
+        <ul class="submenu">
+            <li class="has-submenu">
+                <a href="#" data-page-parent="murid_paud" data-page="murid_paud_menu">
+                    <span>PAUD</span>
+                    <i class="fas fa-chevron-right submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#" data-page="murid_paud_kelas_usia">Menurut Kelas dan Usia</a></li>
+                    <li><a href="#" data-page="murid_paud_jenis_kelamin">Menurut Jenis Kelamin</a></li>
+                    <li><a href="#" data-page="murid_paud_jumlah_bulanan">Jumlah Bulanan</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#" data-page-parent="murid_sd" data-page="murid_sd_menu">
+                    <span>SD</span>
+                    <i class="fas fa-chevron-right submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li><a href="#" data-page="murid_sd_kelas">Menurut Kelas</a></li>
+                    <li><a href="#" data-page="murid_sd_rombel">Menurut Rombel</a></li>
+                    <li><a href="#" data-page="murid_sd_jenis_kelamin">Menurut Jenis Kelamin</a></li>
+                    <li><a href="#" data-page="murid_sd_agama">Menurut Agama</a></li>
+                    <li><a href="#" data-page="murid_sd_jumlah_bulanan">Jumlah Bulanan</a></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    
     <li><a href="#" data-page="siaba_menu"><i class="fas fa-fingerprint"></i> SIABA</a></li>
     <li><a href="#" data-page="pns_menu"><i class="fas fa-user-tie"></i> PNS</a></li>
 </ul>
