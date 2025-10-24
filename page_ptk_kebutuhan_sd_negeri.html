@@ -23,3 +23,31 @@
     </div>
   </div>
 </main>
+
+<style>
+  /* 1. Mencegah scroll di halaman utama */
+  .main-content {
+    overflow-y: hidden;
+  }
+
+  /* 2. Mengatur layout flexbox agar container tabel mengisi sisa ruang */
+  main.table-view-container {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 3. Memberikan scrollbar HANYA pada pembungkus tabel */
+  #tableWrapper .table-container {
+    overflow-y: auto; /* Aktifkan scroll vertikal jika konten meluap */
+    flex-grow: 1;
+  }
+</style>
