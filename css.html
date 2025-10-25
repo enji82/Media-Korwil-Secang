@@ -757,56 +757,78 @@ input:-webkit-autofill:active {
 }
 
 /* =================================================================== */
-/* ======== 11. FREEZE PANE: KEADAAN PTK PAUD (STABIL) ========= */
+/* ======== 11. FREEZE PANE: KEADAAN PTK PAUD (SOLUSI FINAL) ========= */
 /* =================================================================== */
 
-#keadaanPtkPaudTable th, #keadaanPtkPaudTable td { text-align: center; }
-#keadaanPtkPaudTable td:nth-child(2) { text-align: left; }
-/* --- Logika Freeze Pane Lengkap (Termasuk thead dan tfoot) --- */
-#keadaanPtkPaudTable td:last-child {
-  background-color: rgba(0, 180, 255, 0.15); /* Warna highlight biru lembut */
-  font-weight: bold; /* Menebalkan teks agar lebih menonjol */
+/* --- 1. Pengaturan Dasar & Perataan --- */
+#keadaanPtkPaudTable th, 
+#keadaanPtkPaudTable td { 
+  text-align: center; 
+  vertical-align: middle; 
+}
+#keadaanPtkPaudTable td:nth-child(2),
+#keadaanPtkPaudTable tfoot td:nth-child(2) { 
+  text-align: left; 
 }
 #keadaanPtkPaudTable tfoot td {
-  background-color: rgba(0, 180, 255, 0.15);
   font-weight: bold;
 }
-/* 1. Definisikan semua elemen header, footer, dan sel yang akan menjadi sticky */
+
+/* --- 2. Pengaturan Freeze Pane (Posisi) --- */
 #keadaanPtkPaudTable thead th,
-#keadaanPtkPaudTable tfoot td { position: sticky; }
-
+#keadaanPtkPaudTable tfoot td { 
+  position: sticky; 
+}
 #keadaanPtkPaudTable thead th { top: 0; }
-#keadaanPtkPaudTable tfoot td { bottom: -1px; } /* Slight overlap to prevent gap */
+#keadaanPtkPaudTable tfoot td { bottom: 0; }
 
+#keadaanPtkPaudTable thead th:nth-child(1),
 #keadaanPtkPaudTable tbody td:nth-child(1),
-#keadaanPtkPaudTable tfoot td:nth-child(1) { position: sticky; left: 0; }
-
+#keadaanPtkPaudTable tfoot td:nth-child(1) { 
+  left: 0; 
+}
+#keadaanPtkPaudTable thead th:nth-child(2),
 #keadaanPtkPaudTable tbody td:nth-child(2),
-#keadaanPtkPaudTable tfoot td:nth-child(2) { position: sticky; left: 50px; } /* Lebar kolom No. */
+#keadaanPtkPaudTable tfoot td:nth-child(2) { 
+  left: 50px; 
+}
 
-#keadaanPtkPaudTable thead th:nth-child(1) { position: sticky; left: 0; }
-#keadaanPtkPaudTable thead th:nth-child(2) { position: sticky; left: 50px; }
+/* --- 3. Warna Latar Belakang & Lapisan (z-index) --- */
+/* Warna Latar Belakang Default */
+#keadaanPtkPaudTable thead th,
+#keadaanPtkPaudTable tfoot td { 
+  background-color: #101E26; 
+}
 
-/* 2. Beri warna latar solid agar tidak transparan saat scroll */
-#keadaanPtkPaudTable thead th { background-color: #101E26; }
-#keadaanPtkPaudTable tfoot td { background-color: #101E26; }
+/* Warna Latar Belakang untuk Kolom Beku (tbody dan tfoot) */
 #keadaanPtkPaudTable tbody td:nth-child(1),
 #keadaanPtkPaudTable tbody td:nth-child(2),
 #keadaanPtkPaudTable tfoot td:nth-child(1),
-#keadaanPtkPaudTable tfoot td:nth-child(2) { background-color: #1c2e3a; }
+#keadaanPtkPaudTable tfoot td:nth-child(2) {
+  background-color: #1c2e3a; 
+}
 
-#keadaanPtkPaudTable tbody tr:hover td:nth-child(1),
-#keadaanPtkPaudTable tbody tr:hover td:nth-child(2) { background-color: #2a4152; }
-
-/* 3. Atur lapisan z-index secara hirarkis untuk stabilitas */
-#keadaanPtkPaudTable tbody td,
-#keadaanPtkPaudTable tfoot td { z-index: 1; }
-#keadaanPtkPaudTable thead th { z-index: 2; }
+/* z-index */
+#keadaanPtkPaudTable tbody td { z-index: 1; }
+#keadaanPtkPaudTable thead th, #keadaanPtkPaudTable tfoot td { z-index: 2; }
 #keadaanPtkPaudTable thead th:nth-child(1),
 #keadaanPtkPaudTable thead th:nth-child(2),
 #keadaanPtkPaudTable tfoot td:nth-child(1),
-#keadaanPtkPaudTable tfoot td:nth-child(2) { z-index: 3; }
+#keadaanPtkPaudTable tfoot td:nth-child(2) { 
+  z-index: 3; 
+}
 
+/* --- 4. Aturan Tambahan (Highlight, Border, Hover) --- */
+#keadaanPtkPaudTable tfoot td { border-top: 2px solid rgba(0, 195, 255, 0.5); }
+#keadaanPtkPaudTable thead th { border-bottom: 2px solid rgba(0, 195, 255, 0.5); }
+
+#keadaanPtkPaudTable tbody td:last-child {
+  background-color: rgba(0, 180, 255, 0.15);
+}
+#keadaanPtkPaudTable tbody tr:hover td:nth-child(1),
+#keadaanPtkPaudTable tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152;
+}
 
 /* =================================================================== */
 /* ====== 12. FINAL FREEZE PANE: JUMLAH PTK BULANAN PAUD ====== */
@@ -817,7 +839,7 @@ input:-webkit-autofill:active {
   text-align: center; /* 1. Membuat semua konten rata tengah */
 }
 #ptkJumlahBulananPaudTable td:nth-child(2) { 
-  text-align: left; /* 2. Kolom ke-2 (Nama Sekolah) dibuat rata kiri */
+  text-align: left; /* 2. Kolom ke-2 (Nama Lembaga) dibuat rata kiri */
 }
 
 #ptkJumlahBulananPaudTable th:last-child,
@@ -825,21 +847,17 @@ input:-webkit-autofill:active {
   font-weight: bold;
 }
 
-#ptkJumlahBulananPaudTable td:last-child {
+/* DIUBAH: Aturan ini sekarang hanya berlaku untuk isi tabel (tbody) */
+#ptkJumlahBulananPaudTable tbody td:last-child {
   background-color: rgba(0, 180, 255, 0.15); /* Warna highlight biru lembut */
   font-weight: bold; /* Menebalkan teks agar lebih menonjol */
-}
-
-#ptkJumlahBulananPaudTable tfoot td {
-  background-color: rgba(0, 180, 255, 0.15);
-  font-weight: bold;
 }
 
 /* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */
 #ptkJumlahBulananPaudTable thead th,
 #ptkJumlahBulananPaudTable tfoot td {
   position: sticky;
-  background-color: #101E26;
+  background-color: #101E26; /* Aturan ini sekarang akan selalu diterapkan pada footer */
 }
 #ptkJumlahBulananPaudTable thead th { top: 0; }
 #ptkJumlahBulananPaudTable tfoot td { bottom: -1px; }
@@ -878,6 +896,18 @@ input:-webkit-autofill:active {
 /* =================================================================== */
 /* ====== 13. FREEZE PANE: RIWAYAT PENGIRIMAN LAPORAN BULAN ====== */
 /* =================================================================== */
+
+#lapbulRiwayatTable th,
+  #lapbulRiwayatTable td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* 2. Atur kolom ke-2 (Nama Sekolah) dan ke-4 (Bulan) agar rata kiri */
+  #lapbulRiwayatTable td:nth-child(2),
+  #lapbulRiwayatTable td:nth-child(4) {
+    text-align: left;
+  }
 
 /* --- Pengaturan Posisi & Latar Belakang --- */
 #lapbulRiwayatTable thead th {
@@ -1067,9 +1097,6 @@ input:-webkit-autofill:active {
 /* --- KUNCI PERBAIKAN 2: Membuat Header Menjadi 2 Baris --- */
 #statusTable th {
   white-space: normal; /* Memungkinkan teks header turun baris */
-}
-#statusTable th:nth-child(n+3) { /* Menargetkan header dari kolom ke-3 sampai terakhir */
-  width: 70px; /* Memberi lebar tetap agar teks terpaksa turun */
 }
 
 /* --- Pengaturan Freeze Pane Stabil (Tidak Diubah) --- */

@@ -77,10 +77,17 @@
   }
 
   /* 2. Pengaturan Freeze Pane */
-  #muridSdBulananTable thead th,
+  #muridSdBulananTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
   #muridSdBulananTable tfoot td {
     position: sticky;
-    background-color: #101E26;
+    bottom: 0;
+    background-color: #101E26; /* Warna solid untuk footer */
+    z-index: 2;
+    border-top: 2px solid rgba(0, 195, 255, 0.5); /* <-- TAMBAHKAN BARIS INI */
   }
   #muridSdBulananTable thead tr:first-child th { top: 0; }
   #muridSdBulananTable thead tr:nth-child(2) th { top: 40px; }

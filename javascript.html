@@ -274,6 +274,17 @@ function initSkUnggahPage() {
 function initSkRiwayatPage() {
     let allDataRows = [], headerCols = [], filterIndices = {}, currentPage = 1, rowsPerPage = 15, currentFilteredRows = [];
     
+    // FUNGSI BARU UNTUK MENGHITUNG BARIS OTOMATIS
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15; // Nilai default jika tabel tidak ditemukan
+        const rowHeight = 37; // Perkiraan tinggi satu baris tabel dalam pixel
+        // Hitung ruang vertikal yang tersedia untuk tabel
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180; 
+        // Kembalikan jumlah baris yang muat, minimal 5 baris
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
+
     function buildTable() {
         const tableBody = document.getElementById('riwayatTable').querySelector('tbody');
         if (!tableBody) return;
@@ -365,7 +376,6 @@ function initSkRiwayatPage() {
         tableHead.innerHTML = '';
         tableHead.appendChild(headerRow);
         
-        rowsPerPage = 15; // Fallback
         tableBody.innerHTML = '';
         
         filterIndices = { tahun: headerCols.indexOf('Tahun Ajaran'), semester: headerCols.indexOf('Semester'), nama: headerCols.indexOf('Nama SD') };
@@ -383,6 +393,9 @@ function initSkRiwayatPage() {
         
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
+
+        // BARIS YANG DIPERBARUI: Hitung jumlah baris setelah tabel ditampilkan
+        rowsPerPage = calculateRowsPerPage('riwayatTable');
         applyFilters();
     }
     
@@ -392,10 +405,27 @@ function initSkRiwayatPage() {
             document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
         })
         .getRiwayatPengirimanSKData();
+
+    // BARIS BARU: Tambahkan event listener untuk mengubah ukuran
+    window.addEventListener('resize', debounce(() => { 
+        if (document.getElementById('riwayatTable')) { 
+            rowsPerPage = calculateRowsPerPage('riwayatTable'); 
+            buildTable(); // Gambar ulang tabel dengan jumlah baris yang baru
+        } 
+    }));
 }
 
 function initSkStatusPage() {
     let allDataRows = [], headerCols = [], currentPage = 1, rowsPerPage = 15;
+
+    // FUNGSI BARU UNTUK MENGHITUNG BARIS OTOMATIS
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15; // Nilai default
+        const rowHeight = 37; // Perkiraan tinggi satu baris
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
     
     function buildTable() {
         const tableBody = document.getElementById('statusTable').querySelector('tbody');
@@ -463,11 +493,13 @@ function initSkStatusPage() {
         tableHead.innerHTML = '';
         tableHead.appendChild(headerRow);
         
-        rowsPerPage = 15; // Fallback
         tableBody.innerHTML = '';
         
         loadingStatus.style.display = 'none';
         tableWrapper.style.display = 'block';
+        
+        // BARIS YANG DIPERBARUI: Hitung jumlah baris setelah tabel ditampilkan
+        rowsPerPage = calculateRowsPerPage('statusTable');
         buildTable();
     }
     
@@ -477,11 +509,28 @@ function initSkStatusPage() {
             document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
         })
         .getStatusPengirimanSKData();
+
+    // BARIS BARU: Tambahkan event listener untuk mengubah ukuran
+    window.addEventListener('resize', debounce(() => {
+        if(document.getElementById('statusTable')) {
+            rowsPerPage = calculateRowsPerPage('statusTable');
+            buildTable(); // Gambar ulang tabel dengan jumlah baris yang baru
+        }
+    }));
 }
 
 function initSkKelolaPage() {
     let allDataRows = [], allHeaders = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
  
+    // FUNGSI BARU UNTUK MENGHITUNG BARIS OTOMATIS
+    function calculateRowsPerPage(tableId) {
+        const tableContainer = document.getElementById(tableId)?.closest('.table-container');
+        if (!tableContainer) return 15; // Nilai default
+        const rowHeight = 37; // Perkiraan tinggi satu baris
+        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
+        return Math.max(5, Math.floor(availableHeight / rowHeight));
+    }
+
     function buildTable() {
         const tableBody = document.getElementById('kelolaTable').querySelector('tbody');
         if (!tableBody) return;
@@ -636,8 +685,6 @@ function initSkKelolaPage() {
         
         tableHead.innerHTML = `<tr><th>No.</th>${allHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
         
-        rowsPerPage = 15; // fallback
-        
         const uniqueValues = { tahun: [], semester: [], nama: [] };
         allDataRows.forEach(row => {
             uniqueValues.tahun.push(row.data['Tahun Ajaran']);
@@ -660,12 +707,23 @@ function initSkKelolaPage() {
         document.querySelector('.filter-container').style.display = 'flex';
         tableWrapper.style.display = 'block'; 
         document.getElementById('pagination-container').style.display = 'flex';
+
+        // BARIS YANG DIPERBARUI: Hitung jumlah baris setelah tabel ditampilkan
+        rowsPerPage = calculateRowsPerPage('kelolaTable');
         applyFilters();
     }
  
     google.script.run.withSuccessHandler(initializePage).withFailureHandler(err => {
         document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal: ${err.message}</p>`
     }).getSKDataForManagement();
+
+    // BARIS BARU: Tambahkan event listener untuk mengubah ukuran
+    window.addEventListener('resize', debounce(() => {
+        if (document.getElementById('kelolaTable')) {
+            rowsPerPage = calculateRowsPerPage('kelolaTable');
+            buildTable(); // Gambar ulang tabel dengan jumlah baris yang baru
+        }
+    }));
 }
 
 function initSkEditPage(params) {
@@ -1171,7 +1229,7 @@ function initLapbulRiwayatPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180; 
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -1361,7 +1419,7 @@ function initLapbulStatusPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -1655,7 +1713,7 @@ function initLapbulKelolaPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -2228,9 +2286,12 @@ function initPtkKeadaanPaudPage() {
 
         tableBody.innerHTML = '';
         tableFoot.innerHTML = ''; 
+        tableFoot.classList.remove('has-content');
 
-        const namaSekolahIndex = headerCols.indexOf('Nama Sekolah');
+        // --- AWAL KODE YANG DIPERBAIKI ---
+        const namaLembagaIndex = headerCols.indexOf('Nama Lembaga'); // Diubah dari Nama Sekolah
         const jmlPtkIndex = headerCols.indexOf('JML PTK');
+        // --- AKHIR KODE YANG DIPERBAIKI ---
 
         if (currentFilteredRows.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="${headerCols.length + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
@@ -2243,7 +2304,7 @@ function initPtkKeadaanPaudPage() {
             cols.forEach((cellData, colIndex) => {
                 let displayData = (String(cellData) === '0' || !cellData) ? '-' : cellData;
                 let cellClasses = [];
-                if (colIndex === namaSekolahIndex) cellClasses.push('cell-align-left');
+                if (colIndex === namaLembagaIndex) cellClasses.push('cell-align-left');
                 if (colIndex === jmlPtkIndex) cellClasses.push('cell-font-bold');
                 const classString = cellClasses.length > 0 ? ` class="${cellClasses.join(' ')}"` : '';
                 rowHTML += `<td${classString}>${displayData}</td>`;
@@ -2262,11 +2323,13 @@ function initPtkKeadaanPaudPage() {
             }
         });
 
+        tableFoot.classList.add('has-content');
+        
         let totalRowHTML = '<tr>';
-        totalRowHTML += '<td>-</td>';
+        totalRowHTML += '<td>-</td>'; 
 
         headerCols.forEach((header, i) => {
-            if (i === namaSekolahIndex) {
+            if (i === namaLembagaIndex) {
                 totalRowHTML += '<td class="cell-align-left">JUMLAH</td>';
             } else if (i >= sumStartIndex) {
                 const totalClass = (i === jmlPtkIndex) ? ' class="cell-font-bold"' : '';
@@ -2320,7 +2383,6 @@ function initPtkKeadaanPaudPage() {
         }
         
         loadingStatus.style.display = 'none';
-        // KUNCI PERBAIKAN 2: Mengubah 'block' menjadi 'flex' agar sesuai dengan CSS
         tableWrapper.style.display = 'flex'; 
         applyFilters();
     }
@@ -2495,19 +2557,30 @@ function initPtkJumlahBulananPaudPage() {
             }
         });
 
+        tableFoot.classList.add('has-content'); // Tambahkan kelas untuk styling
         const totalRow = document.createElement('tr');
-        totalRow.innerHTML = '<td>-</td>';
+        let totalRowHTML = '<td>-</td>'; // Placeholder untuk kolom "No."
+
+        // --- AWAL KODE YANG DIPERBAIKI ---
+        const namaLembagaIndex = headerCols.indexOf('Nama Lembaga'); // Diubah dari Nama Sekolah
+
         headerCols.forEach((header, i) => {
-            if (hiddenColumnIndices.includes(i)) return;
-            let cellHTML = '<td>-</td>';
-            if (i === headerCols.indexOf('Nama Sekolah')) {
+            if (hiddenColumnIndices.includes(i)) return; // Lewati kolom tersembunyi
+
+            let cellHTML = '<td>-</td>'; // Default placeholder
+            if (i === namaLembagaIndex) {
+                // Jika ini adalah kolom "Nama Lembaga", tulis "JUMLAH"
                 cellHTML = '<td style="text-align: left;">JUMLAH</td>';
             } else if (i >= sumStartIndex) {
+                // Jika ini adalah kolom yang perlu dijumlahkan
                 const isBold = (i === jmlPtkIndex) ? ' class="cell-font-bold"' : '';
                 cellHTML = `<td${isBold}>${totals[i] || '-'}</td>`;
             }
-            totalRow.innerHTML += cellHTML;
+            totalRowHTML += cellHTML;
         });
+        // --- AKHIR KODE YANG DIPERBAIKI ---
+
+        totalRow.innerHTML = totalRowHTML;
         tableFoot.appendChild(totalRow);
     }
     
@@ -2600,7 +2673,7 @@ function initPtkDaftarPaudPage() {
     function calculateRowsPerPage() {
         const tableContainer = document.querySelector('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40; // Ketinggian baris tetap sebagai dasar pembagian
+        const rowHeight = 37; // Ketinggian baris tetap sebagai dasar pembagian
         
         // Menghitung sisa ruang dengan mengurangi posisi atas tabel dari total tinggi jendela
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 160; 
@@ -2801,7 +2874,7 @@ function initPtkKelolaPaudPage() {
     function calculateRowsPerPage() {
         const tableContainer = document.querySelector('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 160;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -3256,7 +3329,7 @@ function initPtkDaftarSdnPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -3420,7 +3493,7 @@ function initPtkDaftarSdsPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
@@ -3573,7 +3646,7 @@ function initPtkKelolaSdPage() {
     function calculateRowsPerPage(tableId) {
         const tableContainer = document.getElementById(tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
-        const rowHeight = 40;
+        const rowHeight = 37;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - 180;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
