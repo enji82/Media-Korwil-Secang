@@ -614,7 +614,7 @@ function initLapbulFormPaudPage(params) {
     bulanSelect.innerHTML = bulanOptions.map((m, i) => `<option value="${m}" ${i === prevMonthIndex ? 'selected' : ''}>${m}</option>`).join('');
     tahunSelect.innerHTML = [currentYear, currentYear - 1].map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
 
-    showAppModal('loading', 'Memuat daftar sekolah...');
+    showAppModal('loading', 'Memuat formulir...');
     google.script.run
         .withSuccessHandler(schoolLists => {
             const handleJenjangChange = () => {
@@ -1612,7 +1612,7 @@ function initPtkTambahPaudPage() {
     const form = document.getElementById('addPtkPaudForm');
     if (!form) return;
 
-    showAppModal('loading', 'Memuat opsi formulir...');
+    showAppModal('loading', 'Memuat formulir...');
 
     google.script.run
         .withSuccessHandler(options => {
@@ -2436,7 +2436,7 @@ function initPtkTambahSdPage() {
     const form = document.getElementById('addPtkSdForm');
     if (!form) return;
 
-    showAppModal('loading', 'Memuat opsi formulir...');
+    showAppModal('loading', 'Memuat formulir...');
 
     google.script.run
         .withSuccessHandler(options => {
@@ -2506,7 +2506,7 @@ function initPtkTambahSdPage() {
     
     let allOptions = {};
 
-    showAppModal('loading', 'Memuat opsi formulir...');
+    showAppModal('loading', 'Memuat formulir...');
 
     function populateSelect(selectEl, optionsArr, placeholder) {
         selectEl.innerHTML = `<option value="" disabled selected>-- ${placeholder} --</option>`;

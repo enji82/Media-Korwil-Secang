@@ -232,22 +232,37 @@ function getSKRiwayatData() {
   }
 }
 
+/**
+ * [REFACTOR - PERBAIKAN FINAL] Mengambil data status pengiriman SK.
+ * Mengembalikan data dalam format objek agar sesuai dengan fungsi generik.
+ * Urutan baris sesuai dengan spreadsheet sumber.
+ */
 function getSKStatusData() {
   try {
     const data = getDataFromSheet('SK_BAGI_TUGAS');
     if (!data || data.length < 2) {
-      return { headers: [], rows: [] }; // Kirim struktur kosong jika tidak ada data
+      return { headers: [], rows: [] };
     }
 
-    const headers = data[0];
+    const headers = data[0].map(h => String(h).trim());
     const dataRows = data.slice(1);
 
-    // BARIS UNTUK MENGURUTKAN DATA TELAH DIHAPUS DARI SINI
+    // **AWAL BLOK PERBAIKAN**
+    // Mengubah setiap baris (yang tadinya array) menjadi objek
+    const structuredRows = dataRows.map(row => {
+      const rowObject = {};
+      headers.forEach((header, index) => {
+        rowObject[header] = row[index];
+      });
+      return rowObject;
+    });
+    // **AKHIR BLOK PERBAIKAN**
 
-    // Kembalikan data dalam format {headers, rows}
+    // Tidak ada pengurutan di sini, sesuai permintaan sebelumnya
+    
     return {
       headers: headers,
-      rows: dataRows
+      rows: structuredRows // Kirim data yang sudah berformat objek
     };
 
   } catch (e) {
