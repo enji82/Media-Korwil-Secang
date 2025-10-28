@@ -18,6 +18,7 @@
     --color-dark-blue: #2980b9;
     --color-dark-yellow: #f39c12;
   }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     background-color: #0f2027;
@@ -28,11 +29,13 @@
     padding: 0;
     font-size: 14px;
   }
+
   .app-container {
     display: flex;
     height: 100vh;
     overflow: hidden;
   }
+
   .main-content {
     flex-grow: 1;
     overflow-y: auto;
@@ -40,22 +43,26 @@
     display: flex;
     flex-direction: column;
   }
+
   .main-content header {
     text-align: center;
     margin-bottom: 30px;
     padding-top: 20px;
     flex-shrink: 0;
   }
+
   .main-content header h1,
   .main-content header h2 {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
+
   .main-content header h1 {
     font-size: 2.5em;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
   }
+
   .main-content header h2 {
     font-size: 1.6em;
     font-weight: 300;
@@ -63,6 +70,7 @@
     margin-top: 5px;
     margin-bottom: 20px;
   }
+
   .main-content header h2::after {
     content: '';
     display: block;
@@ -73,10 +81,26 @@
     border-radius: 1px;
     animation: stretch-bounce 2.5s infinite ease-in-out;
   }
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.3); }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+
+  /* --- Scrollbar Kustom --- */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  /* --- Animasi Global --- */
   @keyframes stretch-bounce { 0% { transform: scaleX(0.5); } 50% { transform: scaleX(1); } 100% { transform: scaleX(0.5); } }
   @keyframes cardFadeIn { to { opacity: 1; transform: translateY(0); } }
   @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
@@ -88,35 +112,168 @@
   /* =================================================================== */
   /* ======================== 2. GAYA SIDEBAR ========================== */
   /* =================================================================== */
-  .sidebar { width: 260px; flex-shrink: 0; background: rgba(10, 25, 41, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-right: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; flex-direction: column; animation: slideInFromLeft 0.6s ease-out forwards; }
-  .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; gap: 15px; }
-  .sidebar-logo { width: 40px; height: 40px; flex-shrink: 0; color: #00c3ff; filter: drop-shadow(0 0 8px #00c3ff); opacity: 0; transform: translateY(10px); animation: fadeInUp 0.5s ease-out 0.2s forwards; }
-  .sidebar-title-container { display: flex; flex-direction: column; opacity: 0; transform: translateY(10px); animation: fadeInUp 0.5s ease-out 0.3s forwards; }
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: rgba(10, 25, 41, 0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    display: flex;
+    flex-direction: column;
+    animation: slideInFromLeft 0.6s ease-out forwards;
+  }
+
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    color: #00c3ff;
+    filter: drop-shadow(0 0 8px #00c3ff);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.5s ease-out 0.2s forwards;
+  }
+
+  .sidebar-title-container {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.5s ease-out 0.3s forwards;
+  }
+
   .title-main { font-size: 1.1em; font-weight: 600; color: #ffffff; line-height: 1.2; }
   .title-sub { font-size: 0.85em; color: #bdc3c7; line-height: 1.2; }
-  .sidebar-menu { list-style: none; padding: 15px; margin: 0; flex-grow: 1; overflow-y: auto; }
-  .sidebar-menu > li { opacity: 0; transform: translateY(15px); animation: fadeInUp 0.5s ease-out forwards; }
-  .sidebar-menu a { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; color: #e0e0e0; text-decoration: none; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; transition: color 0.3s ease; white-space: nowrap; overflow: hidden; }
-  .sidebar-menu a::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.1); border-radius: 6px; transform: translateX(-101%); transition: transform 0.3s ease-out; z-index: -1; }
+
+  .sidebar-menu {
+    list-style: none;
+    padding: 15px;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+
+  .sidebar-menu > li {
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .sidebar-menu a {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e0e0e0;
+    text-decoration: none;
+    padding: 12px 10px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .sidebar-menu a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    transform: translateX(-101%);
+    transition: transform 0.3s ease-out;
+    z-index: -1;
+  }
+
   .sidebar-menu a:hover::before { transform: translateX(0); }
   .sidebar-menu a.active { background-color: #3a5d82; color: #ffffff; font-weight: bold; }
   .sidebar-menu i { font-size: 1.1em; width: 20px; text-align: center; flex-shrink: 0; }
   .has-submenu > a { justify-content: space-between; }
   .submenu-icon { transition: transform 0.3s ease; font-size: 0.8em !important; }
   .has-submenu.open > a .submenu-icon { transform: rotate(90deg); }
-  .submenu { list-style: none; padding-left: 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+
+  .submenu {
+    list-style: none;
+    padding-left: 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+  }
+
   .has-submenu.open > .submenu { max-height: 500px; margin-top: 5px; }
   .submenu a { padding-left: 22px; font-size: 0.95em; }
-  .sidebar-footer { padding: 15px; text-align: center; font-size: 0.8em; color: #bdc3c7; border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
+
+  .sidebar-footer {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.8em;
+    color: #bdc3c7;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+  }
 
   /* =================================================================== */
   /* ================= 3. GAYA MENU UTAMA & SUBMENU ================== */
   /* =================================================================== */
-  .menu-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1400px; margin: 0 auto; padding: 20px; }
-  .menu-button { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 150px; height: 140px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); text-decoration: none; color: #ffffff; text-align: center; padding: 15px; box-sizing: border-box; transition: all 0.3s ease; cursor: pointer; opacity: 0; transform: scale(0.5); animation: zoomIn 0.4s ease-out forwards; }
-  .menu-button:active { transform: translateY(-2px) scale(0.95); filter: brightness(0.9); transition-duration: 0.1s; }
+  .menu-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .menu-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+    color: #ffffff;
+    text-align: center;
+    padding: 15px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.5);
+    animation: zoomIn 0.4s ease-out forwards;
+  }
+
+  .menu-button:active {
+    transform: translateY(-2px) scale(0.95);
+    filter: brightness(0.9);
+    transition-duration: 0.1s;
+  }
+
   .menu-button i { font-size: 2.8em; margin-bottom: 12px; transition: all 0.3s ease; }
   .menu-button span { font-size: 0.9em; font-weight: 500; line-height: 1.2; }
+
+  /* --- Pewarnaan & Efek Hover Tombol Menu --- */
   .menu-button[data-page="sk_menu"] { color: var(--color-blue); }
   .menu-button[data-page="lapbul_menu"] { color: var(--color-green); }
   .menu-button[data-page="ptk_menu"] { color: var(--color-yellow); }
@@ -131,47 +288,207 @@
   .menu-button[data-page="data_sekolah_menu"] { color: var(--color-dark-purple); }
   .menu-button[data-page="komunitas_belajar_menu"] { color: var(--color-dark-blue); }
   .menu-button[data-page="gelar_karya_menu"] { color: var(--color-dark-yellow); }
-  .menu-button:hover { background: rgba(0, 0, 0, 0.3); transform: translateY(-8px); border-color: currentColor; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px currentColor; }
+
+  .menu-button:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: translateY(-8px);
+    border-color: currentColor;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px currentColor;
+  }
+
   .menu-button:hover i { transform: scale(1.1); filter: drop-shadow(0 0 10px currentColor); }
 
   /* =================================================================== */
   /* =============== 4. GAYA FORMULIR & FILTER UMUM ================== */
   /* =================================================================== */
-  .required-star { color: var(--color-red); margin-left: 4px; font-weight: bold; }
-  .filter-container { max-width: none; width: 100%; margin: 0 auto 20px auto; padding: 15px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; box-sizing: border-box; flex-shrink: 0; }
+  
+  /* Gaya untuk bintang merah pada input yang wajib diisi */
+  .required-star {
+    color: var(--color-red);
+    margin-left: 4px;
+    font-weight: bold;
+  }
+
+  .filter-container {
+    max-width: none;
+    width: 100%;
+    margin: 0 auto 20px auto;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
   .filter-group { display: flex; align-items: center; gap: 10px; }
   .filter-group label { font-weight: 500; color: #ffffff; flex-shrink: 0; }
-  .filter-group select { -webkit-appearance: none; appearance: none; width: auto; min-width: 150px; padding: 10px 30px 10px 15px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; color: #e0e0e0; background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; }
-  .manual-form, .edit-form { max-width: none; width: 100%; box-sizing: border-box; margin: 20px 0; padding: 35px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; }
-  .form-sk-upload, .form-container { width: 100%; max-width: 700px; align-self: center; margin-top: 20px; margin-bottom: 20px; }
+  
+  .filter-group select {
+    -webkit-appearance: none;
+    appearance: none;
+    width: auto;
+    min-width: 150px;
+    padding: 10px 30px 10px 15px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    color: #e0e0e0;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+  }
+
+  .manual-form, .edit-form {
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 20px 0;
+    padding: 35px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+  }
+
+  .form-sk-upload, .form-container {
+    width: 100%;
+    max-width: 700px;
+    align-self: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
   .form-group { margin-bottom: 20px; }
   .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #e0e0e0; }
-  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; box-sizing: border-box; font-size: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #e0e0e0; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #e0e0e0;
+  }
+
   .input-hint { font-size: 0.9em; color: #bdc3c7; margin-top: 8px; }
   .input-hint a { color: #00c3ff; text-decoration: none; font-weight: 500; transition: color 0.2s; }
   .input-hint a:hover { color: #ffffff; text-decoration: underline; }
   input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
   .form-group select option, .filter-group select option { background: #1f2a3a; color: #e0e0e0; }
-  .submit-btn { width: 100%; padding: 12px; font-size: 16px; cursor: pointer; transition: all 0.3s; font-weight: bold; background: rgba(0, 180, 255, 0.3); border: 1px solid rgba(0, 180, 255, 0.5); color: #ffffff; border-radius: 8px; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    background: rgba(0, 180, 255, 0.3);
+    border: 1px solid rgba(0, 180, 255, 0.5);
+    color: #ffffff;
+    border-radius: 8px;
+  }
+
   .submit-btn:hover:not(:disabled) { background-color: rgba(0, 180, 255, 0.5); }
   .submit-btn:disabled { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: #888; cursor: not-allowed; }
 
   /* =================================================================== */
   /* ======================= 5. GAYA TABEL UMUM ======================== */
   /* =================================================================== */
-  .table-view-container { display: flex; flex-direction: column; min-height: 0; }
-  .table-container { overflow: auto; background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; margin: 0 auto; }
-  .data-table { border-collapse: separate; border-spacing: 0; font-size: 13px; width: 100%; }
-  .data-table th, .data-table td { border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 12px; vertical-align: middle; white-space: nowrap; height: 24px; }
+  .table-view-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .table-container {
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+  }
+
+  .data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    width: 100%;
+  }
+
+  .data-table th, .data-table td {
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    vertical-align: middle;
+    white-space: nowrap;
+    height: 24px;
+  }
+  
   .data-table th:not(:last-child),
-  .data-table td:not(:last-child) { border-right: 1px solid rgba(255, 255, 255, 0.1); }
-  .data-table th { position: sticky; top: 0; z-index: 5; background-color: #101E26; border-bottom: 2px solid rgba(0, 195, 255, 0.5); font-weight: 600; }
-  .data-table tbody tr:hover td { background-color: rgba(255, 255, 255, 0.08); }
-  .data-table tfoot.has-content td { position: sticky; bottom: -1px; z-index: 5; background-color: #101E26; font-weight: bold; border-top: 2px solid rgba(0, 195, 255, 0.5); }
-  .data-table tbody tr:hover .sticky-col { background-color: #2a4152; }
+  .data-table td:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background-color: #101E26;
+    border-bottom: 2px solid rgba(0, 195, 255, 0.5);
+    font-weight: 600;
+  }
+  .data-table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  .data-table tfoot.has-content td {
+    position: sticky;
+    bottom: -1px; /* Slight overlap to hide gap */
+    z-index: 5;
+    background-color: #101E26;
+    font-weight: bold;
+    border-top: 2px solid rgba(0, 195, 255, 0.5);
+  }
+  .data-table tbody tr:hover .sticky-col {
+    background-color: #2a4152;
+  }
+
+
   .action-buttons { display: flex; justify-content: center; align-items: center; gap: 8px; }
-  .action-btn { display: inline-flex; align-items: center; justify-content: center; height: 24px; padding: 0 14px; border: 1px solid transparent; border-radius: 5px; cursor: pointer; color: white; font-size: 13px; font-weight: bold; transition: all 0.2s ease; width: 90px; box-sizing: border-box; text-decoration: none; white-space: nowrap; }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    width: 90px;
+    box-sizing: border-box;
+    text-decoration: none;
+    white-space: nowrap;
+  }
   .action-btn i { margin-right: 6px; }
   .view-btn { background-color: rgba(0, 180, 255, 0.2); border-color: rgba(0, 180, 255, 0.5); color: #00b4ff; }
   .view-btn:hover { color: #ffffff; background-color: rgba(0, 180, 255, 0.4); }
@@ -179,31 +496,83 @@
   .edit-btn:hover { background-color: rgba(255, 183, 77, 0.6); }
   .delete-btn { background-color: rgba(229, 115, 115, 0.4); border-color: rgba(229, 115, 115, 0.6); }
   .delete-btn:hover { background-color: rgba(229, 115, 115, 0.6); }
-  .pagination-container { text-align: center; margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 12px; flex-shrink: 0; }
-  .page-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: #00b4ff; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-weight: bold; }
+
+  .pagination-container {
+    text-align: center;
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .page-btn {
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #00b4ff;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-weight: bold;
+  }
   .page-btn:hover:not(:disabled) { background-color: rgba(0, 0, 0, 0.4); color: #ffffff; }
   .page-info { font-weight: 500; color: #ffffff; }
   .page-btn:disabled { color: rgba(255, 255, 255, 0.3); cursor: not-allowed; background-color: rgba(0, 0, 0, 0.1); }
-  .table-footer-note { padding: 10px 15px; font-size: 0.85em; color: #bdc3c7; text-align: left; background: rgba(0, 0, 0, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0 0 10px 10px; margin-top: -1px; }
 
+  .table-footer-note {
+    padding: 10px 15px;
+    font-size: 0.85em;
+    color: #bdc3c7;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 10px 10px;
+    margin-top: -1px;
+  }
+  
   /* =================================================================== */
   /* =================== 6. GAYA MODAL & SPINNER ===================== */
   /* =================================================================== */
-  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.3); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000; opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
   #appModal { z-index: 1001; }
   .modal-overlay.show { opacity: 1; visibility: visible; }
-  .modal-content { background: rgba(44, 62, 80, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); padding: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); text-align: center; max-width: 450px; width: 90%; transform: scale(0.9); transition: transform 0.3s ease; }
+  .modal-content {
+    background: rgba(44, 62, 80, 0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center; max-width: 450px; width: 90%;
+    transform: scale(0.9); transition: transform 0.3s ease;
+  }
   .modal-overlay.show .modal-content { transform: scale(1); }
   .modal-content h3 { margin-top: 0; color: #ffffff; }
   .modal-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
-  #deleteModal .modal-actions button { flex-grow: 1; padding: 10px; font-size: 1em; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; }
+  #deleteModal .modal-actions button {
+    flex-grow: 1; padding: 10px; font-size: 1em; font-weight: 500;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s ease;
+    border: 1px solid transparent; display: flex; align-items: center; justify-content: center;
+  }
   #deleteModal .cancel-btn { background-color: rgba(144, 164, 174, 0.2); border-color: rgba(144, 164, 174, 0.4); color: #e0e0e0; }
   #deleteModal .cancel-btn:hover { background-color: rgba(144, 164, 174, 0.4); }
   #deleteModal .delete-btn-confirm { background-color: rgba(229, 115, 115, 0.3); border-color: rgba(229, 115, 115, 0.5); color: #e0e0e0; }
   #deleteModal .delete-btn-confirm:hover { background-color: rgba(229, 115, 115, 0.5); color: #ffffff; }
-  .custom-modal-input { width: 100%; padding: 12px; box-sizing: border-box; font-size: 1.2em; text-align: center; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: 8px; color: #ffffff; margin-top: 15px; transition: all 0.3s ease; }
+  .custom-modal-input {
+    width: 100%; padding: 12px; box-sizing: border-box; font-size: 1.2em; text-align: center;
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    border-radius: 8px; color: #ffffff; margin-top: 15px; transition: all 0.3s ease;
+  }
   .custom-modal-input::placeholder { color: rgba(255, 255, 255, 0.4); }
   .custom-modal-input:focus { outline: none; border-color: #00c3ff; box-shadow: 0 0 10px rgba(0, 195, 255, 0.5); background: rgba(0, 0, 0, 0.3); }
+
   .loading-container { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
   .spinner-container { display: flex; justify-content: center; align-items: center; gap: 6px; height: 50px; }
   .spinner-bar { width: 8px; height: 100%; border-radius: 4px; animation: bounce 1.2s infinite ease-in-out; }
@@ -213,88 +582,242 @@
   .spinner-bar:nth-child(4) { background-color: #3498db; animation-delay: -0.9s; }
 
   /* =================================================================== */
-  /* [BERSIH] KELAS UTILITAS: FREEZE PANE UNTUK SEMUA TABEL (v4.0 - FINAL) */
+  /* [BARU] KELAS UTILITAS: FREEZE PANE UNTUK SEMUA TABEL (REFACTOR) */
   /* =================================================================== */
+
+  /* 1. Aturan dasar untuk semua tabel dengan freeze pane */
   .freeze-pane-table th,
-  .freeze-pane-table td { text-align: center; vertical-align: middle; }
-  .freeze-pane-table thead th { position: sticky; top: 0; background-color: #101E26; }
-  .freeze-pane-table tfoot td { position: sticky; bottom: 0; background-color: #101E26; border-top: 2px solid rgba(0, 195, 255, 0.5); }
+  .freeze-pane-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* 2. Pengaturan Posisi & Latar Belakang Sticky */
+  .freeze-pane-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #101E26; /* Warna solid untuk header */
+  }
+
+  .freeze-pane-table tfoot td {
+    position: sticky;
+    bottom: 0;
+    background-color: #101E26; /* Warna solid untuk footer */
+    z-index: 3;
+    border-top: 2px solid rgba(0, 195, 255, 0.5);
+  }
+
   .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tbody td:nth-child(2) { position: sticky; background-color: #1c2e3a; }
+  .freeze-pane-table tbody td:nth-child(2) {
+    position: sticky;
+    background-color: #1c2e3a; /* Warna solid untuk kolom beku di body */
+  }
+
+  /* 3. Pengaturan Posisi Kolom Beku */
   .freeze-pane-table thead th:nth-child(1),
   .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tfoot td:nth-child(1) { left: 0; }
+  .freeze-pane-table tfoot td:nth-child(1) {
+    left: 0; /* Kolom pertama (No.) menempel di kiri */
+  }
+
   .freeze-pane-table thead th:nth-child(2),
   .freeze-pane-table tbody td:nth-child(2),
-  .freeze-pane-table tfoot td:nth-child(2) { left: 50px; }
+  .freeze-pane-table tfoot td:nth-child(2) {
+    left: 50px; /* Posisi kolom kedua (sesuaikan jika lebar kolom "No." berbeda) */
+  }
+  
+  /* Aturan sticky untuk header 2 baris */
   .freeze-pane-table thead tr:first-child th { top: 0; }
   .freeze-pane-table thead tr:nth-child(2) th { top: 40px; }
+
+  /* 4. Pengaturan Lapisan (z-index) agar tidak tumpang tindih */
   .freeze-pane-table tbody td { z-index: 1; }
-  .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tbody td:nth-child(2) { z-index: 2; }
-  .freeze-pane-table thead th,
-  .freeze-pane-table tfoot td { z-index: 3; }
+  .freeze-pane-table thead th { z-index: 2; }
+  
   .freeze-pane-table thead th:nth-child(1),
   .freeze-pane-table thead th:nth-child(2),
   .freeze-pane-table tfoot td:nth-child(1),
-  .freeze-pane-table tfoot td:nth-child(2) { z-index: 4; }
+  .freeze-pane-table tfoot td:nth-child(2) {
+    z-index: 4; /* Sudut kiri atas dan bawah memiliki lapisan tertinggi */
+  }
+
+  /* 5. Efek Hover untuk kolom beku */
   .freeze-pane-table tbody tr:hover td:nth-child(1),
-  .freeze-pane-table tbody tr:hover td:nth-child(2) { background-color: #2a4152 !important; }
+  .freeze-pane-table tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152 !important; /* Warna hover yang sedikit lebih terang */
+  }
 
   /* =================================================================== */
-  /* ===== 9. GAYA SPESIFIK TABEL (Perataan & Pewarnaan) ===== */
+  /* ===================== 7. GAYA SPESIFIK HALAMAN ==================== */
   /* =================================================================== */
-  #kelolaPtkPaudTable td:nth-child(2), #kelolaPtkPaudTable td:nth-child(3) { text-align: left; }
+
+  /* --- GAYA KOLOM BEKU (STICKY) SEDERHANA (untuk tabel non-freeze-pane) --- */
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background-color: #1c2e3a; /* Warna latar solid untuk kolom beku */
+    z-index: 2;
+  }
+  .data-table th.sticky-col {
+    z-index: 6; /* Header harus di atas body */
+    background-color: #101E26;
+  }
+
+  /* --- MODUL: Laporan Bulan (Formulir) --- */
+  .info-button-container { text-align: center; margin-top: 30px; }
+  .info-btn { background: rgba(0, 180, 255, 0.2); border: 1px solid rgba(0, 180, 255, 0.5); color: #00c3ff; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.3s ease; }
+  .info-btn:hover { background: rgba(0, 180, 255, 0.4); color: #ffffff; }
+  .form-layout-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+  .form-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+  .form-column { display: flex; flex-direction: column; min-width: 0; }
+  .section-title { font-size: 1.2em; color: #00c3ff; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; margin-top: 25px; margin-bottom: 20px; }
+  .form-column > .section-title:first-child { margin-top: 0; }
+  .murid-grid-vertical { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .murid-group { background-color: rgba(0, 0, 0, 0.15); padding: 10px 12px; border-radius: 8px; }
+  .murid-group-label { font-weight: 500; color: #e0e0e0; margin-bottom: 8px; display: block; text-align: center; }
+  .murid-group .form-group label { text-align: center; }
+  .murid-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .murid-input-pair .form-group { margin-bottom: 0; }
+  .murid-input-pair input { text-align: center; width: 100%; padding: 6px 10px; }
+  .ptk-fieldset { border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 5px 15px 10px 15px; margin-bottom: 7px; }
+  .ptk-fieldset legend { padding: 0 10px; color: #00c3ff; font-weight: 500; font-size: 1.1em; text-align: center; width: auto; margin: 0 auto; }
+  .ptk-group-grid { display: grid; gap: 15px; }
+  .ptk-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .ptk-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .ptk-group-grid .form-group label, .ptk-group-grid .form-group input { text-align: center; }
+  .tabs-container { display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-link { padding: 10px 15px; cursor: pointer; background: none; border: none; color: #bdc3c7; font-size: 0.95em; font-weight: 500; transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+  .tab-link.active, .tab-link:hover { color: #00c3ff; border-bottom-color: #00c3ff; }
+  .sub-section-title { font-size: 1em; color: #e0e0e0; margin-top: 20px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .rombel-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+  .rombel-input-group { background-color: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; }
+  .rombel-group-label { text-align: center; font-weight: 500; display: block; margin-bottom: 10px; }
+  .agama-row { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: center; }
+  .agama-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ptk-sub-fieldset { border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 15px; margin-top: 20px; }
+  .ptk-sub-fieldset legend { padding: 0 10px; font-size: 1.1em; font-weight: bold; color: #00c3ff; text-align: left; margin-left: 0; width: auto; }
+  .ptk-row { display: grid; gap: 10px; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
+  .ptk-row > label { font-weight: bold; color: #e0e0e0; }
+  .ptk-row .form-group label { font-weight: normal; color: #bdc3c7; }
+  .ptk-row .form-group { margin-bottom: 0; }
+  .ptk-row.has-label { grid-template-columns: 120px 1fr 1fr 1fr 1fr; }
+
+  .dropdown-info { position: relative; display: inline-block; }
+  .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
+  .info-btn.active + .dropdown-content { border-color: rgba(0, 195, 255, 0.5); }
+  .info-btn i.fa-chevron-down { transition: transform 0.3s ease; }
+  .info-btn.active i.fa-chevron-down { transform: rotate(180deg); }
+
+  /* --- MODUL: Arsip (Drive Browser) --- */
+  .arsip-container {
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px; padding: 25px; width: 100%; max-width: 900px;
+    margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0;
+  }
+  .breadcrumb { margin-bottom: 25px; font-weight: 500; color: #bdc3c7; flex-shrink: 0; }
+  .breadcrumb span { color: #00c3ff; cursor: pointer; transition: color 0.2s ease; }
+  .breadcrumb span:hover { color: #ffffff; text-decoration: underline; }
+  .breadcrumb .inactive { color: #ffffff; cursor: default; text-decoration: none; }
+  #view-container { flex-grow: 1; }
+  .view-container-scrollable { overflow-y: auto; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+  .card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center; background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; cursor: pointer;
+    transition: all 0.2s ease; opacity: 0; transform: translateY(20px);
+    animation: cardFadeIn 0.5s ease-out forwards;
+  }
+  .card:hover { transform: translateY(-5px); border-color: #00c3ff; background: rgba(0, 0, 0, 0.3); }
+  .card i { font-size: 2.5em; margin-bottom: 15px; color: #00c3ff; }
+  .card span { font-weight: 500; color: #e0e0e0; }
+  .file-list-container { list-style-type: none; padding: 0; }
+  .file-item {
+    display: flex; align-items: center; padding: 12px; border-radius: 6px;
+    transition: background-color 0.2s ease; opacity: 0; transform: translateY(15px);
+    animation: cardFadeIn 0.5s ease-out forwards;
+  }
+  .file-item:hover { background-color: rgba(255, 255, 255, 0.08); }
+  .file-item i { color: #e74c3c; font-size: 1.5em; margin-right: 15px; }
+  .file-item a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
+  .file-item a:hover { text-decoration: underline; }
+  
+  /* --- GAYA SPESIFIK TABEL (Perataan & Pewarnaan) --- */
+  .cell-font-bold { font-weight: bold; }
+  #kelolaPtkPaudTable td:nth-child(2),
+  #kelolaPtkPaudTable td:nth-child(3) { text-align: left; }
   #daftarPtkPaudTable td:nth-child(2), #daftarPtkPaudTable td:nth-child(4), #daftarPtkPaudTable td:nth-child(6), #daftarPtkPaudTable td:nth-child(9), #daftarPtkPaudTable td:nth-child(10) { text-align: left; }
   #keadaanPtkPaudTable td:nth-child(2), #keadaanPtkPaudTable tfoot td:nth-child(2) { text-align: left; }
+  #keadaanPtkPaudTable tfoot td { font-weight: bold; }
+  #keadaanPtkPaudTable tbody td:last-child { background-color: rgba(0, 180, 255, 0.15); }
   #ptkJumlahBulananPaudTable td:nth-child(2) { text-align: left; }
   #ptkJumlahBulananPaudTable th:last-child, #ptkJumlahBulananPaudTable td:last-child { font-weight: bold; }
+  #ptkJumlahBulananPaudTable tbody td:last-child { background-color: rgba(0, 180, 255, 0.15); font-weight: bold; }
   #lapbulRiwayatTable td:nth-child(2), #lapbulRiwayatTable td:nth-child(4) { text-align: left; }
   #lapbulStatusTable td:nth-child(2) { text-align: left; }
   #lapbulKelolaTable td:nth-child(2), #lapbulKelolaTable td:nth-child(6) { text-align: left; }
   #riwayatTable td:nth-child(2), #riwayatTable td:nth-child(5), #riwayatTable td:nth-child(7) { text-align: left; }
   #statusTable td:nth-child(2) { text-align: left; }
+  #statusTable th { white-space: normal; }
   #kelolaTable td:nth-child(2), #kelolaTable td:nth-child(5) { text-align: left; }
   #keadaanPtkSdTable td:nth-child(2), #keadaanPtkSdTable tfoot td:nth-child(2), #keadaanPtkSdTable td:nth-child(4) { text-align: left; }
+  #keadaanPtkSdTable thead tr:first-child th { border-bottom: 2px solid rgba(0, 195, 255, 0.5); }
+  #keadaanPtkSdTable thead tr:nth-child(2) th { border-bottom: 2px solid rgba(0, 195, 255, 0.5); }
+  #keadaanPtkSdTable th { white-space: normal; }
+  #keadaanPtkSdTable th:nth-child(n+53):nth-child(-n+63) { width: 80px; min-width: 80px; }
   #jumlahPtkSdBulananTable td:nth-child(2), #jumlahPtkSdBulananTable tfoot td:nth-child(2), #jumlahPtkSdBulananTable td:nth-child(4) { text-align: left; }
+  #jumlahPtkSdBulananTable thead tr:first-child th { border-bottom: 2px solid rgba(0, 195, 255, 0.5); }
+  #jumlahPtkSdBulananTable thead tr:nth-child(2) th { border-bottom: 2px solid rgba(0, 195, 255, 0.5); }
+  #jumlahPtkSdBulananTable th { white-space: normal; }
+  #jumlahPtkSdBulananTable th:nth-child(n+53):nth-child(-n+63) { width: 80px; min-width: 80px; }
   #daftarPtkSdnTable td:nth-child(2), #daftarPtkSdnTable td:nth-child(3), #daftarPtkSdnTable td:nth-child(5), #daftarPtkSdnTable td:nth-child(6), #daftarPtkSdnTable td:nth-child(8), #daftarPtkSdnTable td:nth-child(9), #daftarPtkSdnTable td:nth-child(12) { text-align: left; }
   #daftarPtkSdsTable td:nth-child(2), #daftarPtkSdsTable td:nth-child(3), #daftarPtkSdsTable td:nth-child(5), #daftarPtkSdsTable td:nth-child(6), #daftarPtkSdsTable td:nth-child(8), #daftarPtkSdsTable td:nth-child(9), #daftarPtkSdsTable td:nth-child(12) { text-align: left; }
   #kelolaPtkSdTable td:nth-child(2), #kelolaPtkSdTable td:nth-child(3), #kelolaPtkSdTable td:nth-child(5), #kelolaPtkSdTable td:nth-child(6) { text-align: left; }
   #kebutuhanPtkSdnTable td:nth-child(2), #kebutuhanPtkSdnTable tfoot td:nth-child(2) { text-align: left; }
+  #kebutuhanPtkSdnTable th { white-space: normal; }
   #muridPaudKelasUsiaTable td:nth-child(2), #muridPaudKelasUsiaTable td:nth-child(4) { text-align: left; }
+  #muridPaudKelasUsiaTable th:last-child, #muridPaudKelasUsiaTable td:last-child { font-weight: bold; color: var(--color-orange); }
+  #muridPaudKelasUsiaTable th { white-space: normal; }
   #muridPaudJenisKelaminTable td:nth-child(2), #muridPaudJenisKelaminTable td:nth-child(5) { text-align: left; }
+  #muridPaudJenisKelaminTable th { white-space: normal; }
   #muridPaudJumlahBulananTable td:nth-child(2) { text-align: left; }
+  #muridPaudJumlahBulananTable th { white-space: normal; }
   #muridSdKelasTable td:nth-child(2), #muridSdKelasTable td:nth-child(3) { text-align: left; }
+  #muridSdKelasTable th:last-child, #muridSdKelasTable td:last-child { color: var(--color-orange); font-weight: bold; }
+  #muridSdKelasTable th { white-space: normal; }
   #muridSdRombelTable td:nth-child(2), #muridSdRombelTable td:nth-child(3) { text-align: left; }
+  #muridSdRombelTable th { white-space: normal; }
   #muridSdJenisKelaminTable td:nth-child(2), #muridSdJenisKelaminTable td:nth-child(3) { text-align: left; }
   #muridSdAgamaTable td:nth-child(2), #muridSdAgamaTable td:nth-child(3) { text-align: left; }
+  #muridSdAgamaTable th { white-space: normal; }
   #muridSdJumlahBulananTable td:nth-child(2), #muridSdJumlahBulananTable td:nth-child(3) { text-align: left; }
-  #statusTable th, #keadaanPtkSdTable th, #jumlahPtkSdBulananTable th, #kebutuhanPtkSdnTable th, #muridPaudJenisKelaminTable th, #muridPaudJumlahBulananTable th, #muridSdRombelTable th, #muridSdAgamaTable th, #muridSdJumlahBulananTable th, #muridSdKelasTable th { white-space: normal; }
-  .cell-negative { background-color: rgba(231, 76, 60, 0.25) !important; font-weight: bold; color: #ffffff !important; }
+  #muridSdJumlahBulananTable th { white-space: normal; }
+  .cell-negative { background-color: rgba(231, 76, 60, 0.25) !important; font-weight: bold; }
   .cell-positive { background-color: rgba(46, 204, 113, 0.25) !important; font-weight: bold; }
-  .cell-bg-cream  { background-color: rgba(248, 243, 212, 0.15); }
-  .cell-bg-green  { background-color: rgba(46, 204, 113, 0.15); }
-  .cell-bg-blue   { background-color: rgba(52, 152, 219, 0.15); }
-  .cell-bg-yellow { background-color: rgba(241, 196, 15, 0.15); }
-  .cell-bg-purple { background-color: rgba(155, 89, 182, 0.15); }
-  .cell-bg-red    { background-color: rgba(231, 76, 60, 0.25); }
-  .cell-bg-gray   { background-color: rgba(128, 128, 128, 0.15); }
-  .font-red   { color: #ff5757 !important; font-weight: bold; }
+  #kebutuhanPtkSdnTable tbody tr:hover .cell-negative { background-color: rgba(231, 76, 60, 0.4) !important; }
+  #kebutuhanPtkSdnTable tbody tr:hover .cell-positive { background-color: rgba(46, 204, 113, 0.4) !important; }
+  .cell-bg-cream  { background-color: rgba(248, 243, 212, 0.15); } /* cream */
+  .cell-bg-green  { background-color: rgba(46, 204, 113, 0.15); } /* green */
+  .cell-bg-blue   { background-color: rgba(52, 152, 219, 0.15); } /* blue */
+  .cell-bg-yellow { background-color: rgba(241, 196, 15, 0.15); } /* yellow */
+  .cell-bg-purple { background-color: rgba(155, 89, 182, 0.15); } /* purple */
+  .cell-bg-red    { background-color: rgba(231, 76, 60, 0.25); } /* red (tetap) */
+  .cell-bg-gray   { background-color: rgba(128, 128, 128, 0.15); } /* gray */
+  .font-red   { color: #ff5757 !important; font-weight: bold; } /* <-- BARU */
   .font-green { color: #2ecc71 !important; font-weight: bold; }
   .font-blue  { color: #3498db !important; font-weight: bold; }
   .font-brown { color: #a0522d !important; font-weight: bold; }
-  #kebutuhanPtkSdnTable tbody tr:hover .cell-negative { background-color: rgba(231, 76, 60, 0.4) !important; }
-  #kebutuhanPtkSdnTable tbody tr:hover .cell-positive { background-color: rgba(46, 204, 113, 0.4) !important; }
 
   /* =================================================================== */
-  /* ===== 10. HILANGKAN PANAH DI INPUT ANGKA ===== */
+  /* ============== 8. PERBAIKAN BROWSER AUTOCOMPLETE ================== */
   /* =================================================================== */
-  input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type=number] {
-    -moz-appearance: textfield;
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1f2a3a inset !important; /* Memaksa warna latar gelap */
+    -webkit-text-fill-color: #e0e0e0 !important; /* Memaksa warna teks menjadi terang */
+    caret-color: #e0e0e0 !important; /* Mengubah warna kursor ketik */
   }
 </style>
