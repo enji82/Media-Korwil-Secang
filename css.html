@@ -581,71 +581,78 @@
   .spinner-bar:nth-child(3) { background-color: #f1c40f; animation-delay: -1.0s; }
   .spinner-bar:nth-child(4) { background-color: #3498db; animation-delay: -0.9s; }
 
-  /* =================================================================== */
-  /* [BARU] KELAS UTILITAS: FREEZE PANE UNTUK SEMUA TABEL (REFACTOR) */
-  /* =================================================================== */
+/* =================================================================== */
+/* ====== KELAS UTILITAS: FREEZE PANE UNTUK SEMUA TABEL (v4.0 - FINAL) ====== */
+/* =================================================================== */
 
-  /* 1. Aturan dasar untuk semua tabel dengan freeze pane */
-  .freeze-pane-table th,
-  .freeze-pane-table td {
-    text-align: center;
-    vertical-align: middle;
-  }
+/* 1. Aturan dasar */
+.freeze-pane-table th,
+.freeze-pane-table td {
+  text-align: center;
+  vertical-align: middle;
+}
 
-  /* 2. Pengaturan Posisi & Latar Belakang Sticky */
-  .freeze-pane-table thead th {
-    position: sticky;
-    top: 0;
-    background-color: #101E26; /* Warna solid untuk header */
-  }
+/* 2. Pengaturan Posisi & Latar Belakang Sticky */
+.freeze-pane-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #101E26;
+}
 
-  .freeze-pane-table tfoot td {
-    position: sticky;
-    bottom: 0;
-    background-color: #101E26; /* Warna solid untuk footer */
-    z-index: 3;
-    border-top: 2px solid rgba(0, 195, 255, 0.5);
-  }
+.freeze-pane-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  background-color: #101E26;
+  border-top: 2px solid rgba(0, 195, 255, 0.5);
+}
 
-  .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tbody td:nth-child(2) {
-    position: sticky;
-    background-color: #1c2e3a; /* Warna solid untuk kolom beku di body */
-  }
+.freeze-pane-table tbody td:nth-child(1),
+.freeze-pane-table tbody td:nth-child(2) {
+  position: sticky;
+  background-color: #1c2e3a;
+}
 
-  /* 3. Pengaturan Posisi Kolom Beku */
-  .freeze-pane-table thead th:nth-child(1),
-  .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tfoot td:nth-child(1) {
-    left: 0; /* Kolom pertama (No.) menempel di kiri */
-  }
+/* 3. Pengaturan Posisi Kolom Beku */
+.freeze-pane-table thead th:nth-child(1),
+.freeze-pane-table tbody td:nth-child(1),
+.freeze-pane-table tfoot td:nth-child(1) {
+  left: 0;
+}
 
-  .freeze-pane-table thead th:nth-child(2),
-  .freeze-pane-table tbody td:nth-child(2),
-  .freeze-pane-table tfoot td:nth-child(2) {
-    left: 50px; /* Posisi kolom kedua (sesuaikan jika lebar kolom "No." berbeda) */
-  }
+.freeze-pane-table thead th:nth-child(2),
+.freeze-pane-table tbody td:nth-child(2),
+.freeze-pane-table tfoot td:nth-child(2) {
+  left: 50px;
+}
   
-  /* Aturan sticky untuk header 2 baris */
-  .freeze-pane-table thead tr:first-child th { top: 0; }
-  .freeze-pane-table thead tr:nth-child(2) th { top: 40px; }
+/* Aturan sticky untuk header 2 baris */
+.freeze-pane-table thead tr:first-child th { top: 0; }
+.freeze-pane-table thead tr:nth-child(2) th { top: 40px; }
 
-  /* 4. Pengaturan Lapisan (z-index) agar tidak tumpang tindih */
-  .freeze-pane-table tbody td { z-index: 1; }
-  .freeze-pane-table thead th { z-index: 2; }
-  
-  .freeze-pane-table thead th:nth-child(1),
-  .freeze-pane-table thead th:nth-child(2),
-  .freeze-pane-table tfoot td:nth-child(1),
-  .freeze-pane-table tfoot td:nth-child(2) {
-    z-index: 4; /* Sudut kiri atas dan bawah memiliki lapisan tertinggi */
-  }
+/* 4. HIERARKI Z-INDEX YANG DIPERBAIKI */
+.freeze-pane-table tbody td { 
+  z-index: 1; /* Lapisan paling bawah */
+}
+.freeze-pane-table tbody td:nth-child(1),
+.freeze-pane-table tbody td:nth-child(2) {
+  z-index: 2; /* Kolom beku body di atas sel body biasa */
+}
+.freeze-pane-table thead th,
+.freeze-pane-table tfoot td { 
+  z-index: 3; /* Header & Footer di atas SEMUA sel body */
+}
+.freeze-pane-table thead th:nth-child(1),
+.freeze-pane-table thead th:nth-child(2),
+.freeze-pane-table tfoot td:nth-child(1),
+.freeze-pane-table tfoot td:nth-child(2) {
+  z-index: 4; /* Sudut kiri atas & bawah memiliki lapisan tertinggi */
+}
 
-  /* 5. Efek Hover untuk kolom beku */
-  .freeze-pane-table tbody tr:hover td:nth-child(1),
-  .freeze-pane-table tbody tr:hover td:nth-child(2) {
-    background-color: #2a4152 !important; /* Warna hover yang sedikit lebih terang */
-  }
+/* 5. Efek Hover */
+.freeze-pane-table tbody tr:hover td:nth-child(1),
+.freeze-pane-table tbody tr:hover td:nth-child(2) {
+  background-color: #2a4152 !important;
+}
 
   /* =================================================================== */
   /* ===================== 7. GAYA SPESIFIK HALAMAN ==================== */
@@ -820,4 +827,43 @@
     -webkit-text-fill-color: #e0e0e0 !important; /* Memaksa warna teks menjadi terang */
     caret-color: #e0e0e0 !important; /* Mengubah warna kursor ketik */
   }
+
+  /* =================================================================== */
+  /* ====== PERBAIKAN UI: HILANGKAN PANAH DI INPUT ANGKA ====== */
+  /* =================================================================== */
+
+  /* Untuk browser Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  }
+
+  /* Untuk browser Firefox */
+  input[type=number] {
+  -moz-appearance: textfield;
+  }
+
+  /* =================================================================== */
+/* ====== PERBAIKAN SPESIFIK: Z-INDEX UNTUK TABEL KEADAAN PTK SD ====== */
+/* =================================================================== */
+
+/* Aturan z-index ini akan menimpa aturan generik .freeze-pane-table */
+/* hanya untuk tabel dengan ID #keadaanPtkSdTable */
+
+#keadaanPtkSdTable tbody td { z-index: 1; }
+#keadaanPtkSdTable thead th { z-index: 2; }
+#keadaanPtkSdTable tfoot td { 
+  z-index: 3; /* Footer di atas body */
+}
+/* Sudut kiri atas header harus di lapisan paling atas */
+#keadaanPtkSdTable thead tr:first-child th:nth-child(1),
+#keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
+  z-index: 4;
+}
+/* Sudut kiri bawah (footer) juga harus di atas segalanya */
+#keadaanPtkSdTable tfoot td:nth-child(1),
+#keadaanPtkSdTable tfoot td:nth-child(2) {
+  z-index: 5;
+}
 </style>

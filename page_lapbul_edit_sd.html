@@ -24,7 +24,7 @@
             <div class="form-group"><label>Status Sekolah</label><select name="Status" required><option value="Negeri">Negeri</option><option value="Swasta">Swasta</option></select></div>
             <div class="form-group"><label>Nama Sekolah</label><input type="text" name="Nama Sekolah" required></div>
             <div class="form-group"><label>NPSN</label><input type="text" name="NPSN" pattern="[0-9]{8}" required></div>
-            <div class="form-group"><label>Jumlah Rombel (Total)</label><input type="number" name="Jumlah Rombel" value="0" min="3" max="24" required></div>
+            <div class="form-group"><label>Jumlah Rombel (Total)</label><input type="number" name="Rombel" value="0" min="3" max="24" required></div>
           </div>
         </fieldset>
       </div>
@@ -42,7 +42,7 @@
         <fieldset class="ptk-fieldset">
             <legend>Unggah Berkas</legend>
             <div class="form-group">
-                <label for="fileLapbul">Ganti Scan PDF Laporan (Opsional, Max 300KB)</label>
+                <label for="fileLapbul">Lewati bagian ini apabila tidak mengganti file. (PDF, Max 300KB)</label>
                 <input type="file" id="fileLapbul" name="fileData" accept=".pdf">
                 <p id="existingFileLink" class="input-hint" style="margin-top: 10px;"></p>
             </div>

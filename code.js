@@ -10,16 +10,22 @@ const SPREADSHEET_CONFIG = {
   SK_BAGI_TUGAS: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "SK Tabel Kirim" },
   SK_FORM_RESPONSES: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "Form Responses 1" },
   
-  // --- Modul Laporan Bulanan ---
-  LAPBUL_FORM_RESPONSES_PAUD: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Form Responses 1" },
-  LAPBUL_FORM_RESPONSES_SD: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Input" },
-  LAPBUL_RIWAYAT: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU", sheet: "Riwayat" },
-  LAPBUL_STATUS: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU", sheet: "Status" },
+  // --- Modul Laporan Bulanan & Data Murid ---
+  LAPBUL_PAUD: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Form Responses 1" },
+  LAPBUL_SD: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Input" },
+  LAPBUL_GABUNGAN: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU" }, // Untuk Riwayat & Status
 
-  // --- Data Pendukung ---
-  DATA_SEKOLAH: { id: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs", sheet: "Data Sekolah" },
-  DATA_SEKOLAH_PAUD: { id: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA" }, 
+  // --- Modul Data PTK ---
+  PTK_PAUD_KEADAAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Keadaan PTK PAUD" },
+  PTK_PAUD_JUMLAH_BULANAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Data PAUD Bulanan" }, // <-- TAMBAHKAN BARIS INI
+  PTK_PAUD_DB: { id: "1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk", sheet: "PTK PAUD" },
+  PTK_SD_KEADAAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Keadaan PTK SD" },
+  PTK_SD_DB: { id: "1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0" },
+
+  // --- Data Pendukung & Dropdown ---
+  DATA_SEKOLAH: { id: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs" },
   DROPDOWN_DATA: { id: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA" },
+  FORM_OPTIONS_DB: { id: "1prqqKQBYzkCNFmuzblNAZE41ag9rZTCiY2a0WvZCTvU" },
 
   // --- Data SIABA ---
   SIABA_REKAP: { id: "1x3b-yzZbiqP2XfJNRC3XTbMmRTHLd8eEdUqAlKY3v9U", sheet: "Rekap Script" },
@@ -153,29 +159,51 @@ function processManualForm(formData) {
   }
 }
 
+/**
+ * [REFACTOR - PERBAIKAN PENGURUTAN FINAL] Mengambil data riwayat pengiriman SK.
+ * Menggunakan fungsi parseDate yang andal untuk menangani format tanggal yang tidak seragam.
+ */
 function getSKRiwayatData() {
   try {
-    const data = getDataFromSheet('SK_FORM_RESPONSES');
-    if (!data || data.length < 2) {
-      // Selalu kembalikan struktur data yang konsisten meskipun kosong
+    // Gunakan .getValues() untuk mendapatkan objek Date asli jika memungkinkan
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.id)
+                                .getSheetByName(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.sheet);
+
+    if (!sheet || sheet.getLastRow() < 2) {
       return { headers: [], rows: [] };
     }
+    
+    const allData = sheet.getDataRange().getValues(); // Menggunakan getValues()
+    const originalHeaders = allData[0].map(h => String(h).trim());
+    const dataRows = allData.slice(1);
 
-    const originalHeaders = data[0].map(h => String(h).trim());
-    const dataRows = data.slice(1);
+    // Fungsi bantu yang andal untuk mengubah berbagai format tanggal menjadi objek Date
+    const parseDate = (value) => {
+        if (!value) return new Date(0); // Tanggal paling awal jika kosong
+        // Jika sudah berupa objek Date yang valid, kembalikan langsung
+        if (value instanceof Date && !isNaN(value)) return value;
+        // Jika berupa string, coba parsing format "dd/MM/yyyy HH:mm:ss"
+        if (typeof value === 'string') {
+          const parts = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
+          if (parts) {
+              // parts[3]=yyyy, parts[2]=MM, parts[1]=dd
+              return new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
+          }
+        }
+        // Jika gagal parsing, anggap sebagai tanggal paling awal
+        return new Date(0);
+    };
 
-    // Buat objek dari setiap baris agar lebih mudah dibaca
+    // Ubah setiap baris menjadi objek
     const structuredRows = dataRows.map(row => {
       const rowObject = {};
       originalHeaders.forEach((header, index) => {
         const cell = row[index];
-        // Format tanggal langsung di server
-        if (cell instanceof Date) {
-          if (header === 'Tanggal SK') {
-            rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
-          } else {
-            rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-          }
+        // Format tanggal menjadi string SETELAH diolah
+        if ((header === 'Tanggal Unggah' || header === 'Update') && cell instanceof Date) {
+          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        } else if (header === 'Tanggal SK' && cell instanceof Date) {
+          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
         } else {
           rowObject[header] = cell;
         }
@@ -183,14 +211,15 @@ function getSKRiwayatData() {
       return rowObject;
     });
 
-    // Urutkan data berdasarkan Tanggal Unggah (terbaru lebih dulu)
+    // **KUNCI PERBAIKAN ADA DI SINI**
+    // Urutkan data berdasarkan "Tanggal Unggah" menggunakan fungsi parseDate yang andal
     structuredRows.sort((a, b) => {
-      const dateA = new Date(a['Tanggal Unggah'] || 0);
-      const dateB = new Date(b['Tanggal Unggah'] || 0);
-      return dateB - dateA;
+      const dateB = parseDate(b['Tanggal Unggah']);
+      const dateA = parseDate(a['Tanggal Unggah']);
+      return dateB - dateA; // Urutan descending (terbaru di atas)
     });
     
-    // Tentukan urutan header yang diinginkan untuk ditampilkan di tabel
+    // Tentukan urutan header yang akan ditampilkan di tabel
     const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Tanggal SK", "Kriteria SK", "Dokumen", "Tanggal Unggah"];
 
     return {
@@ -445,10 +474,17 @@ function deleteSKData(rowIndex, deleteCode) {
  * ===================================================================
  */
 
+/**
+ * [REFACTOR - PERBAIKAN] Mengambil daftar sekolah PAUD.
+ * Menggunakan kunci SPREADSHEET_CONFIG yang sudah diperbarui.
+ */
 function getPaudSchoolLists() {
   const cacheKey = 'paud_school_lists';
   return getCachedData(cacheKey, function() {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DATA_SEKOLAH_PAUD.id);
+    // **PERBAIKAN DI BARIS INI**
+    // Menggunakan DROPDOWN_DATA, bukan DATA_SEKOLAH_PAUD
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id); 
+    
     const getValues = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet || sheet.getLastRow() < 2) return [];
@@ -460,7 +496,7 @@ function getPaudSchoolLists() {
 
 function getSdSchoolLists() {
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DATA_SEKOLAH_PAUD.id);
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id);
     const getValues = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet || sheet.getLastRow() < 2) return [];
@@ -498,7 +534,7 @@ function processLapbulFormPaud(formData) {
     const newFile = bulanFolder.createFile(blob).setName(newFileName);
     const fileUrl = newFile.getUrl();
 
-    const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD;
+    const config = SPREADSHEET_CONFIG.LAPBUL_PAUD;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
 
     const newRow = [
@@ -537,12 +573,12 @@ function processLapbulFormSd(formData) {
     const fileUrl = newFile.getUrl();
 
     // 2. Siapkan Data untuk Disimpan ke Google Sheet
-    const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
+    const config = SPREADSHEET_CONFIG.LAPBUL_SD;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     const getValue = (key) => formData[key] || 0;
 
     // Susun baris baru sesuai urutan kolom A s/d GH
-    const newRow = [
+    const newRowLengkap = [
       new Date(), // A
       formData.laporanBulan, // B
       formData.tahun, // C
@@ -618,59 +654,101 @@ function processLapbulFormSd(formData) {
       getValue('ptk_swasta_tendik_pustakawan_pty'), getValue('ptk_swasta_tendik_pustakawan_ptt'),
       getValue('ptk_swasta_tendik_lainnya_pty'), getValue('ptk_swasta_tendik_lainnya_ptt')
     ];
-    sheet.appendRow(newRow);
+    sheet.appendRow(newRowLengkap);
 
+    // 3. Simpan ringkasan data LANGSUNG ke Sheet "Riwayat"
+    const configRiwayat = SPREADSHEET_CONFIG.LAPBUL_GABUNGAN;
+    const sheetRiwayat = SpreadsheetApp.openById(configRiwayat.id).getSheetByName("Riwayat");
+    
+    // Sesuaikan urutan kolom dengan sheet "Riwayat"
+    const newRowRiwayat = [
+      new Date(),              // Kolom A: Tanggal Unggah
+      formData.namaSekolah,    // Kolom B: Nama Sekolah
+      "SD",                    // Kolom C: Jenjang
+      formData.statusSekolah,  // Kolom D: Status
+      formData.laporanBulan,   // Kolom E: Bulan
+      formData.tahun,          // Kolom F: Tahun
+      formData.jumlahRombel,   // Kolom G: Rombel
+      fileUrl                  // Kolom H: Dokumen
+    ];
+    sheetRiwayat.appendRow(newRowRiwayat);
+    // **AKHIR BLOK KODE BARU**
+
+    // 4. Pastikan semua perubahan disimpan sebelum skrip selesai
+    SpreadsheetApp.flush();
     return "Sukses! Laporan Bulan SD berhasil dikirim.";
   } catch (e) {
     return handleError('processLapbulFormSd', e);
   }
 }
 
+/**
+ * [REFACTOR] Mengambil dan menggabungkan data riwayat dari sumber SD dan PAUD secara real-time.
+ * Ini adalah solusi untuk masalah delay IMPORTRANGE.
+ */
 function getLapbulRiwayatData() {
   try {
-    const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Riwayat");
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { headers: [], rows: [] };
-    }
+    const desiredHeaders = ["Nama Sekolah", "Jenjang", "Bulan", "Tahun", "Rombel", "Dokumen", "Tanggal Unggah"];
+    let combinedData = [];
 
-    // **KUNCI PERBAIKAN: Gunakan getDisplayValues() untuk mendapatkan string tanggal yang sudah diformat**
-    const allData = sheet.getDataRange().getDisplayValues();
-    const originalHeaders = allData[0].map(h => String(h).trim());
-    const dataRows = allData.slice(1);
+    // Fungsi bantu untuk memproses data mentah dari setiap sheet
+    const processSheetData = (sheet, mapping) => {
+      if (!sheet || sheet.getLastRow() < 2) return;
+      
+      const data = sheet.getDataRange().getValues(); // Gunakan getValues untuk tanggal
+      const dataRows = data.slice(1);
 
-    // Fungsi bantu untuk mengubah string tanggal "dd/MM/yyyy HH:mm:ss" menjadi objek Date
-    const parseDate = (dateString) => {
-        if (!dateString || typeof dateString !== 'string') return new Date(0);
-        const parts = dateString.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
-        if (parts) {
-            // parts[3] = yyyy, parts[2] = MM, parts[1] = dd
-            return new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
-        }
-        return new Date(0); // Kembalikan tanggal awal jika format tidak cocok
+      dataRows.forEach(row => {
+        // Lewati baris jika kolom Tanggal Unggah (kolom A di kedua sumber) kosong
+        if (!row[0]) return;
+
+        const rowObject = {
+          "Nama Sekolah":   row[mapping.namaSekolah],
+          "Jenjang":        mapping.jenjang === 'static' ? 'SD' : row[mapping.jenjang],
+          "Bulan":          row[mapping.bulan],
+          "Tahun":          row[mapping.tahun],
+          "Rombel":         row[mapping.rombel],
+          "Dokumen":        row[mapping.dokumen],
+          "Tanggal Unggah": row[mapping.tanggalUnggah]
+        };
+        combinedData.push(rowObject);
+      });
     };
     
-    // Ubah setiap baris menjadi objek
-    const structuredRows = dataRows.map(row => {
-        const rowObject = {};
-        originalHeaders.forEach((header, index) => {
-            rowObject[header] = row[index];
-        });
-        return rowObject;
-    });
+    // 1. Proses Data SD
+    const sdConfig = SPREADSHEET_CONFIG.LAPBUL_SD;
+    const sdSheet = SpreadsheetApp.openById(sdConfig.id).getSheetByName(sdConfig.sheet);
+    const sdMapping = { namaSekolah: 4, jenjang: 'static', bulan: 1, tahun: 2, rombel: 6, dokumen: 7, tanggalUnggah: 0 }; // E=4, B=1, C=2, G=6, H=7, A=0
+    processSheetData(sdSheet, sdMapping);
 
-    // Urutkan data berdasarkan Tanggal Unggah (terbaru di atas)
-    structuredRows.sort((a, b) => {
-      const dateB = parseDate(b['Tanggal Unggah']);
-      const dateA = parseDate(a['Tanggal Unggah']);
+    // 2. Proses Data PAUD
+    const paudConfig = SPREADSHEET_CONFIG.LAPBUL_PAUD;
+    const paudSheet = SpreadsheetApp.openById(paudConfig.id).getSheetByName(paudConfig.sheet);
+    const paudMapping = { namaSekolah: 7, jenjang: 6, bulan: 1, tahun: 2, rombel: 5, dokumen: 36, tanggalUnggah: 0 }; // H=7, G=6, B=1, C=2, F=5, AK=36, A=0
+    processSheetData(paudSheet, paudMapping);
+    
+    // 3. Urutkan semua data yang sudah digabung
+    const parseDate = (value) => {
+        if (value instanceof Date && !isNaN(value)) return value;
+        return new Date(0);
+    };
+    combinedData.sort((a, b) => {
+      const dateB = parseDate(b["Tanggal Unggah"]);
+      const dateA = parseDate(a["Tanggal Unggah"]);
       return dateB - dateA;
     });
 
-    // Tentukan header yang akan ditampilkan di tabel
-    const desiredHeaders = ["Nama Sekolah", "Status", "Bulan", "Tahun", "Rombel", "Dokumen", "Tanggal Unggah"];
+    // 4. Format tanggal menjadi string setelah diurutkan
+    const formattedData = combinedData.map(row => {
+      row["Tanggal Unggah"] = (row["Tanggal Unggah"] instanceof Date) 
+        ? Utilities.formatDate(row["Tanggal Unggah"], Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss")
+        : row["Tanggal Unggah"];
+      return row;
+    });
 
     return {
       headers: desiredHeaders,
-      rows: structuredRows
+      rows: formattedData
     };
 
   } catch (e) {
@@ -718,41 +796,59 @@ function getLapbulStatusData() {
   }
 }
 
+/**
+ * [REFACTOR - PERBAIKAN PENGURUTAN] Mengambil data gabungan Laporan Bulan.
+ * Mengurutkan berdasarkan prioritas: 1. Update (terbaru), 2. Tanggal Unggah (terbaru).
+ * Mampu menangani format tanggal yang tidak seragam.
+ */
 function getLapbulKelolaData() {
   try {
-    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName("Form Responses 1");
-    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName("Input");
+    const paudConfig = SPREADSHEET_CONFIG.LAPBUL_PAUD;
+    const sdConfig = SPREADSHEET_CONFIG.LAPBUL_SD;
+
+    const paudSheet = SpreadsheetApp.openById(paudConfig.id).getSheetByName(paudConfig.sheet);
+    const sdSheet = SpreadsheetApp.openById(sdConfig.id).getSheetByName(sdConfig.sheet);
+    
     let combinedData = [];
 
-    const parseDateForSort = (dateStr) => {
-        if (!dateStr || !(typeof dateStr === 'string' || dateStr instanceof Date)) return new Date(0);
-        if (dateStr instanceof Date) return dateStr;
-        const parts = String(dateStr).match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
-        if (parts) return new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
+    // **FUNGSI BANTU BARU YANG LEBIH ANDAL UNTUK MEMBACA TANGGAL**
+    const parseDate = (value) => {
+        // Jika tidak ada nilai, kembalikan tanggal paling awal agar diurutkan ke bawah
+        if (!value) return new Date(0); 
+        // Jika sudah berupa objek Date yang valid, kembalikan langsung
+        if (value instanceof Date && !isNaN(value)) return value;
+        // Jika berupa string, coba parsing format "dd/MM/yyyy HH:mm:ss"
+        if (typeof value === 'string') {
+          const parts = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
+          if (parts) {
+              // parts[3]=yyyy, parts[2]=MM, parts[1]=dd
+              return new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
+          }
+        }
+        // Jika gagal parsing, anggap sebagai tanggal paling awal
         return new Date(0);
     };
 
     const processSheetData = (sheet, sourceName) => {
       if (!sheet || sheet.getLastRow() < 2) return;
+      // Gunakan .getValues() untuk mendapatkan objek Date asli jika ada
       const data = sheet.getDataRange().getValues();
       const headers = data[0].map(h => String(h).trim());
       const rows = data.slice(1);
 
       rows.forEach((row, index) => {
-        if (!row[0]) return; // Lewati baris kosong
-
+        if (!row[0]) return;
         const rowObject = {
-          _rowIndex: index + 2, // Simpan informasi baris asli
-          _source: sourceName    // Simpan sumber data (PAUD/SD)
+          _rowIndex: index + 2,
+          _source: sourceName
         };
         headers.forEach((header, i) => {
-          rowObject[header] = (row[i] instanceof Date) ? Utilities.formatDate(row[i], Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss") : row[i];
+          // Simpan objek Date asli untuk pengurutan
+          rowObject[header] = row[i];
         });
-        
         if (sourceName === 'SD') {
           rowObject['Jenjang'] = 'SD';
         }
-        
         combinedData.push(rowObject);
       });
     };
@@ -760,15 +856,35 @@ function getLapbulKelolaData() {
     processSheetData(paudSheet, 'PAUD');
     processSheetData(sdSheet, 'SD');
     
+    // **BLOK PENGURUTAN MULTI-LEVEL YANG SUDAH DIPERBAIKI**
     combinedData.sort((a, b) => {
-        const dateB = parseDateForSort(b['Update'] || b['Tanggal Unggah']);
-        const dateA = parseDateForSort(a['Update'] || a['Tanggal Unggah']);
-        return dateB - dateA;
+        // Prioritas 1: Urutkan berdasarkan kolom "Update" (terbaru di atas)
+        const dateB_update = parseDate(b['Update']);
+        const dateA_update = parseDate(a['Update']);
+        if (dateB_update.getTime() !== dateA_update.getTime()) {
+            return dateB_update - dateA_update;
+        }
+
+        // Prioritas 2: Jika "Update" sama, urutkan berdasarkan "Tanggal Unggah" (terbaru di atas)
+        const dateB_timestamp = parseDate(b['Tanggal Unggah']);
+        const dateA_timestamp = parseDate(a['Tanggal Unggah']);
+        return dateB_timestamp - dateA_timestamp;
     });
     
+    // Format tanggal menjadi string SETELAH diurutkan
+    const formattedRows = combinedData.map(row => {
+        if (row['Update'] instanceof Date) {
+            row['Update'] = Utilities.formatDate(row['Update'], Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        }
+        if (row['Tanggal Unggah'] instanceof Date) {
+            row['Tanggal Unggah'] = Utilities.formatDate(row['Tanggal Unggah'], Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        }
+        return row;
+    });
+
     const finalHeaders = ["Nama Sekolah", "Jenjang", "Bulan", "Tahun", "Dokumen", "Aksi", "Tanggal Unggah", "Update"];
 
-    return { headers: finalHeaders, rows: combinedData };
+    return { headers: finalHeaders, rows: formattedRows };
 
   } catch (e) {
     return handleError('getLapbulKelolaData', e);
@@ -776,18 +892,18 @@ function getLapbulKelolaData() {
 }
 
 /**
- * Mengambil satu baris data Laporan Bulan berdasarkan sumber dan nomor baris.
- * @param {number} rowIndex Nomor baris di spreadsheet.
- * @param {string} source Sumber data ('PAUD' atau 'SD').
- * @returns {Object} Objek yang berisi data dari baris tersebut.
+ * [REFACTOR - PERBAIKAN KONSISTENSI v2.0] Mengambil satu baris data Laporan Bulan.
+ * Mengubah nama header 'Jumlah Rombel' menjadi 'Rombel' untuk PAUD dan SD.
  */
 function getLapbulDataByRow(rowIndex, source) {
   try {
     let sheet;
     if (source === 'PAUD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+      const config = SPREADSHEET_CONFIG.LAPBUL_PAUD;
+      sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     } else if (source === 'SD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+      const config = SPREADSHEET_CONFIG.LAPBUL_SD;
+      sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     } else {
       throw new Error("Sumber data tidak valid.");
     }
@@ -795,9 +911,16 @@ function getLapbulDataByRow(rowIndex, source) {
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const values = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
     const rowData = {};
+
     headers.forEach((header, i) => {
-      rowData[header.trim()] = values[i];
+      let key = header.trim();
+      // **PERBAIKAN KONSISTENSI DI SINI**
+      if (key === 'Jumlah Rombel') {
+        key = 'Rombel'; // Ganti nama header agar cocok dengan form
+      }
+      rowData[key] = values[i];
     });
+    
     return rowData;
   } catch (e) {
     return handleError('getLapbulDataByRow', e);
@@ -806,9 +929,8 @@ function getLapbulDataByRow(rowIndex, source) {
 
 
 /**
- * Memperbarui satu baris data Laporan Bulan.
- * @param {Object} formData Objek data dari form edit di client.
- * @returns {string} Pesan sukses.
+ * [REFACTOR - PERBAIKAN] Memperbarui satu baris data Laporan Bulan.
+ * Menggunakan kunci SPREADSHEET_CONFIG yang benar.
  */
 function updateLapbulData(formData) {
   try {
@@ -817,23 +939,25 @@ function updateLapbulData(formData) {
     const rowIndex = formData.rowIndex;
     if (!source || !rowIndex) throw new Error("Informasi 'source' atau 'rowIndex' tidak ditemukan.");
 
-    // KUNCI PERBAIKAN: Blok ini dipindahkan ke atas agar variabel 'sheet'
-    // terdefinisi sebelum digunakan.
+    // **AWAL BLOK PERBAIKAN**
     if (source === 'PAUD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
+      const config = SPREADSHEET_CONFIG.LAPBUL_PAUD;
+      sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
       const jenjang = formData.jenjang || sheet.getRange(rowIndex, headers.indexOf('Jenjang') + 1).getValue();
       FOLDER_ID = jenjang === 'KB' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_TK;
     } else if (source === 'SD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
+      const config = SPREADSHEET_CONFIG.LAPBUL_SD;
+      sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
       FOLDER_ID = FOLDER_CONFIG.LAPBUL_SD;
+    // **AKHIR BLOK PERBAIKAN**
     } else {
       throw new Error("Sumber data tidak valid: " + source);
     }
     
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
 
-    if (!formData.laporanBulan || !formData.tahun) {
-        throw new Error("Informasi 'laporanBulan' atau 'tahun' kosong. Tidak dapat memproses file.");
+    if (!formData.Bulan || !formData.Tahun) {
+        throw new Error("Informasi 'Bulan' atau 'Tahun' kosong. Tidak dapat memproses file.");
     }
 
     const range = sheet.getRange(rowIndex, 1, 1, headers.length);
@@ -850,11 +974,11 @@ function updateLapbulData(formData) {
       }
       
       const mainFolder = DriveApp.getFolderById(FOLDER_ID);
-      const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
-      const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
+      const tahunFolder = getOrCreateFolder(mainFolder, formData.Tahun);
+      const bulanFolder = getOrCreateFolder(tahunFolder, formData.Bulan);
       
-      const namaSekolah = formData.namaSekolah || existingValues[headers.indexOf('Nama Sekolah')];
-      const newFileName = `${namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
+      const namaSekolah = formData['Nama Sekolah'] || existingValues[headers.indexOf('Nama Sekolah')];
+      const newFileName = `${namaSekolah} - Lapbul ${formData.Bulan} ${formData.Tahun}.pdf`;
       const decodedData = Utilities.base64Decode(formData.fileData.data);
       const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
       const newFile = bulanFolder.createFile(blob);
@@ -863,6 +987,10 @@ function updateLapbulData(formData) {
 
     formData['Update'] = new Date();
     const newRowValues = headers.map((header, index) => {
+      // Ganti nama 'Rombel' dari form menjadi 'Jumlah Rombel' untuk disimpan di sheet
+      if (header === 'Jumlah Rombel' && formData.hasOwnProperty('Rombel')) {
+        return formData['Rombel'];
+      }
       if (formData.hasOwnProperty(header)) {
         return formData[header];
       }
@@ -1031,13 +1159,14 @@ function getUnduhFormatInfo() {
 }
 
 /**
- * [REFACTOR] Mengambil data keadaan PTK PAUD.
- * Mengembalikan data dalam format objek.
+ * [BARU] Mengambil data keadaan PTK PAUD dari sheet 'Jumlah PTK Bulanan'.
+ * Mengembalikan data dalam format objek yang siap diolah oleh fungsi generik.
  */
-function getKeadaanPtkPaudData() {
+function getPtkKeadaanPaudData() {
   try {
-    const ss = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs");
-    const sheet = ss.getSheetByName("Keadaan PTK PAUD");
+    const config = SPREADSHEET_CONFIG.PTK_PAUD_KEADAAN;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    
     if (!sheet || sheet.getLastRow() < 2) {
       return { headers: [], rows: [] };
     }
@@ -1046,14 +1175,14 @@ function getKeadaanPtkPaudData() {
     const headers = allData[0];
     const dataRows = allData.slice(1);
 
-    // Ubah setiap baris menjadi objek
+    // Mengubah setiap baris menjadi objek
     const structuredRows = dataRows.map(row => {
       const rowObject = {};
       headers.forEach((header, index) => {
         rowObject[header] = row[index];
       });
-      // Tambahkan data untuk filter
-      rowObject._filterJenjang = rowObject['Jenjang'];
+      // Menambahkan data tersembunyi untuk filter berdasarkan kolom "Jenjang" (Kolom B)
+      rowObject._filterJenjang = row[headers.indexOf('Jenjang')];
       return rowObject;
     });
 
@@ -1062,7 +1191,7 @@ function getKeadaanPtkPaudData() {
       rows: structuredRows
     };
   } catch (e) {
-    return handleError('getKeadaanPtkPaudData', e);
+    return handleError('getPtkKeadaanPaudData', e);
   }
 }
 
@@ -1083,43 +1212,38 @@ function getKeadaanPtkSdData() {
 
 /**
  * [REFACTOR] Mengambil data jumlah PTK bulanan untuk PAUD.
- * Fungsi ini memilih kolom yang relevan dan mengembalikan data dalam format objek.
+ * Menggunakan SPREADSHEET_CONFIG terpusat.
  */
-function getPtkJumlahBulananPaudData() { // Nama fungsi diseragamkan
+function getPtkJumlahBulananPaudData() {
   try {
-    const ss = SpreadsheetApp.openById("1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs");
-    const sheet = ss.getSheetByName("Data PAUD Bulanan");
+    // **PERBAIKAN DI SINI: Menggunakan konfigurasi terpusat**
+    const config = SPREADSHEET_CONFIG.PTK_PAUD_JUMLAH_BULANAN;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    
     if (!sheet || sheet.getLastRow() < 2) {
       return { headers: [], rows: [] };
     }
     
     const allData = sheet.getDataRange().getDisplayValues();
-    const headers = allData[0].map(h => String(h).trim());
+    const headers = allData[0];
     const dataRows = allData.slice(1);
 
-    // Tentukan kolom mana saja yang ingin kita tampilkan di tabel
     const desiredHeaders = [
         "Nama Lembaga", "Jenjang", "Status", "Jumlah Rombel", 
         "KS PNS", "KS Non PNS", "GK PNS", "GK PPPK", "GTY", "GTT", 
-        "Penjaga", "TAS", "Pustakawan", "Tendik Lain", "JML PTK"
+        "Penjaga", "TAS", "Pustakawan", "Tendik Lain", "Jumlah PTK"
     ];
     
-    // Ambil indeks (posisi) dari kolom-kolom yang kita butuhkan
     const colIndices = desiredHeaders.map(header => headers.indexOf(header));
-    
-    // Ambil juga indeks untuk kolom yang akan digunakan untuk filter
     const tahunIndex = headers.indexOf('Tahun');
     const bulanIndex = headers.indexOf('Bulan');
 
-    // Ubah setiap baris data menjadi format objek yang lebih mudah dibaca
     const structuredRows = dataRows.map(row => {
         const rowObject = {
-            // Data ini disembunyikan tapi dipakai untuk filter
             _filterTahun: row[tahunIndex],
             _filterBulan: row[bulanIndex],
             _filterJenjang: row[headers.indexOf('Jenjang')]
         };
-        // Masukkan data yang akan ditampilkan di tabel
         desiredHeaders.forEach((header, i) => {
             const index = colIndices[i];
             rowObject[header] = row[index];
@@ -1138,106 +1262,127 @@ function getPtkJumlahBulananPaudData() { // Nama fungsi diseragamkan
 }
 
 /**
- * Mengambil data daftar PTK PAUD dari spreadsheet.
+ * [REFACTOR] Mengambil data daftar PTK PAUD.
+ * Mengembalikan data dalam format objek yang sudah diurutkan berdasarkan Nama.
  */
 function getDaftarPtkPaudData() {
   try {
-    const ss = SpreadsheetApp.openById("1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk");
-    const sheet = ss.getSheetByName("PTK PAUD");
-    if (!sheet) {
-      throw new Error("Sheet 'PTK PAUD' tidak ditemukan.");
+    const config = SPREADSHEET_CONFIG.PTK_PAUD_DB;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet || sheet.getLastRow() < 2) {
+      return { headers: [], rows: [] };
     }
-    
+
     const allData = sheet.getDataRange().getDisplayValues();
     const headers = allData[0];
-    let dataRows = allData.slice(1);
+    const dataRows = allData.slice(1);
 
-    // [PERBAIKAN] Mengurutkan baris data berdasarkan abjad pada kolom "Nama" (indeks 2)
-    dataRows.sort((a, b) => {
-      // localeCompare digunakan untuk pengurutan abjad yang benar
-      return a[2].localeCompare(b[2]);
-    });
-
-    const colIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    const finalHeaders = colIndices.map(index => headers[index]);
+    // Mengurutkan baris data berdasarkan abjad pada kolom "Nama" (indeks ke-2)
+    const namaIndex = headers.indexOf('Nama');
+    if (namaIndex > -1) {
+      dataRows.sort((a, b) => {
+        return a[namaIndex].localeCompare(b[namaIndex]);
+      });
+    }
     
-    const finalData = dataRows.map(row => {
-      return colIndices.map(index => row[index]);
+    // Tentukan kolom mana saja yang ingin ditampilkan
+    const desiredHeaders = ["Nama", "L/P", "Jabatan", "TMT", "Pendidikan", "Serdik", "NUPTK"];
+    
+    // Ubah setiap baris menjadi objek
+    const structuredRows = dataRows.map(row => {
+      const rowObject = {
+        // Data untuk filter
+        _filterJenjang: row[headers.indexOf('Jenjang')],
+        _filterNamaLembaga: row[headers.indexOf('Nama Lembaga')],
+        _filterStatus: row[headers.indexOf('Status')]
+      };
+      // Data untuk ditampilkan
+      desiredHeaders.forEach(header => {
+        const index = headers.indexOf(header);
+        if (index > -1) {
+          rowObject[header] = row[index];
+        }
+      });
+      return rowObject;
     });
 
-    return [finalHeaders].concat(finalData);
+    return {
+      headers: desiredHeaders,
+      rows: structuredRows
+    };
 
   } catch (e) {
     return handleError('getDaftarPtkPaudData', e);
   }
 }
 
+/**
+ * [REFACTOR - PERBAIKAN PENGURUTAN KOMBINASI] Mengambil data PTK PAUD untuk halaman Kelola.
+ * Mengurutkan berdasarkan tanggal terbaru dari kolom "Update" atau "Tanggal Input".
+ */
 function getKelolaPtkPaudData() {
   try {
-    const ss = SpreadsheetApp.openById("1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk");
-    const sheet = ss.getSheetByName("PTK PAUD");
-    if (!sheet) throw new Error("Sheet 'PTK PAUD' tidak ditemukan.");
-
-    const allData = sheet.getDataRange().getValues();
-    if (allData.length < 2) {
+    const config = SPREADSHEET_CONFIG.PTK_PAUD_DB;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet || sheet.getLastRow() < 2) {
       return { headers: [], rows: [] };
     }
 
+    const allData = sheet.getDataRange().getValues();
     const headers = allData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
 
-    // [PERBAIKAN] Langkah 1: Simpan nomor baris asli SEBELUM diurutkan
+    const parseDate = (value) => {
+      if (value instanceof Date && !isNaN(value)) return value;
+      return new Date(0); // Return tanggal paling awal jika tidak valid
+    };
+
     const indexedData = dataRows.map((row, index) => ({
-      originalRowIndex: index + 2, // Baris fisik di spreadsheet (mulai dari 2)
+      originalRowIndex: index + 2,
       rowData: row
     }));
 
-    // Fungsi bantu untuk mengubah tanggal menjadi objek yang bisa dibandingkan
-    const parseDate = (value) => {
-      if (value instanceof Date && !isNaN(value)) {
-        return value.getTime();
-      }
-      return 0; 
-    };
-
-    // Langkah 2: Lakukan pengurutan 2 tingkat pada data yang sudah diindeks
+    // **AWAL BLOK KODE PERBAIKAN PENGURUTAN**
     const updateIndex = headers.indexOf('Update');
     const dateInputIndex = headers.indexOf('Tanggal Input');
-    
+
     indexedData.sort((a, b) => {
-      // Urutan 1: Berdasarkan kolom "Update" (terbaru di atas)
-      const updateA = parseDate(a.rowData[updateIndex]);
-      const updateB = parseDate(b.rowData[updateIndex]);
-      if (updateB !== updateA) {
-        return updateB - updateA;
-      }
+      // Ambil tanggal terbaru dari baris B (update atau input)
+      const dateB_update = parseDate(b.rowData[updateIndex]);
+      const dateB_input = parseDate(b.rowData[dateInputIndex]);
+      const latestDateB = dateB_update > dateB_input ? dateB_update : dateB_input;
 
-      // Urutan 2: Jika "Update" sama, urutkan berdasarkan "Tanggal Input" (terbaru di atas)
-      const dateInputA = parseDate(a.rowData[dateInputIndex]);
-      const dateInputB = parseDate(b.rowData[dateInputIndex]);
-      return dateInputB - dateInputA;
+      // Ambil tanggal terbaru dari baris A (update atau input)
+      const dateA_update = parseDate(a.rowData[updateIndex]);
+      const dateA_input = parseDate(a.rowData[dateInputIndex]);
+      const latestDateA = dateA_update > dateA_input ? dateA_update : dateA_input;
+      
+      // Bandingkan tanggal terbaru dari kedua baris
+      return latestDateB - latestDateA;
     });
+    // **AKHIR BLOK KODE PERBAIKAN PENGURUTAN**
 
-    // Langkah 3: Buat data final untuk dikirim ke frontend
-    const finalData = indexedData.map(item => {
-      const rowDataObject = {};
+    const structuredRows = indexedData.map(item => {
+      const rowObject = {
+        _rowIndex: item.originalRowIndex,
+        _source: 'PAUD'
+      };
       headers.forEach((header, i) => {
         let cell = item.rowData[i];
         if (cell instanceof Date) {
-          rowDataObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
         } else {
-          rowDataObject[header] = cell || "";
+          rowObject[header] = cell || "";
         }
       });
-      
-      // [KUNCI PERBAIKAN] Kirim nomor baris asli yang sudah disimpan sebelumnya
-      return { rowIndex: item.originalRowIndex, data: rowDataObject }; 
+      return rowObject;
     });
+    
+    const desiredHeaders = ['Nama', 'Nama Lembaga', 'Status', 'NIP/NIY', 'Jabatan', 'Aksi', 'Tanggal Input', 'Update'];
 
-    return { headers, rows: finalData };
+    return { headers: desiredHeaders, rows: structuredRows };
   } catch (e) {
-    Logger.log(`Error getKelolaPtkPaudData: ${e.message}`);
-    return { error: e.message, headers: [], rows: [] };
+    return handleError('getKelolaPtkPaudData', e);
   }
 }
 
@@ -1414,6 +1559,46 @@ function deletePtkPaudData(rowIndex, deleteCode) {
   } catch (e) {
     Logger.log(`Error in deletePtkPaudData: ${e.message}`);
     throw new Error(`Gagal menghapus data: ${e.message}`);
+  }
+}
+
+/**
+ * [REFACTOR - PERBAIKAN FINAL] Mengambil data keadaan PTK SD.
+ * Mengembalikan data baris sebagai array mentah untuk menangani header duplikat,
+ * dan mengirimkan indeks kolom filter secara terpisah.
+ */
+function getPtkKeadaanSdData() {
+  try {
+    const config = SPREADSHEET_CONFIG.PTK_SD_KEADAAN;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet || sheet.getLastRow() < 3) { // Butuh minimal 3 baris
+      return { headerRow1: [], headerRow2: [], rows: [], filterConfigs: [] };
+    }
+
+    const allData = sheet.getDataRange().getDisplayValues();
+    const headerRow1 = allData[0];
+    const headerRow2 = allData[1];
+    const dataRows = allData.slice(2);
+
+    // Siapkan konfigurasi filter untuk dikirim ke klien
+    const filterConfigs = [];
+    const statusIndex = headerRow1.indexOf('Status');
+    if (statusIndex > -1) {
+      filterConfigs.push({
+        id: 'filterStatusSekolah',
+        columnIndex: statusIndex // Kirim INDEKS kolom, bukan nama
+      });
+    }
+
+    return {
+      isDoubleHeader: true, // Tambahkan flag untuk penanda
+      headerRow1: headerRow1,
+      headerRow2: headerRow2,
+      rows: dataRows, // Kirim sebagai array mentah
+      filterConfigs: filterConfigs // Kirim konfigurasi filter
+    };
+  } catch (e) {
+    return handleError('getPtkKeadaanSdData', e);
   }
 }
 
