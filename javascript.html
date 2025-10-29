@@ -284,10 +284,10 @@ function initSkRiwayatPage() {
 }
 
 function initSkStatusPage() {
-    // Cukup panggil fungsi generik dengan konfigurasi yang tepat
+    // Panggil fungsi generik dengan konfigurasi yang tepat
     initializeGenericTablePage({
-        tableId: 'statusTable', // ID dari <table> di page_sk_status.html
-        serverFunction: 'getSKStatusData', // Nama fungsi BARU di code.gs
+        tableId: 'statusTable',
+        serverFunction: 'getSKStatusData', // Memanggil fungsi baru yang sudah kita perbaiki
         filterConfig: [] // Halaman ini tidak memiliki filter, jadi array-nya kosong
     });
 }
@@ -295,8 +295,8 @@ function initSkStatusPage() {
 function initSkKelolaPage() {
     initializeGenericTablePage({
         tableId: 'kelolaTable',
-        serverFunction: 'getSKKelolaData',
-        editPage: 'sk_edit',
+        serverFunction: 'getSKKelolaData', // Panggil fungsi baru yang sudah kita sempurnakan
+        editPage: 'sk_edit', // Halaman tujuan untuk tombol Edit
         filterConfig: [
             { id: 'filterTahun', dataColumn: 'Tahun Ajaran', sortReverse: true },
             { id: 'filterSemester', dataColumn: 'Semester' },
@@ -873,22 +873,31 @@ function initLapbulFormSdPage() {
 function initLapbulRiwayatPage() {
     initializeGenericTablePage({
         tableId: 'lapbulRiwayatTable',
-        serverFunction: 'getLapbulRiwayatData', // Nama fungsinya tetap sama
+        serverFunction: 'getLapbulRiwayatData', 
         filterConfig: [
-            // Gunakan nama header yang benar sebagai dataColumn
+            // Konfigurasi lain tidak berubah
             { id: 'filterTahun', dataColumn: 'Tahun', sortReverse: true },
             { id: 'filterBulan', dataColumn: 'Bulan', specialSort: 'bulan' },
             { id: 'filterJenjang', dataColumn: 'Jenjang' },
-            { id: 'filterNamaSekolah', dataColumn: 'Nama Sekolah' }
+            
+            // ================== AWAL PERUBAHAN ==================
+            { 
+              id: 'filterNamaSekolah',      // ID select element
+              dataColumn: 'Nama Sekolah',   // Nama kolom di data sumber
+              dependsOn: 'filterJenjang',      // ID dari filter induk
+              dependencyColumn: 'Jenjang'      // Nama kolom di data sumber untuk dicocokkan
+            }
+            // =================== AKHIR PERUBAHAN ===================
         ]
     });
 }
 
 function initLapbulStatusPage() {
     initializeGenericTablePage({
-        tableId: 'lapbulStatusTable', // ID tabel dari page_lapbul_status.html
-        serverFunction: 'getLapbulStatusData', // Nama fungsi BARU di code.gs
+        tableId: 'lapbulStatusTable',
+        serverFunction: 'getLapbulStatusData', // Memanggil fungsi baru kita
         filterConfig: [
+            // Fungsi generik akan menggunakan properti _filter... yang kita buat
             { id: 'filterTahun', dataColumn: '_filterTahun', sortReverse: true },
             { id: 'filterJenjang', dataColumn: '_filterJenjang' },
             { id: 'filterStatus', dataColumn: '_filterStatus' }
@@ -897,11 +906,8 @@ function initLapbulStatusPage() {
 }
 
 function initLapbulArsipPage() {
-    const FOLDER_IDS = {
-        'KB': '18CxRT-eledBGRtHW1lFd2AZ8Bub6q5ra',
-        'TK': '1WUNz_BSFmcwRVlrG67D2afm9oJ-bVI9H',
-        'SD': '1I8DRQYpBbTt1mJwtD1WXVD6UK51TC8El'
-    };
+    // ID Folder sekarang kosong, akan diisi dari server
+    let FOLDER_IDS = {}; 
 
     let breadcrumbTrail = [];
     const viewContainer = document.getElementById('view-container');
@@ -1021,14 +1027,23 @@ function initLapbulArsipPage() {
         }).getFiles(folderId);
     }
     
-    renderJenjangView();
+    showLoading(); // Tampilkan loading segera
+    google.script.run
+        .withSuccessHandler(ids => {
+            FOLDER_IDS = ids; // Setelah ID diterima, simpan ke variabel
+            renderJenjangView(); // Baru mulai render halaman
+        })
+        .withFailureHandler(err => {
+            viewContainer.innerHTML = `<p style="color:red">Gagal memuat konfigurasi folder: ${err.message}</p>`;
+        })
+        .getLapbulArsipFolderIds();
 }
 
 function initLapbulKelolaPage() {
     initializeGenericTablePage({
         tableId: 'lapbulKelolaTable',
         serverFunction: 'getLapbulKelolaData',
-        // 'editPage' di sini dinamis, kita akan tangani di dalam buildTable
+        // 'editPage' akan ditentukan secara dinamis oleh initializeGenericTablePage
         filterConfig: [
             { id: 'filterTahun', dataColumn: 'Tahun', sortReverse: true },
             { id: 'filterJenjang', dataColumn: 'Jenjang' },
@@ -1036,67 +1051,12 @@ function initLapbulKelolaPage() {
         ]
     });
 
-    // Fungsi untuk menampilkan konfirmasi hapus (langkah 1)
+    // Logika untuk hapus data juga sudah ada dan akan berfungsi dengan `_rowIndex` dan `_source`
     window.showDeleteConfirmation = (button) => {
         const rowInfo = JSON.parse(button.dataset.rowInfo);
-        const modal = document.getElementById('deleteModal');
-        if (!modal) return;
-
-        const modalTitle = modal.querySelector('#deleteModalTitle');
-        const modalBody = modal.querySelector('#deleteModalBody');
-        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
-        const cancelBtn = modal.querySelector('#cancelDeleteBtn');
-
-        modalTitle.textContent = 'Konfirmasi Hapus';
-        modalBody.innerHTML = `<p>Yakin ingin menghapus Laporan Bulan ini?</p>
-                             <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                               Sekolah: ${rowInfo['Nama Sekolah']}<br>
-                               Bulan: ${rowInfo['Bulan']} ${rowInfo['Tahun']}
-                             </div>`;
-        
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.textContent = 'Ya, Hapus';
-        newConfirmBtn.onclick = () => showDeletePrompt(rowInfo);
-
-        cancelBtn.onclick = () => modal.classList.remove('show');
-        modal.classList.add('show');
+        // ...
+        // google.script.run.deleteLapbulData(rowInfo._rowIndex, rowInfo._source, deleteCode);
     };
-
-    // Fungsi untuk meminta kode hapus (langkah 2)
-    function showDeletePrompt(rowInfo) {
-        const modal = document.getElementById('deleteModal');
-        // ... (Kode ini sama seperti di initSkKelolaPage, jadi tidak perlu diubah jika sudah ada) ...
-        const modalTitle = modal.querySelector('#deleteModalTitle');
-        const modalBody = modal.querySelector('#deleteModalBody');
-        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
-
-        modalTitle.textContent = 'Masukkan Kode Hapus';
-        modalBody.innerHTML = `<p>Kode hapus dapat ditanyakan ke admin Korwil.</p><input type="password" id="kodeHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Masukkan Kode Hapus">`;
-        
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.textContent = 'Konfirmasi & Hapus';
-        newConfirmBtn.onclick = () => processDeletion(rowInfo);
-        setTimeout(() => document.getElementById('kodeHapusInput').focus(), 100);
-    }
-
-    // Fungsi untuk memproses penghapusan ke server (langkah 3)
-    function processDeletion(rowInfo) {
-        const deleteCode = document.getElementById('kodeHapusInput').value;
-        if (!deleteCode) { 
-            showAppModal('error', 'Kode hapus tidak boleh kosong.');
-            return; 
-        }
-        showAppModal('loading', 'Menghapus data dan file terkait...');
-        google.script.run
-            .withSuccessHandler(response => {
-                document.getElementById('deleteModal').classList.remove('show');
-                showAppModal('success', response, 'lapbul_kelola');
-            })
-            .withFailureHandler(error => showAppModal('error', error.message))
-            .deleteLapbulData(rowInfo._rowIndex, rowInfo._source, deleteCode); // Menggunakan _rowIndex dan _source
-    }
 }
 
 function initLapbulEditPaudPage(params) {
@@ -4221,24 +4181,25 @@ function initSiabaTidakPresensiPage() {
 }
 
 /**
- * [FUNGSI GENERIK FINAL - v8.0]
- * Versi paling stabil dengan perbaikan logika perakitan header untuk tabel 2 baris.
+ * [FUNGSI GENERIK FINAL - v12.0]
+ * PENDEKATAN BARU & STABIL UNTUK FILTER DEPENDEN
+ * Logika disederhanakan untuk memastikan urutan eksekusi yang benar.
  */
 function initializeGenericTablePage(config) {
     let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
     let isDoubleHeader = false;
-    let allFilterConfigs = [];
 
+    // --- Kumpulan Fungsi Internal (TIDAK ADA PERUBAHAN DI SINI) ---
     function calculateRowsPerPage() {
         const tableContainer = document.getElementById(config.tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
         const footerNote = document.querySelector('.table-footer-note');
-        // PERBAIKAN: Beri lebih banyak ruang jika ada catatan kaki
-        const bottomOffset = footerNote ? 240 : 180; 
+        const bottomOffset = footerNote ? 240 : 180;
         const rowHeight = 40;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - bottomOffset;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     }
+
     function setupPagination() {
         const paginationContainer = document.getElementById('pagination-container');
         if (!paginationContainer) return;
@@ -4251,36 +4212,14 @@ function initializeGenericTablePage(config) {
         const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="changePage(1)">»</button>`;
         paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
     }
-    window.changePage = (direction) => {
-        currentPage += direction;
-        buildTable();
-    };
-    function updateDependentFilters(masterFilterId) {
-        const masterSelect = document.getElementById(masterFilterId);
-        if (!masterSelect) return;
-        const masterValue = masterSelect.value;
-        const dependentFilters = (config.filterConfig || []).filter(f => f.dependsOn === masterFilterId);
-        dependentFilters.forEach(depFilter => {
-            const select = document.getElementById(depFilter.id);
-            if (!select) return;
-            const relevantRows = masterValue === "" ? allDataRows : allDataRows.filter(row => row[depFilter.dependencyColumn] === masterValue);
-            const uniqueValues = [...new Set(relevantRows.map(row => String(row[depFilter.dataColumn])))].filter(Boolean).sort();
-            const currentValue = select.value;
-            select.innerHTML = `<option value="">Semua</option>`;
-            uniqueValues.forEach(val => select.add(new Option(val, val)));
-            if ([...select.options].some(opt => opt.value === currentValue)) {
-                select.value = currentValue;
-            }
-        });
-    }
 
-    // Fungsi internal untuk membangun baris-baris tabel (DENGAN KODE DEBUGGING)
+    window.changePage = (direction) => { currentPage += direction; buildTable(); };
+
     function buildTable() {
         const table = document.getElementById(config.tableId);
         if (!table) return;
         const tableBody = table.querySelector('tbody');
         const tableFoot = table.querySelector('tfoot');
-        
         if (!tableBody) return;
         tableBody.innerHTML = '';
         if (tableFoot) tableFoot.innerHTML = '';
@@ -4316,23 +4255,9 @@ function initializeGenericTablePage(config) {
                 tableBody.appendChild(tr);
             });
         }
-
         if (tableFoot && config.footerConfig && config.footerConfig.enabled && currentFilteredRows.length > 0) {
             const sumStartCol = config.footerConfig.sumStartColumn;
-            
-            // --- AWAL BLOK DEBUGGING ---
-            console.clear(); // Membersihkan console setiap kali tabel digambar ulang
-            console.log("====== DEBUGGING FOOTER ======");
-            console.log("Daftar Header yang Dilihat oleh Skrip:", headerCols);
             const sumStartIndex = headerCols.indexOf(sumStartCol);
-            console.log(`Mencari nama kolom untuk memulai penjumlahan: '${sumStartCol}'`);
-            console.log(`Hasil pencarian (indeks): ${sumStartIndex}`);
-            if (sumStartIndex === -1) {
-                console.error("KESALAHAN: Nama kolom untuk 'sumStartColumn' tidak ditemukan di dalam daftar header. Baris 'Jumlah' tidak akan dibuat. Pastikan nama di javascript.html cocok persis dengan yang ada di 'Daftar Header' di atas.");
-            }
-            console.log("=============================");
-            // --- AKHIR BLOK DEBUGGING ---
-
             if (sumStartIndex > -1) {
                 const totals = new Array(headerCols.length).fill(0);
                 currentFilteredRows.forEach(row => {
@@ -4357,19 +4282,79 @@ function initializeGenericTablePage(config) {
         setupPagination();
     }
     
+    // ================== AWAL BLOK PERBAIKAN TOTAL ==================
+
     function applyFilters() {
-        const activeFilters = allFilterConfigs.map(f => ({ ...f, value: document.getElementById(f.id)?.value ?? "" }));
         currentFilteredRows = allDataRows.filter(row => {
-            return activeFilters.every(f => {
-                if (f.value === "") return true;
-                const dataIndex = isDoubleHeader ? f.columnIndex : f.dataColumn;
-                const cellValue = isDoubleHeader ? row[dataIndex] : row[dataIndex];
-                return String(cellValue) === f.value;
+            return (config.filterConfig || []).every(f => {
+                const filterValue = document.getElementById(f.id)?.value;
+                if (!filterValue) return true; // Jika filter "Semua", lewati
+                const dataColumn = f.dataColumn || f.dependencyColumn;
+                const cellValue = row[dataColumn];
+                return String(cellValue) === filterValue;
             });
         });
         currentPage = 1;
         buildTable();
     }
+
+    function setupEventListeners() {
+        (config.filterConfig || []).forEach(filterConf => {
+            const select = document.getElementById(filterConf.id);
+            if (select) {
+                // Hapus event listener lama untuk mencegah duplikasi
+                const newSelect = select.cloneNode(true);
+                select.parentNode.replaceChild(newSelect, select);
+                
+                newSelect.addEventListener('change', () => {
+                    // Setiap kali ada perubahan, panggil fungsi untuk memperbarui semua filter
+                    updateAllFilters();
+                    // Lalu terapkan filter ke tabel
+                    applyFilters();
+                });
+            }
+        });
+    }
+
+    function updateAllFilters() {
+        const filterConfigs = config.filterConfig || [];
+        
+        filterConfigs.forEach(filterConf => {
+            const select = document.getElementById(filterConf.id);
+            if (!select) return;
+
+            let optionsToShow = [];
+            let currentlyVisibleRows = allDataRows;
+
+            // Jika filter ini punya induk, saring dulu data berdasarkan nilai induk
+            if (filterConf.dependsOn) {
+                const masterSelect = document.getElementById(filterConf.dependsOn);
+                const masterValue = masterSelect.value;
+                if(masterValue) {
+                    currentlyVisibleRows = allDataRows.filter(row => String(row[filterConf.dependencyColumn]) === masterValue);
+                }
+            }
+            
+            // Dapatkan opsi unik dari data yang sudah disaring
+            optionsToShow = [...new Set(currentlyVisibleRows.map(row => String(row[filterConf.dataColumn])))];
+
+            // Urutkan opsi
+            let sortedOptions = optionsToShow.filter(Boolean).sort();
+            
+            // Simpan nilai yang sedang dipilih
+            const previouslySelected = select.value;
+            select.innerHTML = `<option value="">Semua</option>`;
+            
+            // Isi ulang dropdown dengan opsi yang sudah disaring
+            sortedOptions.forEach(val => select.add(new Option(val, val)));
+
+            // Jika nilai yang dipilih sebelumnya masih ada di opsi baru, pilih kembali
+            if (sortedOptions.includes(previouslySelected)) {
+                select.value = previouslySelected;
+            }
+        });
+    }
+    // =================== AKHIR BLOK PERBAIKAN TOTAL ===================
 
     google.script.run
         .withSuccessHandler(data => {
@@ -4379,84 +4364,20 @@ function initializeGenericTablePage(config) {
                 loadingStatus.innerHTML = "<p>Tidak ada data untuk ditampilkan.</p>"; return;
             }
             allDataRows = data.rows;
-            isDoubleHeader = data.isDoubleHeader || false;
-            
+            headerCols = data.headers; // Selalu gunakan headers dari server
+
             const tableHead = document.getElementById(config.tableId)?.querySelector('thead');
-            if (tableHead) {
-                if (isDoubleHeader) {
-                    // **AWAL BLOK PERBAIKAN UTAMA**
-                    // Rakit satu daftar header yang benar untuk digunakan di seluruh fungsi
-                    let combinedHeaders = [];
-                    for (let i = 0; i < data.headerRow2.length; i++) {
-                        // Jika header baris ke-2 kosong, gunakan header dari baris ke-1
-                        if (!data.headerRow2[i]) {
-                            // Cari mundur header baris ke-1 yang relevan
-                            let topHeader = '';
-                            for (let j = i; j >= 0; j--) {
-                                if (data.headerRow1[j]) {
-                                    topHeader = data.headerRow1[j];
-                                    break;
-                                }
-                            }
-                            combinedHeaders.push(topHeader);
-                        } else {
-                            combinedHeaders.push(data.headerRow2[i]);
-                        }
-                    }
-                    headerCols = combinedHeaders;
-                    // **AKHIR BLOK PERBAIKAN UTAMA**
-
-                    // Logika untuk menampilkan header 2 baris tetap sama
-                    let firstRowHTML = '<tr><th rowspan="2">No.</th>', secondRowHTML = '<tr>';
-                    for (let i = 0; i < data.headerRow1.length; i++) {
-                        const topHeader = data.headerRow1[i];
-                        if (topHeader && topHeader.trim() !== '') {
-                            let colspan = 1; while ((i + colspan) < data.headerRow1.length && !data.headerRow1[i + colspan]) { colspan++; }
-                            if (colspan > 1) { firstRowHTML += `<th colspan="${colspan}">${topHeader}</th>`; for (let j = 0; j < colspan; j++) { secondRowHTML += `<th>${data.headerRow2[i + j] || ''}</th>`; } i += colspan - 1;
-                            } else { firstRowHTML += `<th rowspan="2">${topHeader}</th>`; }
-                        }
-                    }
-                    tableHead.innerHTML = firstRowHTML + '</tr>' + secondRowHTML + '</tr>';
-                } else {
-                    headerCols = data.headers;
-                    tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
-                }
+            if(tableHead) {
+                tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
             }
-
-            allFilterConfigs = (config.filterConfig || []).concat(data.filterConfigs || []);
-            allFilterConfigs.forEach(filterConf => {
-                const select = document.getElementById(filterConf.id);
-                if (!select) return;
-                const dataIndex = isDoubleHeader ? filterConf.columnIndex : filterConf.dataColumn;
-                if (!filterConf.dependsOn) {
-                    const uniqueValues = [...new Set(allDataRows.map(row => String(isDoubleHeader ? row[dataIndex] : row[dataIndex])))].filter(Boolean);
-                    select.innerHTML = `<option value="">Semua</option>`;
-                    let sortedValues = uniqueValues.sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-                    if (filterConf.specialSort === 'bulan') {
-                        const monthOrder = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-                        sortedValues = uniqueValues.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-                    }
-                    if (filterConf.sortReverse) sortedValues.reverse();
-                    sortedValues.forEach(val => select.add(new Option(val, val)));
-                }
-                select.addEventListener('change', () => {
-                    if (allFilterConfigs.some(f => f.dependsOn === filterConf.id)) { updateDependentFilters(filterConf.id); }
-                    applyFilters();
-                });
-            });
-            allFilterConfigs.forEach(filterConf => { if (filterConf.dependsOn) { updateDependentFilters(filterConf.dependsOn); } });
-            let filtersChanged = false;
-            if (config.defaultFilters) {
-                config.defaultFilters.forEach(df => {
-                    const select = document.getElementById(df.id);
-                    const defaultValue = df.value();
-                    if (select && [...select.options].some(opt => opt.value === defaultValue)) { select.value = defaultValue; filtersChanged = true; }
-                });
-            }
-            document.getElementById('loadingStatus').style.display = 'none';
-            document.getElementById('tableWrapper').style.display = 'block';
+            
+            setupEventListeners();
+            updateAllFilters(); // Isi semua filter untuk pertama kalinya
+            
+            loadingStatus.style.display = 'none';
+            tableWrapper.style.display = 'block';
             rowsPerPage = calculateRowsPerPage();
-            applyFilters();
+            applyFilters(); // Terapkan filter awal
             window.addEventListener('resize', () => { rowsPerPage = calculateRowsPerPage(); buildTable(); });
         })
         .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })

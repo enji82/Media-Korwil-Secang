@@ -820,4 +820,16 @@
     -webkit-text-fill-color: #e0e0e0 !important; /* Memaksa warna teks menjadi terang */
     caret-color: #e0e0e0 !important; /* Mengubah warna kursor ketik */
   }
+
+  /* =================================================================== */
+/* ===== 10. HILANGKAN PANAH DI INPUT ANGKA ===== */
+/* =================================================================== */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
 </style>
