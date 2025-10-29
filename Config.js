@@ -1,12 +1,5 @@
 // File: Config.gs
 
-/**
- * ===================================================================
- * ======================= 1. KONFIGURASI PUSAT ======================
- * ===================================================================
- * Semua ID Spreadsheet dan Folder disimpan di sini agar mudah dikelola.
- */
-
 const SPREADSHEET_CONFIG = {
   // --- Modul SK Pembagian Tugas ---
   SK_BAGI_TUGAS: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "SK Tabel Kirim" },
@@ -22,7 +15,19 @@ const SPREADSHEET_CONFIG = {
   PTK_PAUD_JUMLAH_BULANAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Data PAUD Bulanan" },
   PTK_PAUD_DB: { id: "1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk", sheet: "PTK PAUD" },
   PTK_SD_KEADAAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Keadaan PTK SD" },
+  PTK_SD_JUMLAH_BULANAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "PTK Bulanan SD"},
+  PTK_SD_KEBUTUHAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Kebutuhan Guru"},
   PTK_SD_DB: { id: "1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0" },
+
+  // --- Modul Data Murid (Tambahan dari file code.js Anda) ---
+  MURID_PAUD_KELAS: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid Kelas" },
+  MURID_PAUD_JK: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid JK" },
+  MURID_PAUD_BULANAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid Bulanan" },
+  MURID_SD_KELAS: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Kelas" },
+  MURID_SD_ROMBEL: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Rombel" },
+  MURID_SD_JK: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel JK" },
+  MURID_SD_AGAMA: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Agama" },
+  MURID_SD_BULANAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Bulanan" },
 
   // --- Data Pendukung & Dropdown ---
   DATA_SEKOLAH: { id: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs" },

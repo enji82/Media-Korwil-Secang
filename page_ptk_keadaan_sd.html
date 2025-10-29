@@ -32,6 +32,33 @@
       Sumber data: laporan bulan terakhir.
     </div>
   </div>
-
-  <div id="pagination-container" class="pagination-container"></div>
 </main>
+
+<style>
+  /* 1. Mencegah scrollbar utama halaman muncul */
+  #main-content {
+    overflow-y: hidden;
+  }
+
+  /* 2. Jadikan <main> sebagai container flexbox yang mengisi sisa ruang */
+  main.table-view-container {
+    flex-grow: 1;
+    min-height: 0; /* Trik penting agar flexbox berfungsi dengan overflow */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 3. Jadikan #tableWrapper sebagai sub-container flexbox */
+  #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 4. INTI MASALAH: perintahkan .table-container untuk memanjang dan scroll */
+  #tableWrapper .table-container {
+    flex-grow: 1;
+    overflow-y: auto; /* Aktifkan scrollbar vertikal HANYA di sini */
+  }
+</style>

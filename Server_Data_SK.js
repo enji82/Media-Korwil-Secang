@@ -1,9 +1,3 @@
-/**
- * ===================================================================
- * ================= MODUL SK PEMBAGIAN TUGAS =====================
- * ===================================================================
- */
-
 function getMasterSkOptions() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id);
@@ -58,71 +52,58 @@ function processManualForm(formData) {
 }
 
 /**
- * [REFACTOR - PERBAIKAN PENGURUTAN FINAL] Mengambil data riwayat pengiriman SK.
- * Menggunakan fungsi parseDate yang andal untuk menangani format tanggal yang tidak seragam.
+ * [REFACTOR - FINAL] Mengambil data riwayat pengiriman SK.
+ * Mengembalikan data dalam format objek { headers, rows } yang sudah diurutkan.
  */
 function getSKRiwayatData() {
   try {
-    // Gunakan .getValues() untuk mendapatkan objek Date asli jika memungkinkan
     const sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.id)
                                 .getSheetByName(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.sheet);
 
     if (!sheet || sheet.getLastRow() < 2) {
-      return { headers: [], rows: [] };
+      return { headers: ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Tanggal SK", "Kriteria SK", "Dokumen", "Tanggal Unggah"], rows: [] };
     }
     
-    const allData = sheet.getDataRange().getValues(); // Menggunakan getValues()
+    const allData = sheet.getDataRange().getValues();
     const originalHeaders = allData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
 
-    // Fungsi bantu yang andal untuk mengubah berbagai format tanggal menjadi objek Date
     const parseDate = (value) => {
-        if (!value) return new Date(0); // Tanggal paling awal jika kosong
-        // Jika sudah berupa objek Date yang valid, kembalikan langsung
+        if (!value) return new Date(0);
         if (value instanceof Date && !isNaN(value)) return value;
-        // Jika berupa string, coba parsing format "dd/MM/yyyy HH:mm:ss"
-        if (typeof value === 'string') {
-          const parts = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
-          if (parts) {
-              // parts[3]=yyyy, parts[2]=MM, parts[1]=dd
-              return new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
-          }
-        }
-        // Jika gagal parsing, anggap sebagai tanggal paling awal
-        return new Date(0);
+        const date = new Date(value);
+        return isNaN(date) ? new Date(0) : date;
     };
 
-    // Ubah setiap baris menjadi objek
-    const structuredRows = dataRows.map(row => {
+    let structuredRows = dataRows.map(row => {
       const rowObject = {};
       originalHeaders.forEach((header, index) => {
-        const cell = row[index];
-        // Format tanggal menjadi string SETELAH diolah
-        if ((header === 'Tanggal Unggah' || header === 'Update') && cell instanceof Date) {
-          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-        } else if (header === 'Tanggal SK' && cell instanceof Date) {
-          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
-        } else {
-          rowObject[header] = cell;
-        }
+        rowObject[header] = row[index];
       });
       return rowObject;
     });
 
-    // **KUNCI PERBAIKAN ADA DI SINI**
-    // Urutkan data berdasarkan "Tanggal Unggah" menggunakan fungsi parseDate yang andal
     structuredRows.sort((a, b) => {
       const dateB = parseDate(b['Tanggal Unggah']);
       const dateA = parseDate(a['Tanggal Unggah']);
-      return dateB - dateA; // Urutan descending (terbaru di atas)
+      return dateB - dateA;
     });
     
-    // Tentukan urutan header yang akan ditampilkan di tabel
+    const formattedRows = structuredRows.map(row => {
+        if (row['Tanggal Unggah'] instanceof Date) {
+          row['Tanggal Unggah'] = Utilities.formatDate(row['Tanggal Unggah'], Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        }
+        if (row['Tanggal SK'] instanceof Date) {
+          row['Tanggal SK'] = Utilities.formatDate(row['Tanggal SK'], Session.getScriptTimeZone(), "dd/MM/yyyy");
+        }
+        return row;
+    });
+    
     const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Tanggal SK", "Kriteria SK", "Dokumen", "Tanggal Unggah"];
 
     return {
       headers: desiredHeaders,
-      rows: structuredRows
+      rows: formattedRows
     };
 
   } catch (e) {
@@ -131,13 +112,13 @@ function getSKRiwayatData() {
 }
 
 /**
- * [REFACTOR - PERBAIKAN FINAL] Mengambil data status pengiriman SK.
- * Mengembalikan data dalam format objek agar sesuai dengan fungsi generik.
- * Urutan baris sesuai dengan spreadsheet sumber.
+ * [REFACTOR - FINAL] Mengambil data status pengiriman SK.
+ * Mengembalikan data dalam format objek { headers, rows } agar sesuai dengan fungsi generik.
  */
 function getSKStatusData() {
   try {
-    const data = getDataFromSheet('SK_BAGI_TUGAS');
+    // Memanggil fungsi utilitas yang ada di Code.gs
+    const data = getDataFromSheet('SK_BAGI_TUGAS'); 
     if (!data || data.length < 2) {
       return { headers: [], rows: [] };
     }
@@ -176,21 +157,23 @@ function getSKKelolaData() {
     const originalHeaders = originalData[0].map(h => String(h).trim());
     const dataRows = originalData.slice(1);
 
-    // Fungsi bantu yang andal untuk mengubah berbagai format tanggal menjadi objek Date
+    // Fungsi bantu untuk mengubah tanggal menjadi objek Date yang valid untuk perbandingan
     const parseDate = (value) => {
+      // Jika sudah berupa objek Date, kembalikan langsung
       if (value instanceof Date && !isNaN(value)) return value;
+      // Jika tidak ada nilai, kembalikan tanggal paling awal agar diurutkan ke bawah
       if (!value) return new Date(0); 
+      // Coba parsing dari format string
       const date = new Date(value);
       return isNaN(date) ? new Date(0) : date;
     };
 
-    // Simpan nomor baris asli SEBELUM diurutkan
     const indexedData = dataRows.map((row, index) => ({
       row: row,
-      originalIndex: index + 2 // Baris fisik di spreadsheet (dimulai dari 2)
+      originalIndex: index + 2
     }));
 
-    // Logika pengurutan multi-level (sudah bagus, kita pertahankan)
+    // **KUNCI PERBAIKAN 1: LOGIKA PENGURUTAN MULTI-LEVEL**
     const updateIndex = originalHeaders.indexOf('Update');
     const timestampIndex = originalHeaders.indexOf('Tanggal Unggah');
 
@@ -201,17 +184,18 @@ function getSKKelolaData() {
       if (dateB_update.getTime() !== dateA_update.getTime()) {
         return dateB_update - dateA_update;
       }
-      // Prioritas 2: Jika "Update" sama, urutkan berdasarkan "Tanggal Unggah"
+
+      // Prioritas 2: Jika "Update" sama, urutkan berdasarkan "Tanggal Unggah" (terbaru di atas)
       const dateB_timestamp = parseDate(b.row[timestampIndex]);
       const dateA_timestamp = parseDate(a.row[timestampIndex]);
       return dateB_timestamp - dateA_timestamp;
     });
 
-    // Ubah setiap baris menjadi objek dan format tanggalnya
+    // Mengubah baris menjadi objek (logika ini tetap sama)
     const structuredRows = indexedData.map(item => {
       const rowObject = {
-        _rowIndex: item.originalIndex, // WAJIB: untuk tombol Edit & Hapus
-        _source: 'SK'                  // WAJIB: untuk membedakan dengan modul lain
+        _rowIndex: item.originalIndex,
+        _source: 'SK'
       };
       originalHeaders.forEach((header, i) => {
         let cell = item.row[i];
@@ -225,7 +209,8 @@ function getSKKelolaData() {
       return rowObject;
     });
     
-    // Tentukan urutan header yang akan ditampilkan di tabel
+    // **KUNCI PERBAIKAN 2: MENAMBAHKAN KOLOM BARU**
+    // Tambahkan "Tanggal Unggah" dan "Update" setelah "Aksi"
     const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Kriteria SK", "Dokumen", "Aksi", "Tanggal Unggah", "Update"];
 
     return {
@@ -256,15 +241,12 @@ function getSKDataByRow(rowIndex) {
 
 function updateSKData(formData) {
   try {
-    // ================== PERBAIKAN DI BARIS INI ==================
-    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES; // Nama variabel sudah benar
-    // ==========================================================
-
+    const config = SPREADSHEET_CONFIG.SK_FORM_RESPONSES;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
     
     const range = sheet.getRange(formData.rowIndex, 1, 1, headers.length);
-    const existingRowValues = range.getDisplayValues()[0];
+    const existingRowValues = range.getDisplayValues()[0]; // getDisplayValues untuk perbandingan string
     const existingRowObject = {};
     headers.forEach((header, i) => { existingRowObject[header] = existingRowValues[i]; });
 
@@ -275,11 +257,14 @@ function updateSKData(formData) {
     let fileUrl = existingRowObject['Dokumen'];
     const fileUrlIndex = headers.indexOf('Dokumen');
 
+    // Tentukan nama file dan folder tujuan BARU berdasarkan data form
     const newSemesterFolderName = formData['Semester'];
     const newTargetFolder = getOrCreateFolder(tahunAjaranFolder, newSemesterFolderName);
     const newFilename = `${existingRowObject['Nama SD']} - ${tahunAjaranFolderName} - ${newSemesterFolderName} - ${formData['Kriteria SK']}.pdf`;
 
+    // Skenario 1: File BARU diunggah
     if (formData.fileData && formData.fileData.data) {
+      // Hapus file lama jika ada
       if (fileUrlIndex > -1 && existingRowObject['Dokumen']) {
         try {
           const fileId = existingRowObject['Dokumen'].match(/[-\w]{25,}/);
@@ -289,51 +274,45 @@ function updateSKData(formData) {
         }
       }
       
+      // Unggah file baru
       const decodedData = Utilities.base64Decode(formData.fileData.data);
       const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFilename);
       const newFile = newTargetFolder.createFile(blob);
       fileUrl = newFile.getUrl();
 
+    // Skenario 2: TIDAK ada file baru, tapi data (Semester/Kriteria) berubah
     } else if (fileUrlIndex > -1 && existingRowObject['Dokumen']) {
         const fileIdMatch = existingRowObject['Dokumen'].match(/[-\w]{25,}/);
         if (fileIdMatch) {
             const fileId = fileIdMatch[0];
             const file = DriveApp.getFileById(fileId);
             const currentFileName = file.getName();
-            
-            const parents = file.getParents();
-            let needsMove = true; 
+            const currentParentFolder = file.getParents().next();
 
-            if (parents.hasNext()) {
-                const currentParentFolder = parents.next();
-                if (currentFileName === newFilename && currentParentFolder.getName() === newSemesterFolderName) {
-                    needsMove = false;
-                }
-            }
-
-            if (needsMove) {
+            // Cek jika nama file atau folder perlu diubah
+            if (currentFileName !== newFilename || currentParentFolder.getName() !== newSemesterFolderName) {
                 file.moveTo(newTargetFolder);
                 file.setName(newFilename);
-                fileUrl = file.getUrl();
+                fileUrl = file.getUrl(); // Perbarui URL setelah dipindah/diubah namanya
                 Logger.log(`File dipindahkan ke folder '${newSemesterFolderName}' dan diubah namanya menjadi '${newFilename}'`);
             }
         }
     }
     
-    formData['Dokumen'] = fileUrl;
+    formData['Dokumen'] = fileUrl; // Pastikan URL file diperbarui di formData
     formData['Update'] = new Date();
+
     const newRowValuesForSheet = headers.map(header => {
       return formData.hasOwnProperty(header) ? formData[header] : existingRowObject[header];
     });
 
+    // Gunakan getRange(row, col, numRows, numCols) dan setValues()
     sheet.getRange(formData.rowIndex, 1, 1, headers.length).setValues([newRowValuesForSheet]);
     
     const tanggalSKIndex = headers.indexOf('Tanggal SK');
     if (tanggalSKIndex !== -1) {
       sheet.getRange(formData.rowIndex, tanggalSKIndex + 1).setNumberFormat("dd-MM-yyyy");
     }
-    
-    SpreadsheetApp.flush(); 
     
     return "Data berhasil diperbarui!";
   } catch (e) {

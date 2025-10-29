@@ -33,5 +33,33 @@
     </div>
   </div>
 
-  <div id="pagination-container" class="pagination-container"></div>
 </main>
+
+<style>
+  /* 1. Paksa container utama untuk TIDAK memiliki scrollbar */
+  #main-content {
+    overflow-y: hidden !important;
+  }
+
+  /* 2. Jadikan <main> sebagai container flexbox yang mengisi sisa ruang */
+  main.table-view-container {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 3. Jadikan #tableWrapper sebagai sub-container flexbox */
+  #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 4. Perintahkan .table-container untuk memanjang dan memiliki scrollbar */
+  #tableWrapper .table-container {
+    flex-grow: 1;
+    overflow: auto; /* Scrollbar vertikal dan horizontal akan muncul di sini */
+  }
+</style>

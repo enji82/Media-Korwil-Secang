@@ -3,103 +3,54 @@
   /* ===================== 1. GAYA DASAR & GLOBAL ====================== */
   /* =================================================================== */
   :root {
-    --color-red: #e74c3c;
-    --color-green: #2ecc71;
-    --color-yellow: #f1c40f;
-    --color-blue: #3498db;
-    --color-purple: #9b59b6;
-    --color-orange: #e67e22;
-    --color-cyan: #1abc9c;
-    --color-cream: #f8f3d4;
-    --color-dark-orange: #d35400;
-    --color-dark-green: #27ae60;
-    --color-dark-red: #c03b2b;
-    --color-dark-purple: #8e44ad;
-    --color-dark-blue: #2980b9;
-    --color-dark-yellow: #f39c12;
+    --color-red: #e74c3c; --color-green: #2ecc71; --color-yellow: #f1c40f; --color-blue: #3498db;
+    --color-purple: #9b59b6; --color-orange: #e67e22; --color-cyan: #1abc9c; --color-cream: #f8f3d4;
+    --color-dark-orange: #d35400; --color-dark-green: #27ae60; --color-dark-red: #c03b2b;
+    --color-dark-purple: #8e44ad; --color-dark-blue: #2980b9; --color-dark-yellow: #f39c12;
   }
-
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    background-color: #0f2027;
-    background-image: linear-gradient(120deg, #2c5364 0%, #203a43 50%, #0f2027 100%);
-    background-attachment: fixed;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 0;
-    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #0f2027; background-image: linear-gradient(120deg, #2c5364 0%, #203a43 50%, #0f2027 100%);
+    background-attachment: fixed; color: #e0e0e0; margin: 0; padding: 0; font-size: 14px;
   }
-
-  .app-container {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
-
+  .app-container { display: flex; height: 100vh; overflow: hidden; }
+  
+  /* === PERBAIKAN SCROLLBAR GLOBAL (FINAL) === */
   .main-content {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow: hidden; /* Mencegah scroll di container utama */
     padding: 25px;
     display: flex;
     flex-direction: column;
   }
+  main.table-view-container {
+    flex-grow: 1;
+    min-height: 0; /* Kunci agar flexbox bekerja dengan overflow */
+    display: flex;
+    flex-direction: column;
+  }
+  #tableWrapper {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #tableWrapper .table-container {
+    flex-grow: 1;
+    overflow: auto; /* Scrollbar vertikal & horizontal HANYA muncul di sini */
+  }
+  /* === AKHIR PERBAIKAN === */
 
-  .main-content header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-top: 20px;
-    flex-shrink: 0;
-  }
-
-  .main-content header h1,
-  .main-content header h2 {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-
-  .main-content header h1 {
-    font-size: 2.5em;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-  }
-
-  .main-content header h2 {
-    font-size: 1.6em;
-    font-weight: 300;
-    color: #bdc3c7;
-    margin-top: 5px;
-    margin-bottom: 20px;
-  }
-
-  .main-content header h2::after {
-    content: '';
-    display: block;
-    width: 100px;
-    height: 2px;
-    background-color: #00c3ff;
-    margin: 20px auto 0 auto;
-    border-radius: 1px;
-    animation: stretch-bounce 2.5s infinite ease-in-out;
-  }
-
-  /* --- Scrollbar Kustom --- */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.4);
-  }
-
+  .main-content header { text-align: center; margin-bottom: 20px; padding-top: 15px; flex-shrink: 0; }
+  .main-content header h1, .main-content header h2 { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+  .main-content header h1 { font-size: 2.5em; font-weight: 700; color: #fff; margin: 0; }
+  .main-content header h2 { font-size: 1.6em; font-weight: 300; color: #bdc3c7; margin: 5px 0 20px 0; }
+  .main-content header h2::after { content: ''; display: block; width: 100px; height: 2px; background-color: #00c3ff; margin: 20px auto 0; border-radius: 1px; animation: stretch-bounce 2.5s infinite ease-in-out; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.3); }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+  
   /* --- Animasi Global --- */
   @keyframes stretch-bounce { 0% { transform: scaleX(0.5); } 50% { transform: scaleX(1); } 100% { transform: scaleX(0.5); } }
   @keyframes cardFadeIn { to { opacity: 1; transform: translateY(0); } }
@@ -820,16 +771,4 @@
     -webkit-text-fill-color: #e0e0e0 !important; /* Memaksa warna teks menjadi terang */
     caret-color: #e0e0e0 !important; /* Mengubah warna kursor ketik */
   }
-
-  /* =================================================================== */
-/* ===== 10. HILANGKAN PANAH DI INPUT ANGKA ===== */
-/* =================================================================== */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type=number] {
-  -moz-appearance: textfield;
-}
 </style>
