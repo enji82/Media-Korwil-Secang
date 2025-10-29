@@ -518,116 +518,15 @@ function initSkUnggahPage() {
 }
 
 function initSkRiwayatPage() {
-    const tableId = 'riwayatTable';
-    const serverFunction = 'getSKRiwayatData';
-    const filterIds = ['filterTahun', 'filterSemester', 'filterNamaSekolah'];
-    
-    let allData = [];
-    let currentPage = 1;
-    let rowsPerPage = 15;
-
-    const loadingStatus = document.getElementById('loadingStatus');
-    const tableWrapper = document.getElementById('tableWrapper');
-    const table = document.getElementById(tableId);
-    const tableHead = table.querySelector('thead');
-    const tableBody = table.querySelector('tbody');
-    const paginationContainer = document.getElementById('pagination-container');
-
-    function buildTable() {
-        const filterTahun = document.getElementById('filterTahun').value;
-        const filterSemester = document.getElementById('filterSemester').value;
-        const filterNamaSekolah = document.getElementById('filterNamaSekolah').value;
-
-        const filteredData = allData.filter(row => {
-            const tahunMatch = !filterTahun || row['Tahun Ajaran'] === filterTahun;
-            const semesterMatch = !filterSemester || row['Semester'] === filterSemester;
-            const sekolahMatch = !filterNamaSekolah || row['Nama SD'] === filterNamaSekolah;
-            return tahunMatch && semesterMatch && sekolahMatch;
-        });
-
-        tableBody.innerHTML = '';
-        const pageCount = Math.ceil(filteredData.length / rowsPerPage);
-        currentPage = Math.min(currentPage, pageCount) || 1;
-        const start = (currentPage - 1) * rowsPerPage;
-        const paginatedData = filteredData.slice(start, start + rowsPerPage);
-
-        if (paginatedData.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${tableHead.rows[0].cells.length}">Tidak ada data yang cocok.</td></tr>`;
-        } else {
-            paginatedData.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                let rowHTML = `<td>${start + index + 1}</td>`;
-                // Dapatkan header dari thead untuk memastikan urutan yang benar
-                Array.from(tableHead.rows[0].cells).forEach((th, i) => {
-                    if (i === 0) return; // Skip kolom No.
-                    const header = th.textContent;
-                    const cellData = row[header] || '-';
-                    if (header === 'Dokumen' && String(cellData).startsWith('http')) {
-                        rowHTML += `<td><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`;
-                    } else {
-                        rowHTML += `<td>${cellData}</td>`;
-                    }
-                });
-                tr.innerHTML = rowHTML;
-                tableBody.appendChild(tr);
-            });
-        }
-        
-        // Setup Paginasi
-        paginationContainer.innerHTML = '';
-        if (pageCount > 1) {
-            paginationContainer.style.display = 'flex';
-            const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
-            const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''}>«</button>`;
-            const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''}>»</button>`;
-            paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
-            paginationContainer.querySelector('button:first-child').onclick = () => { currentPage--; buildTable(); };
-            paginationContainer.querySelector('button:last-child').onclick = () => { currentPage++; buildTable(); };
-        } else {
-            paginationContainer.style.display = 'none';
-        }
-    }
-
-    function setupFilters(headers) {
-        const filterConfig = [
-            { id: 'filterTahun', dataColumn: 'Tahun Ajaran' },
+    initializeGenericTablePage({
+        tableId: 'riwayatTable',
+        serverFunction: 'getSKRiwayatData',
+        filterConfig: [
+            { id: 'filterTahun', dataColumn: 'Tahun Ajaran', sortReverse: true },
             { id: 'filterSemester', dataColumn: 'Semester' },
             { id: 'filterNamaSekolah', dataColumn: 'Nama SD' }
-        ];
-
-        filterConfig.forEach(conf => {
-            const select = document.getElementById(conf.id);
-            if(select){
-                const uniqueValues = [...new Set(allData.map(row => row[conf.dataColumn]))].filter(Boolean).sort();
-                select.innerHTML = '<option value="">Semua</option>';
-                uniqueValues.forEach(val => select.add(new Option(val, val)));
-                select.addEventListener('change', () => { currentPage = 1; buildTable(); });
-            }
-        });
-    }
-
-    google.script.run
-        .withSuccessHandler(data => {
-            if (data.error || !data.rows) {
-                loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${data.error || 'Format data salah.'}</p>`;
-                return;
-            }
-
-            allData = data.rows;
-            const headers = data.headers;
-            
-            tableHead.innerHTML = `<tr><th>No.</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-            
-            setupFilters(headers);
-            buildTable();
-
-            loadingStatus.style.display = 'none';
-            tableWrapper.style.display = 'block';
-        })
-        .withFailureHandler(error => {
-            loadingStatus.innerHTML = `<p style="color:red;">Gagal total memuat data: ${error.message}</p>`;
-        })
-        [serverFunction]();
+        ]
+    });
 }
 
 function initSkStatusPage() {
