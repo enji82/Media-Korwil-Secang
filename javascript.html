@@ -78,15 +78,14 @@ function loadPage(event, pageName, params = {}) {
                     pageInitializers[pageName](params);
                 }
                 updateActiveMenu(pageName);
-                addRequiredStars();
             } catch (e) {
                 console.error("Client-side error after loading page:", e);
-                contentArea.innerHTML = `<div class="error-box"><h3>Error JavaScript di Browser!</h3><p><strong>Pesan:</strong> ${e.message}</p><p><strong>Stack:</strong> ${e.stack}</p></div>`;
+                contentArea.innerHTML = `<div class="error-box" style="padding: 20px; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; border-radius: 8px; color: white;"><h3>Error JavaScript di Browser!</h3><p><strong>Pesan:</strong> ${e.message}</p><p><strong>Stack:</strong> ${e.stack}</p></div>`;
             }
         })
         .withFailureHandler(err => {
             console.error("Server-side error during include:", err);
-            contentArea.innerHTML = `<div class="error-box"><h3>Gagal Memuat Konten!</h3><p>Pastikan file HTML 'page_${pageName}.html' ada dan namanya sudah benar.</p><p><strong>Pesan Server:</strong> ${err.message}</p></div>`;
+            contentArea.innerHTML = `<div class="error-box" style="padding: 20px; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; border-radius: 8px; color: white;"><h3>Gagal Memuat Konten!</h3><p>Pastikan file HTML 'page_${pageName}.html' ada dan namanya sudah benar.</p><p><strong>Pesan Server:</strong> ${err.message}</p></div>`;
         })
         .include('page_' + pageName);
 }
@@ -125,13 +124,6 @@ function updateActiveMenu(pageName) {
     }
 }
 
-/**
- * [MODIFIKASI] Fungsi ini dikosongkan untuk menghapus tanda bintang wajib (*)
- */
-function addRequiredStars() {
-    /* Kosongkan agar tidak ada tanda bintang di form */
-}
-
 const debounce = (func, timeout = 150) => {
     let timer;
     return (...args) => {
@@ -140,32 +132,10 @@ const debounce = (func, timeout = 150) => {
     };
 };
 
-function setupInfoDropdown(buttonId, contentId, preloadedData) {
-    const infoBtn = document.getElementById(buttonId);
-    const contentDiv = document.getElementById(contentId);
+// ===============================================================
+// === FUNGSI GENERIK TABEL DITEMPATKAN DI SINI (SEBELUM INIT) ===
+// ===============================================================
 
-    if (!infoBtn || !contentDiv) return;
-
-    if (preloadedData && preloadedData.length > 0) {
-        const infoContent = `<ul style="text-align: left; padding: 10px 20px 10px 35px; line-height: 1.6; margin: 0;">${preloadedData.map(item => `<li>${item}</li>`).join('')}</ul>`;
-        contentDiv.innerHTML = infoContent;
-    } else {
-        contentDiv.innerHTML = '<p style="padding: 15px;">Informasi tidak ditemukan.</p>';
-    }
-    
-    const loadingContainer = contentDiv.querySelector('.loading-container');
-    if (loadingContainer) loadingContainer.style.display = 'none';
-
-    infoBtn.onclick = function() {
-        const isOpen = this.classList.toggle('active');
-        contentDiv.style.maxHeight = isOpen ? (contentDiv.scrollHeight + 10) + "px" : "0px";
-    };
-}
-
-/**
- * [FUNGSI GENERIK FINAL - V2 - PAGINATION FIX]
- * Fungsi ini sekarang akan selalu menampilkan pagination jika container-nya ada.
- */
 function initializeGenericTablePage(config) {
     let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
     let isDoubleHeader = false;
@@ -518,250 +488,11 @@ function setupTabForm(formId) {
     document.head.appendChild(style);
 }
 
-function initializeGenericTablePage(config) {
-    let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
-    let isDoubleHeader = false;
-    let headerRow1 = [], headerRow2 = [];
-
-    function calculateRowsPerPage() {
-        const tableContainer = document.getElementById(config.tableId)?.closest('.table-container');
-        if (!tableContainer) return 15;
-        const paginationContainer = document.getElementById('pagination-container');
-        const bottomOffset = paginationContainer ? 180 : 100;
-        const rowHeight = 40;
-        const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - bottomOffset;
-        return Math.max(5, Math.floor(availableHeight / rowHeight));
-    }
-
-    function setupPagination() {
-    const paginationContainer = document.getElementById('pagination-container');
-    if (!paginationContainer) return;
-
-    // Hitung jumlah halaman, pastikan minimal 1
-    const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage) || 1;
-
-    // Selalu tampilkan pagination container
-    paginationContainer.style.display = 'flex';
-
-    const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
-    const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="window.changePage(-1)">«</button>`;
-    const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="window.changePage(1)">»</button>`;
-
-    paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
-    }
-    window.changePage = (direction) => {
-        currentPage += direction;
-        buildTable();
-    };
-
-    function buildTable() {
-        const table = document.getElementById(config.tableId);
-        if (!table) return;
-        const tableBody = table.querySelector('tbody');
-        const tableFoot = table.querySelector('tfoot');
-        if (!tableBody) return;
-        tableBody.innerHTML = '';
-        if (tableFoot) tableFoot.innerHTML = '';
-
-        const usePagination = !!document.getElementById('pagination-container');
-        let paginatedRows = currentFilteredRows;
-        
-        if (usePagination) {
-            rowsPerPage = calculateRowsPerPage();
-            const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage) || 1;
-            currentPage = Math.min(currentPage, pageCount) || 1;
-            const start = (currentPage - 1) * rowsPerPage;
-            paginatedRows = currentFilteredRows.slice(start, start + rowsPerPage);
-        }
-
-        if (paginatedRows.length === 0) {
-            const colspan = (isDoubleHeader ? headerCols.length : (headerCols.length + 1));
-            tableBody.innerHTML = `<tr><td colspan="${colspan}">Tidak ada data yang cocok dengan filter.</td></tr>`;
-        } else {
-            paginatedRows.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                const rowNumber = usePagination ? (currentPage - 1) * rowsPerPage + index + 1 : index + 1;
-                let rowCells = [`<td>${rowNumber}</td>`];
-                if (isDoubleHeader) {
-                    row.forEach(cellData => {
-                        let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData;
-                        rowCells.push(`<td>${displayCell}</td>`);
-                    });
-                } else {
-                    headerCols.forEach(header => {
-                        const cellData = row[header] ?? '';
-                        if (header === 'Aksi') {
-                            const rowIndex = row._rowIndex, source = row._source; let editPage = config.editPage;
-                            if (config.serverFunction === 'getLapbulKelolaData') { if (source === 'PAUD') editPage = 'lapbul_edit_paud'; else if (source === 'SD') editPage = 'lapbul_edit_sd'; }
-                            if (editPage && rowIndex !== undefined) { 
-                                rowCells.push(`<td class="action-buttons"><button class="action-btn edit-btn" onclick="loadPage(event, '${editPage}', { rowIndex: ${rowIndex}, source: '${source}' })"><i class="fas fa-pencil-alt"></i> Edit</button><button class="action-btn delete-btn" onclick="showDeleteConfirmation(this)" data-row-info='${JSON.stringify(row)}'><i class="fas fa-trash"></i> Hapus</button></td>`); 
-                            } else { 
-                                rowCells.push('<td>-</td>'); 
-                            }
-                        } else if (header === 'Dokumen' && String(cellData).startsWith('http')) { 
-                            rowCells.push(`<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`); 
-                        }
-                        else { 
-                            let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData; 
-                            if (displayCell === 'T') displayCell = '<span style="color: var(--color-green); font-weight: bold;">✓</span>'; 
-                            else if (displayCell === 'F') displayCell = '<span style="color: var(--color-red); font-weight: bold;">✗</span>'; 
-                            rowCells.push(`<td>${displayCell}</td>`); 
-                        }
-                    });
-                }
-                tr.innerHTML = rowCells.join('');
-                tableBody.appendChild(tr);
-            });
-        }
-        if (tableFoot && config.footerConfig && config.footerConfig.enabled && currentFilteredRows.length > 0) {
-            const sumStartCol = config.footerConfig.sumStartColumn;
-            const sumStartIndex = headerCols.indexOf(sumStartCol);
-            
-            if (sumStartIndex > -1) {
-                const totals = new Array(headerCols.length).fill(0);
-                currentFilteredRows.forEach(row => {
-                    for (let i = sumStartIndex; i < headerCols.length; i++) {
-                        const cellValue = isDoubleHeader ? row[i] : row[headerCols[i]];
-                        const value = parseInt(cellValue, 10);
-                        if (!isNaN(value)) totals[i] += value;
-                    }
-                });
-                let totalRowHTML = '<tr><td>-</td>';
-                const labelColumnIndex = headerCols.indexOf(config.footerConfig.labelColumn);
-
-                headerCols.forEach((header, i) => {
-                    if (i === labelColumnIndex) totalRowHTML += '<td>JUMLAH</td>';
-                    else if (i >= sumStartIndex) totalRowHTML += `<td>${totals[i] || '-'}</td>`;
-                    else totalRowHTML += '<td>-</td>';
-                });
-
-                totalRowHTML += '</tr>';
-                tableFoot.innerHTML = totalRowHTML; tableFoot.classList.add('has-content');
-            }
-        } else if (tableFoot) {
-            tableFoot.classList.remove('has-content');
-        }
-        if(usePagination) setupPagination();
-    }
-
-    function applyFilters() {
-        const filterConfigs = (config.filterConfig || []);
-        currentFilteredRows = allDataRows.filter(row => {
-            return filterConfigs.every(f => {
-                const filterValue = document.getElementById(f.id)?.value;
-                if (!filterValue) return true;
-                const dataIndex = isDoubleHeader ? f.columnIndex : (f.dataColumn || f.dependencyColumn);
-                const cellValue = isDoubleHeader ? row[dataIndex] : (row[dataIndex] || row[f.dataColumn]);
-                return String(cellValue) === filterValue;
-            });
-        });
-        currentPage = 1;
-        buildTable();
-    }
-
-    function setupEventListeners() {
-        (config.filterConfig || []).forEach(filterConf => {
-            const select = document.getElementById(filterConf.id);
-            if (select) {
-                const newSelect = select.cloneNode(true);
-                select.parentNode.replaceChild(newSelect, select);
-                newSelect.addEventListener('change', handleFilterChange);
-            }
-        });
-    }
-
-    const debouncedFilterChange = debounce(() => {
-        updateAllFilters();
-        applyFilters();
-    }, 200);
-
-    function handleFilterChange() {
-        debouncedFilterChange();
-    }
-    
-    function updateAllFilters() {
-        (config.filterConfig || []).forEach(filterConf => {
-            const select = document.getElementById(filterConf.id);
-            if (!select) return;
-
-            let optionsSourceData = allDataRows;
-            if (filterConf.dependsOn) {
-                const masterSelect = document.getElementById(filterConf.dependsOn);
-                const masterValue = masterSelect.value;
-                if(masterValue) {
-                    const dependencyConfig = (config.filterConfig || []).find(f => f.id === filterConf.dependsOn);
-                    const dependencyColumn = isDoubleHeader ? dependencyConfig.columnIndex : (dependencyConfig.dataColumn || dependencyConfig.dependencyColumn);
-                    optionsSourceData = allDataRows.filter(row => String(isDoubleHeader ? row[dependencyColumn] : row[dependencyColumn]) === masterValue);
-                }
-            }
-            const dataColumn = isDoubleHeader ? filterConf.columnIndex : filterConf.dataColumn;
-            const uniqueOptions = [...new Set(optionsSourceData.map(row => String(isDoubleHeader ? row[dataColumn] : row[dataColumn])))].filter(Boolean);
-            const sortedOptions = uniqueOptions.sort();
-            const previouslySelected = select.value;
-            select.innerHTML = `<option value="">Semua</option>`;
-            sortedOptions.forEach(val => select.add(new Option(val, val)));
-            if (sortedOptions.includes(previouslySelected)) {
-                select.value = previouslySelected;
-            }
-        });
-    }
-
-    google.script.run
-        .withSuccessHandler(data => {
-        setTimeout(() => {
-        const loadingStatus = document.getElementById('loadingStatus');
-        const tableWrapper = document.getElementById('tableWrapper');
-        if (data.error || !data.rows || data.rows.length === 0) { 
-            if (loadingStatus) loadingStatus.innerHTML = "<p>Tidak ada data untuk ditampilkan.</p>"; 
-            return; 
-        }
-        if (loadingStatus) loadingStatus.style.display = 'none';
-        if (tableWrapper) tableWrapper.style.display = 'flex';
-        allDataRows = data.rows;
-        headerCols = data.headers;
-        isDoubleHeader = data.isDoubleHeader || false;
-        
-        const tableHead = document.getElementById(config.tableId)?.querySelector('thead');
-        if(tableHead) {
-             if (isDoubleHeader) {
-                // (Logika header ganda tetap sama)
-             } else {
-                tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
-             }
-        }
-        
-        config.filterConfig = (config.filterConfig || []).concat(data.filterConfigs || []);
-        setupEventListeners();
-        updateAllFilters();
-        
-        if (config.defaultFilters) {
-            config.defaultFilters.forEach(df => {
-                const select = document.getElementById(df.id);
-                if (select) {
-                    const defaultValue = (typeof df.value === 'function') ? df.value() : df.value;
-                    const allOptions = [...new Set(allDataRows.map(row => String(row[df.dataColumn])))];
-                    if(allOptions.includes(defaultValue)){
-                        select.value = defaultValue; 
-                    }
-                }
-            });
-            handleFilterChange();
-        } else {
-            applyFilters(); 
-        }
-        
-        loadingStatus.style.display = 'none';
-        tableWrapper.style.display = 'flex'; // Gunakan flex agar konsisten
-        
-        // Pindahkan event listener resize ke dalam setTimeout juga
-        window.addEventListener('resize', debounce(() => { if(document.getElementById(config.tableId)) buildTable(); }, 250));
-
-    }, 0); // Penundaan 0 milidetik sudah cukup
-})
-        .withFailureHandler(error => { document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; })
-        [config.serverFunction]();
-}
-
+/**
+ * ===================================================================
+ * ======================= 2. SEMUA FUNGSI INISIALISASI HALAMAN ======
+ * ===================================================================
+ */
 
 function initHomePage() {
     document.querySelectorAll('#main-content .menu-button').forEach((button, index) => {
@@ -1226,45 +957,6 @@ function initLapbulFormPaudPage(params) {
         .withFailureHandler(err => showAppModal('error', `Gagal memuat daftar sekolah: ${err.message}`))
         .getPaudSchoolLists();
 }
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // [BLOCK 1] LOGIKA VALIDASI AKHIR (memastikan semua required field terisi)
-        // ... (Kode untuk mengecek isValid, menandai field merah, dan pindah tab jika error) ...
-        
-        if (!isValid) {
-            // Tampilkan notifikasi error
-            return false;
-        }
-
-        // [BLOCK 2] LOGIKA PENGIRIMAN DATA KE SERVER
-        
-        const submitButton = document.getElementById('finalSubmitBtn');
-        submitButton.disabled = true;
-        showAppModal('loading', 'Mengirim data dan mengunggah file...');
-        
-        // Logika file handling, base64 encoding, dan pemanggilan server:
-        const file = document.getElementById('fileLapbul').files[0];
-        
-        // ... (Validasi ukuran file, dll.) ...
-        
-        const reader = new FileReader();
-        reader.onload = event => {
-            const fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
-            const formData = Object.fromEntries(new FormData(form));
-            formData.fileData = fileData;
-            google.script.run
-                .withSuccessHandler(response => showAppModal('success', response, 'lapbul_riwayat'))
-                .withFailureHandler(error => {
-                    showAppModal('error', `Gagal: ${error.message}`);
-                    submitButton.disabled = false;
-                })
-                .processLapbulFormPaud(formData);
-        };
-        reader.readAsDataURL(file);
-
-    });
 
 function initLapbulFormSdPage() {
     const form = document.getElementById('lapbulFormSd');
@@ -4780,12 +4472,13 @@ function initSiabaTidakPresensiPage() {
         .getSiabaTidakPresensiFilterOptions();
 }
 
+
 /**
  * ===================================================================
  * =================== 3. OBJEK INISIALISASI & TRIGGER ===============
  * ===================================================================
  */
-
+ 
 const pageInitializers = {
     'home': initHomePage,
     'sk_menu': initSubMenuPage,
@@ -4834,7 +4527,6 @@ const pageInitializers = {
     'murid_sd_agama': initMuridSdAgamaPage,
     'murid_sd_jumlah_bulanan': initMuridSdJumlahBulananPage,
     'siaba_menu': initSubMenuPage,
-    'siaba_menu': initSubMenuPage,
     'siaba_panduan': initSubMenuPage,
     'siaba_daftar_presensi': initSiabaDaftarPresensiPage,
     'siaba_tidak_presensi': initSiabaTidakPresensiPage,
@@ -4858,17 +4550,25 @@ const pageInitializers = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Muat halaman utama saat pertama kali dibuka
     loadPage(null, 'home');
+
+    // Listener ini sekarang dipasang di 'body' untuk menangkap semua klik
     document.body.addEventListener('click', function(e) {
+        // Cari elemen <a> terdekat dari target yang diklik
         const link = e.target.closest('a');
-        if (!link) return;
+        if (!link) return; // Jika yang diklik bukan link, abaikan
+
         const pageName = link.dataset.page;
         const isSubmenuToggle = link.hasAttribute('data-page-parent');
+
+        // Logika untuk membuka/tutup submenu di sidebar
         if (isSubmenuToggle) {
             e.preventDefault();
             link.parentElement.classList.toggle('open');
-        }
-        if (pageName) {
+        } 
+        // Logika untuk memuat halaman (berlaku untuk sidebar DAN menu utama)
+        else if (pageName) {
             e.preventDefault();
             loadPage(null, pageName);
         }
