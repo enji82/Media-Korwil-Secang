@@ -152,18 +152,23 @@ function initializeGenericTablePage(config) {
     }
 
     function setupPagination() {
-        const paginationContainer = document.getElementById('pagination-container');
-        if (!paginationContainer) return;
+    const paginationContainer = document.getElementById('pagination-container');
+    if (!paginationContainer) return;
 
-        const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage) || 1;
-        
-        paginationContainer.style.display = 'flex';
-
-        const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
-        const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="window.changePage(-1)">«</button>`;
-        const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="window.changePage(1)">»</button>`;
-        
-        paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
+    const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
+    
+    // KEMBALIKAN LOGIKA INI: Sembunyikan jika hanya ada 1 halaman atau kurang
+    if (pageCount <= 1) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    paginationContainer.style.display = 'flex';
+    const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
+    const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="window.changePage(-1)">«</button>`;
+    const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="window.changePage(1)">»</button>`;
+    
+    paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
     }
 
     window.changePage = (direction) => {
@@ -449,7 +454,7 @@ function setupTabForm(formId) {
         // Dapatkan data file dari Tab 4
         const file = document.getElementById('fileLapbul').files[0];
         if (!file || file.size > 300 * 1024) { 
-             showAppModal('error', 'File PDF harus dipilih dan maksimal 300 KB.');
+             showAppModal('error', 'Unggah scan file format PDF ukuran maksimal 300 KB.');
              submitButton.disabled = false;
              return;
         }
@@ -541,7 +546,7 @@ function initSkUnggahPage() {
         showAppModal('loading', 'Sedang memproses dan mengunggah file...');
         const file = document.getElementById('fileUpload').files[0];
         if (!file || file.size > 1024 * 1024) {
-            showAppModal('error', 'File PDF maksimal 1 MB harus dipilih.');
+            showAppModal('error', 'Unggah scan file format PDF ukuran maksimal 1 MB.');
             submitButton.disabled = false;
             return;
         }
@@ -1147,7 +1152,7 @@ function initLapbulFormSdPage() {
         showAppModal('loading', 'Mengirim data dan mengunggah file...');
         const file = document.getElementById('fileLapbul').files[0];
         if (!file || file.size > 300 * 1024) {
-            showAppModal('error', 'File PDF dengan ukuran maksimal 300 KB harus dipilih.');
+            showAppModal('error', 'Unggah scan file format PDF ukuran maksimal 300 KB.');
             submitButton.disabled = false;
             return;
         }
@@ -4555,23 +4560,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listener ini sekarang dipasang di 'body' untuk menangkap semua klik
     document.body.addEventListener('click', function(e) {
-        // Cari elemen <a> terdekat dari target yang diklik
-        const link = e.target.closest('a');
-        if (!link) return; // Jika yang diklik bukan link, abaikan
+    const link = e.target.closest('a');
+    if (!link) return;
 
-        const pageName = link.dataset.page;
-        const isSubmenuToggle = link.hasAttribute('data-page-parent');
+    e.preventDefault(); // Mencegah semua aksi default link di sidebar
 
-        // Logika untuk membuka/tutup submenu di sidebar
-        if (isSubmenuToggle) {
-            e.preventDefault();
-            link.parentElement.classList.toggle('open');
-        } 
-        // Logika untuk memuat halaman (berlaku untuk sidebar DAN menu utama)
-        else if (pageName) {
-            e.preventDefault();
-            loadPage(null, pageName);
+    const pageName = link.dataset.page;
+    const parentLi = link.parentElement;
+    
+    // Cek apakah link yang diklik adalah link utama di dalam <li> yang punya submenu
+    const isParentToggle = parentLi.classList.contains('has-submenu');
+
+    if (isParentToggle) {
+        // Jika menu sudah terbuka dan diklik lagi, cukup tutup dan berhenti.
+        if (parentLi.classList.contains('open')) {
+            parentLi.classList.remove('open');
+            return; // Hentikan eksekusi lebih lanjut
         }
-    });
+    }
+    
+    // Jika link memiliki halaman tujuan (baik itu menu utama atau submenu),
+    // muat halamannya. Fungsi loadPage akan mengurus pembukaan submenu yang benar.
+    if (pageName) {
+        loadPage(null, pageName);
+    }
+});
 });
 </script>

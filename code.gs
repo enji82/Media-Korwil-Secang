@@ -1402,9 +1402,8 @@ function processManualForm(formData) {
 }
 
 /**
- * [REFACTOR - FINAL V3] Mengambil data riwayat pengiriman SK.
- * Memperbaiki penanganan format tanggal yang tidak konsisten (memaksa dd/MM/yyyy).
- * Mengembalikan data dalam format objek { headers, rows } yang sudah diurutkan.
+ * [REFACTOR - FINAL V4] Mengambil data riwayat pengiriman SK.
+ * Memperbaiki parsing tanggal untuk pengurutan yang benar.
  */
 function getSKRiwayatData() {
   try {
@@ -1417,63 +1416,40 @@ function getSKRiwayatData() {
       return { headers: desiredHeaders, rows: [] };
     }
     
-    // Menggunakan getValues() di sini untuk mendapatkan objek Date asli
-    const allDataValues = sheet.getDataRange().getValues();
-    const allDataDisplay = sheet.getDataRange().getDisplayValues(); 
-    
-    const originalHeaders = allDataValues[0].map(h => String(h).trim());
-    const dataRows = allDataValues.slice(1);
-    const displayRows = allDataDisplay.slice(1);
+    const allData = sheet.getDataRange().getDisplayValues(); 
+    const originalHeaders = allData[0].map(h => String(h).trim());
+    const dataRows = allData.slice(1);
 
-    // Fungsi parse tanggal yang lebih kuat (digunakan untuk pengurutan)
+    // Fungsi parse tanggal yang lebih kuat untuk format "dd/MM/yyyy HH:mm:ss"
     const parseDate = (value) => {
-        if (!value) return new Date(0);
-        if (value instanceof Date && !isNaN(value)) return value;
+        if (!value || typeof value !== 'string') return new Date(0);
+        const parts = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
+        if (parts) {
+            // parts[2] - 1 karena bulan di JavaScript dimulai dari 0 (Januari=0)
+            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+        }
         const date = new Date(value);
         return isNaN(date) ? new Date(0) : date;
     };
 
-    let structuredRows = dataRows.map((row, index) => {
+    let structuredRows = dataRows.map(row => {
       const rowObject = {};
-      originalHeaders.forEach((header, i) => {
-        let cellValue = row[i];
-        
-        // Simpan nilai untuk pengurutan
-        rowObject[header] = cellValue; 
-        
-        // Format Tanggal SK dan Tanggal Unggah secara eksplisit untuk ditampilkan
-        if (header === 'Tanggal SK' && cellValue instanceof Date) {
-            // Memaksa format dd/MM/yyyy
-            rowObject[header] = Utilities.formatDate(cellValue, Session.getScriptTimeZone(), "dd/MM/yyyy");
-        } else if (header === 'Tanggal Unggah' && cellValue instanceof Date) {
-            // Memaksa format dd/MM/yyyy HH:mm:ss
-            rowObject[header] = Utilities.formatDate(cellValue, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-        } else if (typeof cellValue === 'string') {
-             // Jika berupa string (dari getDisplayValues) untuk kolom lain, gunakan saja
-             rowObject[header] = displayRows[index][i];
-        }
+      originalHeaders.forEach((header, index) => {
+        rowObject[header] = row[index];
       });
       return rowObject;
     });
 
+    // Pengurutan sekarang akan berfungsi dengan benar
     structuredRows.sort((a, b) => {
       const dateB = parseDate(b['Tanggal Unggah']);
       const dateA = parseDate(a['Tanggal Unggah']);
-      return dateB - dateA; // Mengurutkan dari yang terbaru ke terlama
-    });
-    
-    // Ambil data sesuai urutan pengurutan
-    const finalRows = structuredRows.map(row => {
-        const finalRow = {};
-        desiredHeaders.forEach(header => {
-            finalRow[header] = row[header];
-        });
-        return finalRow;
+      return dateB - dateA;
     });
     
     return {
       headers: desiredHeaders,
-      rows: finalRows
+      rows: structuredRows
     };
 
   } catch (e) {
