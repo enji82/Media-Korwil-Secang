@@ -20,13 +20,16 @@
             <div class="form-group"><label>Tahun</label><select name="tahun" required></select></div>
         </div>
         <div class="form-grid">
-        <div class="form-group"><label>Status Lembaga</label><select name="statusSekolah" required><option value="Swasta" selected>Swasta</option><option value="Negeri">Negeri</option></select></div>
-        <div class="form-group"><label>Jenjang</label><select id="jenjang" name="jenjang" required></select></div>
+            <div class="form-group"><label>Status Lembaga</label><select name="statusSekolah" required><option value="Swasta" selected>Swasta</option><option value="Negeri">Negeri</option></select></div>
+            <div class="form-group"><label>Jenjang</label><select id="jenjang" name="jenjang" required></select></div>
         </div>
         <div class="form-group"><label>Nama Lembaga</label><select id="namaSekolah" name="namaSekolah" required disabled></select></div>
         <div class="form-grid">
           <div class="form-group"><label>NPSN</label><input type="text" name="npsn" pattern="\d*" title="Hanya angka yang diperbolehkan" required></div>
-          <div class="form-group"><label>Jumlah Rombel</label><input type="number" name="jumlahRombel" value="0" min="0" max="16" required></div>
+          <div class="form-group"><label>Jumlah Rombel</label><input type="number" name="jumlahRombel" min="0" max="16" required></div>
+        </div>
+        <div class="tab-form-footer">
+            <button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button>
         </div>
       </div>
 
@@ -43,7 +46,6 @@
                 <div class="murid-group"><label class="murid-group-label">Usia > 6 Tahun</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="murid_6_up_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="murid_6_up_P" value="0" min="0" required></div></div></div>
             </div>
         </fieldset>
-
         <fieldset class="ptk-fieldset" style="margin-top: 20px;">
             <legend>Menurut Rombel</legend>
             <div class="murid-grid-vertical" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
@@ -63,6 +65,15 @@
                 </div>
             </div>
         </fieldset>
+        <div id="murid-validation-feedback" class="murid-validation-container">
+            <p>Total Murid (Menurut Usia): <span id="totalUsia">0</span></p>
+            <p>Total Murid (Menurut Rombel): <span id="totalRombel">0</span></p>
+            <p id="murid-validation-status" class="status-error">Isikan jumlah murid.</p>
+        </div>
+        <div class="tab-form-footer">
+            <button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button>
+            <button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button>
+        </div>
       </div>
 
       <div id="dataPtk" class="tab-content-form">
@@ -73,7 +84,6 @@
             <div class="form-group"><label>Non ASN</label><input type="number" name="kepsek_Non_ASN" value="0" min="0" max="1"></div>
           </div>
         </fieldset>
-
         <fieldset class="ptk-fieldset">
           <legend>Guru</legend>
           <div class="ptk-group-grid ptk-grid-4">
@@ -83,7 +93,6 @@
             <div class="form-group"><label>GTT</label><input type="number" name="guru_GTT" value="0" min="0"></div>
           </div>
         </fieldset>
-
         <fieldset class="ptk-fieldset">
           <legend>Tenaga Kependidikan</legend>
           <div class="ptk-group-grid ptk-grid-4">
@@ -93,6 +102,10 @@
             <div class="form-group"><label>Lainnya</label><input type="number" name="tendik_Lainnya" value="0" min="0"></div>
           </div>
         </fieldset>
+        <div class="tab-form-footer">
+            <button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button>
+            <button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button>
+        </div>
       </div>
       
       <div id="dataUnggah" class="tab-content-form">
@@ -100,12 +113,11 @@
           <label for="fileLapbul">Scan PDF Laporan Bulan Asli, Ukuran Maksimal 300 KB</label>
           <input type="file" id="fileLapbul" name="fileData" accept=".pdf" required>
         </div>
-        
-        <div class="tab-form-footer" style="padding-top: 0; border: none;">
-             <button type="submit" class="submit-btn" id="finalSubmitBtn" style="width: auto; margin-left: auto;">Kirim Laporan</button>
+        <div class="tab-form-footer">
+            <button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button>
+            <button type="submit" class="submit-btn" id="finalSubmitBtn" style="width: auto; margin-left: auto;">Kirim Laporan</button>
         </div>
       </div>
-
     </div>
   </form>
 </main>

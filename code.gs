@@ -106,6 +106,16 @@ function getCachedData(key, fetchFunction) {
  * ===================================================================
  */
 
+function getSkArsipFolderIds() {
+  try {
+    return {
+      'MAIN_SK': FOLDER_CONFIG.MAIN_SK
+    };
+  } catch (e) {
+    return handleError('getSkArsipFolderIds', e);
+  }
+}
+
 function getFolders(folderId) {
   try {
     const parentFolder = DriveApp.getFolderById(folderId);
@@ -205,16 +215,41 @@ function getPaudSchoolLists() {
 
 function getSdSchoolLists() {
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DATA_SEKOLAH_PAUD.id);
-    const getValues = (sheetName) => {
-      const sheet = ss.getSheetByName(sheetName);
-      if (!sheet || sheet.getLastRow() < 2) return [];
-      return sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat().filter(Boolean).sort();
+    // 1. Buka spreadsheet yang benar menggunakan DROPDOWN_DATA
+    const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.DROPDOWN_DATA.id);
+    // 2. Akses sheet "Nama SDNS"
+    const sheet = ss.getSheetByName("Nama SDNS");
+
+    if (!sheet || sheet.getLastRow() < 2) {
+      return { SDN: [], SDS: [] }; // Kembalikan array kosong jika sheet tidak ada/kosong
+    }
+
+    // 3. Ambil semua data dari baris kedua sampai akhir
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getDisplayValues();
+
+    const lists = {
+      "SDN": [],
+      "SDS": []
     };
-    return {
-      SDN: getValues('Nama SDN'),
-      SDS: getValues('Nama SDS')
-    };
+
+    // 4. Loop melalui data dan pisahkan berdasarkan status di kolom A
+    data.forEach(row => {
+      const status = row[0]; // Kolom A (Negeri/Swasta)
+      const namaSekolah = row[1]; // Kolom B (Nama SD)
+
+      if (status === "Negeri" && namaSekolah) {
+        lists.SDN.push(namaSekolah);
+      } else if (status === "Swasta" && namaSekolah) {
+        lists.SDS.push(namaSekolah);
+      }
+    });
+
+    // Urutkan hasilnya
+    lists.SDN.sort();
+    lists.SDS.sort();
+
+    return lists;
+
   } catch (e) {
     return handleError('getSdSchoolLists', e);
   }
@@ -268,34 +303,21 @@ function processLapbulFormPaud(formData) {
 
 function processLapbulFormSd(formData) {
   try {
-    // 1. Proses File dan Simpan ke Google Drive
     const mainFolder = DriveApp.getFolderById(FOLDER_CONFIG.LAPBUL_SD);
     const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
     const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
-
     const fileData = formData.fileData;
     const decodedData = Utilities.base64Decode(fileData.data);
     const blob = Utilities.newBlob(decodedData, fileData.mimeType, fileData.fileName);
-    
     const newFileName = `${formData.namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
     const newFile = bulanFolder.createFile(blob).setName(newFileName);
     const fileUrl = newFile.getUrl();
-
-    // 2. Siapkan Data untuk Disimpan ke Google Sheet
     const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     const getValue = (key) => formData[key] || 0;
 
-    // Susun baris baru sesuai urutan kolom A s/d GH
     const newRow = [
-      new Date(), // A
-      formData.laporanBulan, // B
-      formData.tahun, // C
-      formData.statusSekolah, // D
-      formData.namaSekolah, // E
-      formData.npsn, // F
-      formData.jumlahRombel, // G
-      fileUrl, // H
+      new Date(), formData.laporanBulan, formData.tahun, formData.statusSekolah, formData.namaSekolah, formData.npsn, formData.jumlahRombel, fileUrl,
       
       // Kelas 1 (I-AC)
       getValue('k1_jumlah_rombel'), getValue('k1_rombel_tunggal_L'), getValue('k1_rombel_tunggal_P'),
@@ -343,13 +365,20 @@ function processLapbulFormSd(formData) {
       getValue('ptk_negeri_guru_pjok_pns'), getValue('ptk_negeri_guru_pjok_pppk'), getValue('ptk_negeri_guru_pjok_pppkpw'), getValue('ptk_negeri_guru_pjok_gtt'),
       getValue('ptk_negeri_guru_kristen_pns'), getValue('ptk_negeri_guru_kristen_pppk'), getValue('ptk_negeri_guru_kristen_pppkpw'), getValue('ptk_negeri_guru_kristen_gtt'),
       getValue('ptk_negeri_guru_inggris_gtt'), getValue('ptk_negeri_guru_lainnya_gtt'),
-      getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
       getValue('ptk_negeri_tendik_pengelola_pppk'), getValue('ptk_negeri_tendik_pengelola_pppkpw'), getValue('ptk_negeri_tendik_pengelola_ptt'),
+      getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
+      getValue('ptk_negeri_plo_pppk'), getValue('ptk_negeri_plo_pppkpw'), getValue('ptk_negeri_plo_ptt'), // GK, GL, GM
+      getValue('ptk_negeri_penata_lo_pppk'), getValue('ptk_negeri_penata_lo_pppkpw'), getValue('ptk_negeri_penata_lo_ptt'), // GN, GO, GP
+      getValue('ptk_negeri_adm_perkantoran_pppk'), getValue('ptk_negeri_adm_perkantoran_pppkpw'), getValue('ptk_negeri_adm_perkantoran_ptt'), // GQ, GR, GS
+
       getValue('ptk_negeri_tendik_penjaga_ptt'), getValue('ptk_negeri_tendik_tas_ptt'), getValue('ptk_negeri_tendik_pustakawan_ptt'), getValue('ptk_negeri_tendik_lainnya_ptt'),
 
       // PTK Swasta (FI-GH)
  
       getValue('ptk_swasta_ks_gty'), getValue('ptk_swasta_ks_gtt'),
+      getValue('ptk_swasta_ks_pns'), getValue('ptk_swasta_ks_pppk'), // GT, GU
+      getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'),
+      getValue('ptk_swasta_guru_kelas_pns'), getValue('ptk_swasta_guru_kelas_pppk'), // GV, GW
       getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'),
       getValue('ptk_swasta_guru_pai_gty'), getValue('ptk_swasta_guru_pai_gtt'),
       getValue('ptk_swasta_guru_pjok_gty'), getValue('ptk_swasta_guru_pjok_gtt'),
@@ -364,7 +393,6 @@ function processLapbulFormSd(formData) {
       getValue('ptk_swasta_tendik_lainnya_pty'), getValue('ptk_swasta_tendik_lainnya_ptt')
     ];
     sheet.appendRow(newRow);
-
     return "Sukses! Laporan Bulan SD berhasil dikirim.";
   } catch (e) {
     return handleError('processLapbulFormSd', e);
@@ -1409,49 +1437,50 @@ function getSKRiwayatData() {
   try {
     const sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.id)
                                 .getSheetByName(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.sheet);
-
     const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Tanggal SK", "Kriteria SK", "Dokumen", "Tanggal Unggah"];
-
+    
     if (!sheet || sheet.getLastRow() < 2) {
       return { headers: desiredHeaders, rows: [] };
     }
     
-    const allData = sheet.getDataRange().getDisplayValues(); 
+    // Tetap gunakan getValues() untuk mendapatkan objek tanggal asli
+    const allData = sheet.getDataRange().getValues(); 
     const originalHeaders = allData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
 
-    // Fungsi parse tanggal yang lebih kuat untuk format "dd/MM/yyyy HH:mm:ss"
-    const parseDate = (value) => {
-        if (!value || typeof value !== 'string') return new Date(0);
-        const parts = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
-        if (parts) {
-            // parts[2] - 1 karena bulan di JavaScript dimulai dari 0 (Januari=0)
-            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
-        }
-        const date = new Date(value);
-        return isNaN(date) ? new Date(0) : date;
-    };
+    // Cari indeks kolom 'Tanggal Unggah' untuk sorting
+    const timestampIndex = originalHeaders.indexOf('Tanggal Unggah');
 
+    // Langsung urutkan berdasarkan objek tanggal mentah. Ini lebih cepat dan akurat.
+    dataRows.sort((a, b) => {
+        const dateA = a[timestampIndex] instanceof Date ? a[timestampIndex].getTime() : 0;
+        const dateB = b[timestampIndex] instanceof Date ? b[timestampIndex].getTime() : 0;
+        return dateB - dateA; // Mengurutkan dari terbaru (nilai terbesar) ke terlama
+    });
+
+    // Setelah diurutkan, baru kita format datanya untuk ditampilkan
     let structuredRows = dataRows.map(row => {
       const rowObject = {};
       originalHeaders.forEach((header, index) => {
-        rowObject[header] = row[index];
+        let cell = row[index];
+        if (cell instanceof Date) {
+          // Terapkan format yang berbeda berdasarkan nama header
+          if (header === 'Tanggal SK') {
+            rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
+          } else { // Asumsikan sisanya adalah timestamp
+            rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+          }
+        } else {
+          rowObject[header] = cell;
+        }
       });
       return rowObject;
     });
 
-    // Pengurutan sekarang akan berfungsi dengan benar
-    structuredRows.sort((a, b) => {
-      const dateB = parseDate(b['Tanggal Unggah']);
-      const dateA = parseDate(a['Tanggal Unggah']);
-      return dateB - dateA;
-    });
-    
     return {
       headers: desiredHeaders,
       rows: structuredRows
     };
-
   } catch (e) {
     return handleError('getSKRiwayatData', e);
   }
@@ -1459,27 +1488,46 @@ function getSKRiwayatData() {
 
 function getSKStatusData() {
   try {
-    const data = getDataFromSheet('SK_BAGI_TUGAS'); 
-    if (!data || data.length < 2) {
+    const config = SPREADSHEET_CONFIG.SK_BAGI_TUGAS;
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+
+    if (!sheet || sheet.getLastRow() < 2) {
       return { headers: [], rows: [] };
     }
 
-    const headers = data[0].map(h => String(h).trim());
-    const dataRows = data.slice(1);
+    const dataRange = sheet.getDataRange();
+    // Ambil nilai teks biasa
+    const displayValues = dataRange.getDisplayValues();
+    // Ambil nilai rich text untuk mendapatkan URL
+    const richTextValues = dataRange.getRichTextValues();
 
-    const structuredRows = dataRows.map(row => {
+    const headers = displayValues[0].map(h => String(h).trim());
+    const dataRows = displayValues.slice(1);
+    const richTextRows = richTextValues.slice(1);
+
+    // Cari tahu di kolom mana 'Dokumen' berada
+    const docIndex = headers.indexOf('Dokumen');
+
+    const structuredRows = dataRows.map((row, rowIndex) => {
       const rowObject = {};
-      headers.forEach((header, index) => {
-        rowObject[header] = row[index];
+      headers.forEach((header, colIndex) => {
+        // Jika ini adalah kolom "Dokumen" dan ada linknya, ambil URL-nya
+        if (colIndex === docIndex) {
+          const richText = richTextRows[rowIndex][colIndex];
+          const linkUrl = richText.getLinkUrl();
+          // Jika ada link, gunakan URL-nya. Jika tidak, gunakan teks biasa.
+          rowObject[header] = linkUrl || row[colIndex]; 
+        } else {
+          rowObject[header] = row[colIndex];
+        }
       });
       return rowObject;
     });
-    
+
     return {
       headers: headers,
       rows: structuredRows
     };
-
   } catch (e) {
     return handleError('getSKStatusData', e);
   }
@@ -1524,15 +1572,18 @@ function getSKKelolaData() {
         _source: 'SK'
       };
       originalHeaders.forEach((header, i) => {
-        let cell = item.row[i];
-        if ((header === 'Tanggal Unggah' || header === 'Update' || header === 'Tanggal SK') && cell instanceof Date) {
-          const format = (header === 'Tanggal SK') ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm:ss";
-          rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), format);
-        } else {
-          rowObject[header] = cell;
-        }
-      });
-      return rowObject;
+      let cell = item.row[i];
+      // MODIFIKASI DIMULAI DI SINI
+      if (header === 'Tanggal SK' && cell instanceof Date) {
+      rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy");
+      } else if ((header === 'Tanggal Unggah' || header === 'Update') && cell instanceof Date) {
+      rowObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+      // MODIFIKASI SELESAI
+      } else {
+      rowObject[header] = cell;
+    }
+  });
+  return rowObject;
     });
     
     const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Kriteria SK", "Dokumen", "Aksi", "Tanggal Unggah", "Update"];
