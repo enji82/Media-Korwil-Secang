@@ -632,11 +632,65 @@ main.manual-form.form-tab-container > form {
   .agama-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ptk-sub-fieldset { border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 15px; margin-top: 20px; }
   .ptk-sub-fieldset legend { padding: 0 10px; font-size: 1.1em; font-weight: bold; color: #00c3ff; text-align: left; margin-left: 0; width: auto; }
-  .ptk-row { display: grid; gap: 10px; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
+ .ptk-row { display: grid; gap: 10px; align-items: center; font-size: 0.9em; margin-bottom: 10px; }
   .ptk-row > label { font-weight: bold; color: #e0e0e0; }
   .ptk-row .form-group label { font-weight: normal; color: #bdc3c7; }
-  .ptk-row .form-group { margin-bottom: 0; }
-  .ptk-row.has-label { grid-template-columns: 120px 1fr 1fr 1fr 1fr; }
+  .ptk-row .form-group {
+    margin-bottom: 0 !important;
+  }
+  /* --- PERBAIKAN FINAL LAYOUT PTK (HORIZONTAL DAN PROPORISONAL) --- */
+
+/* 1. Kontainer Paling Luar (Menentukan Label Utama di atas) */
+.ptk-row.has-label { 
+    display: block; 
+    margin-bottom: 15px; 
+    border-top: 1px solid rgba(255,255,255,0.1); 
+    padding-top: 10px;
+}
+.ptk-row.has-label > label {
+    text-align: left;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 1em;
+}
+
+/* 2. KUNCI PERBAIKAN: Menargetkan div yang membungkus input PNS, PPPK, dll. */
+.ptk-row.has-label > div:last-child {
+    display: flex; /* Gunakan Flexbox */
+    justify-content: flex-start; /* Mulai dari kiri */
+    gap: 15px; /* Jarak antar kolom input */
+    margin-top: 5px;
+    width: 100%; /* Memastikan kontainer memiliki lebar penuh untuk referensi */
+}
+
+/* 3. Atur Lebar Proporsional untuk Input di dalamnya */
+.ptk-row.has-label > div:last-child .form-group {
+    /* Set lebar maksimum untuk satu input tunggal. 
+       Misal, 20% adalah proporsi yang bagus agar tidak terlalu lebar di desktop. */
+    max-width: 22%; 
+    min-width: 80px;
+    margin-bottom: 0 !important;
+}
+
+/* KOREKSI SPESIFIK: Untuk baris dengan 4 input (seperti Guru Kelas), kita kembalikan ke grid */
+/* Ini diperlukan karena beberapa baris memiliki 4 input yang harus membagi ruang sama rata */
+.ptk-row.has-label > div[class*="ptk-grid-4"] {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 kolom sama besar */
+    gap: 10px;
+    max-width: 100%;
+}
+.ptk-row.has-label > div[class*="ptk-grid-2"] {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 kolom sama besar */
+    gap: 10px;
+    max-width: 50%; /* Membatasi lebar total hanya 2 kolom */
+}
+
+/* 4. Teks input rata tengah */
+.ptk-sub-fieldset input[type="number"] {
+    text-align: center;
+}
 
   .dropdown-info { position: relative; display: inline-block; }
   .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
