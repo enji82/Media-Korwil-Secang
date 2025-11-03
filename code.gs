@@ -3,43 +3,84 @@
  * ======================= 1. KONFIGURASI PUSAT ======================
  * ===================================================================
  */
+// 1. DAFTAR ID UNIK (BEST PRACTICE: SINGLE SOURCE OF TRUTH)
+const SPREADSHEET_IDS = {
+  // SK & Form Responses menggunakan ID yang sama
+  SK_DATA: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4",
+  // Banyak Modul PAUD menggunakan ID yang sama
+  PAUD_DATA: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs",
+  // Banyak Modul SD menggunakan ID yang sama
+  SD_DATA: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s",
+  
+  // ID unik lainnya
+  LAPBUL_GABUNGAN: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU",
+  PTK_PAUD_DB: "1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk",
+  PTK_SD_DB: "1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0",
+  DATA_SEKOLAH: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs",   
+  DROPDOWN_DATA: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA",
+  FORM_OPTIONS_DB: "1prqqKQBYzkCNFmuzblNAZE41ag9rZTCiY2a0WvZCTvU",
+  SIABA_REKAP: "1x3b-yzZbiqP2XfJNRC3XTbMmRTHLd8eEdUqAlKY3v9U",
+  SIABA_TIDAK_PRESENSI: "1mjXz5l_cqBiiR3x9qJ7BU4yQ3f0ghERT9ph8CC608Zc",
+};
+
 const SPREADSHEET_CONFIG = {
   // --- Modul SK Pembagian Tugas ---
-  SK_BAGI_TUGAS: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "SK Tabel Kirim" },
-  SK_FORM_RESPONSES: { id: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4", sheet: "Form Responses 1" },
+  SK_BAGI_TUGAS: { id: SPREADSHEET_IDS.SK_DATA, sheet: "SK Tabel Kirim" },
+  SK_FORM_RESPONSES: { id: SPREADSHEET_IDS.SK_DATA, sheet: "Form Responses 1" },
 
   // --- Modul Laporan Bulanan & Data Murid ---
-  LAPBUL_FORM_RESPONSES_PAUD: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Form Responses 1" },
-  LAPBUL_FORM_RESPONSES_SD: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Input" },
-  LAPBUL_GABUNGAN: { id: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU" },
+  LAPBUL_FORM_RESPONSES_PAUD: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Form Responses 1" },
+  LAPBUL_FORM_RESPONSES_SD: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Input" },
+  LAPBUL_GABUNGAN: { id: SPREADSHEET_IDS.LAPBUL_GABUNGAN },
+  // Konfigurasi LAPBUL_RIWAYAT yang dirujuk dari ID pusat
+  LAPBUL_RIWAYAT: {
+      'PAUD': { 
+          id: SPREADSHEET_IDS.PAUD_DATA,
+          sheet: 'Form Responses 1' 
+      },
+      'SD': { 
+          id: SPREADSHEET_IDS.SD_DATA,
+          sheet: 'Input' 
+      },
+  },
+  LAPBUL_STATUS: {
+      'PAUD': { 
+          id: SPREADSHEET_IDS.PAUD_DATA,
+          sheet: 'Status' 
+      },
+      'SD': { 
+          id: SPREADSHEET_IDS.SD_DATA,
+          sheet: 'Status' 
+      }
+  },
 
   // --- Modul Data PTK ---
-  PTK_PAUD_KEADAAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Keadaan PTK PAUD" },
-  PTK_PAUD_JUMLAH_BULANAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Data PAUD Bulanan" },
-  PTK_PAUD_DB: { id: "1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk", sheet: "PTK PAUD" },
-  PTK_SD_KEADAAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Keadaan PTK SD" },
-  PTK_SD_JUMLAH_BULANAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "PTK Bulanan SD"},
-  PTK_SD_KEBUTUHAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "Kebutuhan Guru"},
-  PTK_SD_DB: { id: "1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0" },
+  PTK_PAUD_KEADAAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Keadaan PTK PAUD" },
+  PTK_PAUD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Data PAUD Bulanan" },
+  PTK_PAUD_DB: { id: SPREADSHEET_IDS.PTK_PAUD_DB, sheet: "PTK PAUD" },
+  PTK_SD_KEADAAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Keadaan PTK SD" },
+  PTK_SD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "PTK Bulanan SD"},
+  PTK_SD_KEBUTUHAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Kebutuhan Guru"},
+  PTK_SD_DB: { id: SPREADSHEET_IDS.PTK_SD_DB },
 
   // --- Modul Data Murid ---
-  MURID_PAUD_KELAS: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid Kelas" },
-  MURID_PAUD_JK: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid JK" },
-  MURID_PAUD_BULANAN: { id: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs", sheet: "Murid Bulanan" },
-  MURID_SD_KELAS: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Kelas" },
-  MURID_SD_ROMBEL: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Rombel" },
-  MURID_SD_JK: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel JK" },
-  MURID_SD_AGAMA: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Agama" },
-  MURID_SD_BULANAN: { id: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s", sheet: "SD Tabel Bulanan" },
+  MURID_PAUD_KELAS: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Murid Kelas" },
+  MURID_PAUD_JK: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Murid JK" },
+  MURID_PAUD_BULANAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Murid Bulanan" },
+  MURID_SD_KELAS: { id: SPREADSHEET_IDS.SD_DATA, sheet: "SD Tabel Kelas" },
+  MURID_SD_ROMBEL: { id: SPREADSHEET_IDS.SD_DATA, sheet: "SD Tabel Rombel" },
+  MURID_SD_JK: { id: SPREADSHEET_IDS.SD_DATA, sheet: "SD Tabel JK" },
+  MURID_SD_AGAMA: { id: SPREADSHEET_IDS.SD_DATA, sheet: "SD Tabel Agama" },
+  MURID_SD_BULANAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "SD Tabel Bulanan" },
 
   // --- Data Pendukung & Dropdown ---
-  DATA_SEKOLAH: { id: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs" },   
-  DROPDOWN_DATA: { id: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA" },
-  FORM_OPTIONS_DB: { id: "1prqqKQBYzkCNFmuzblNAZE41ag9rZTCiY2a0WvZCTvU" },
+  DATA_SEKOLAH: { id: SPREADSHEET_IDS.DATA_SEKOLAH },   
+  DROPDOWN_DATA: { id: SPREADSHEET_IDS.DROPDOWN_DATA },
+  FORM_OPTIONS_DB: { id: SPREADSHEET_IDS.FORM_OPTIONS_DB },
 
   // --- Data SIABA ---
-  SIABA_REKAP: { id: "1x3b-yzZbiqP2XfJNRC3XTbMmRTHLd8eEdUqAlKY3v9U", sheet: "Rekap Script" },
-  SIABA_TIDAK_PRESENSI: { id: "1mjXz5l_cqBiiR3x9qJ7BU4yQ3f0ghERT9ph8CC608Zc", sheet: "Rekap Script" },
+  SIABA_REKAP: { id: SPREADSHEET_IDS.SIABA_REKAP, sheet: "Rekap Script" },
+  SIABA_TIDAK_PRESENSI: { id: SPREADSHEET_IDS.SIABA_TIDAK_PRESENSI, sheet: "Rekap Script" },
 };
 
 const FOLDER_CONFIG = {
@@ -48,6 +89,24 @@ const FOLDER_CONFIG = {
   LAPBUL_TK: "1WUNz_BSFmcwRVlrG67D2afm9oJ-bVI9H",
   LAPBUL_SD: "1I8DRQYpBbTt1mJwtD1WXVD6UK51TC8El",
 };
+
+const STATUS_COLUMNS_MAP = {
+    'Tahun': 0, 'Bulan': 1, 'Jenjang': 2, 'Nama Sekolah': 3
+};
+
+const PAUD_STATUS_SHEET_ID = SPREADSHEET_IDS.PAUD_DATA;
+const SD_STATUS_SHEET_ID = SPREADSHEET_IDS.SD_DATA;
+const STATUS_SHEET_NAME = "Status"; // Nama sheet yang digunakan di kedua SS
+
+const LAPBUL_STATUS_HEADERS = [
+    "Nama Sekolah", "Jenjang", "Status", "Tahun", "Januari", 
+    "Februari", "Maret", "April", "Mei", "Juni", 
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+const START_ROW = 2; 
+const NUM_COLUMNS_TO_FETCH = 16; 
+const STATUS_COLUMN_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 /**
  * ===================================================================
@@ -399,100 +458,230 @@ function processLapbulFormSd(formData) {
   }
 }
 
+// Kolom mapping untuk Paud dan SD
+const LAPBUL_COLUMNS = {
+    // ... (Mapping kolom PAUD dan SD tetap sama di sini)
+    'PAUD': {
+        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 4, 'Jenjang': 6, 'Nama Sekolah': 7, 'Rombel': 5, 'Dokumen': 36
+    },
+    'SD': {
+        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 3, 'Nama Sekolah': 4, 'Rombel': 6, 'Dokumen': 7, 'Jenjang': 190
+    }
+};
+
 function getLapbulRiwayatData() {
-  try {
-    const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Riwayat");
+    try {
+        const configPaud = SPREADSHEET_CONFIG.LAPBUL_RIWAYAT.PAUD;
+        const configSd = SPREADSHEET_CONFIG.LAPBUL_RIWAYAT.SD;
 
-    if (!sheet) {
-      throw new Error("Sheet 'Riwayat' di spreadsheet gabungan tidak ditemukan.");
+        // Buka Spreadsheet menggunakan ID dari config
+        const paudSS = SpreadsheetApp.openById(configPaud.id);
+        const sdSS = SpreadsheetApp.openById(configSd.id);
+        
+        if (!paudSS) throw new Error(`Gagal membuka Spreadsheet PAUD (ID: ${configPaud.id}).`);
+        if (!sdSS) throw new Error(`Gagal membuka Spreadsheet SD (ID: ${configSd.id}).`);
+
+        const paudSheet = paudSS.getSheetByName(configPaud.sheet);
+        const sdSheet = sdSS.getSheetByName(configSd.sheet);
+        
+        if (!paudSheet) throw new Error(`Sheet '${configPaud.sheet}' tidak ditemukan di SS PAUD.`);
+        if (!sdSheet) throw new Error(`Sheet '${configSd.sheet}' tidak ditemukan di SS SD.`);
+        
+        // Header Akhir hanya berisi 8 kolom data (tanpa Aksi)
+        const desiredHeaders = ["Nama Sekolah", "Jenjang", "Status", "Bulan", "Tahun", "Rombel", "Dokumen", "Tanggal Unggah"];
+        let combinedData = [];
+        const parseDateForSort = (date) => (date instanceof Date && !isNaN(date)) ? date.getTime() : 0;
+        
+        const processSheetData = (sheet, sourceKey) => {
+            if (sheet.getLastRow() < 2) return;
+            
+            const dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
+            const values = dataRange.getValues(); 
+            const map = LAPBUL_COLUMNS[sourceKey];
+            
+            values.forEach((row, index) => {
+                if (!row[map['Tanggal Unggah']]) return; 
+
+                const rowObject = {
+                    _rowIndex: index + 2,
+                    _source: sourceKey
+                };
+                
+                rowObject['Nama Sekolah'] = row[map['Nama Sekolah']] || '-';
+                rowObject['Jenjang'] = sourceKey === 'SD' ? (row[map['Jenjang']] || 'SD') : (row[map['Jenjang']] || '-');
+                rowObject['Status'] = row[map['Status']] || '-';
+                rowObject['Bulan'] = row[map['Bulan']] || '-';
+                rowObject['Tahun'] = String(row[map['Tahun']] || '-');
+                rowObject['Rombel'] = row[map['Rombel']] || '-';
+                rowObject['Dokumen'] = row[map['Dokumen']] || ''; // URL Dokumen
+                rowObject['Tanggal Unggah'] = row[map['Tanggal Unggah']];
+                
+                combinedData.push(rowObject);
+            });
+        };
+
+        processSheetData(paudSheet, 'PAUD');
+        processSheetData(sdSheet, 'SD');
+        
+        if (combinedData.length === 0) {
+            // Hanya kirim headers yang dibutuhkan jika tidak ada data
+            return { headers: desiredHeaders, rows: [], status: 'no_data' };
+        }
+
+        combinedData.sort((a, b) => parseDateForSort(b['Tanggal Unggah']) - parseDateForSort(a['Tanggal Unggah']));
+        
+        const ssTimezone = paudSS.getSpreadsheetTimeZone();
+        const finalRows = combinedData.map(row => {
+            const dateValue = row['Tanggal Unggah'];
+            // Format Tanggal Unggah
+            row['Tanggal Unggah'] = (dateValue instanceof Date && !isNaN(dateValue)) ? 
+                                    Utilities.formatDate(dateValue, ssTimezone, "dd/MM/yyyy HH:mm:ss") : 
+                                    (row['Tanggal Unggah'] || '-');
+            
+            // Hapus penambahan kolom "Aksi"
+            // row['Aksi'] tidak lagi ditambahkan
+            
+            return row;
+        });
+
+        // HANYA kirim desiredHeaders (tanpa "Aksi")
+        return { 
+            headers: desiredHeaders, 
+            rows: finalRows
+        };
+
+    } catch (e) {
+        Logger.log("ERROR di getLapbulRiwayatData: " + e.message);
+        return { error: `Gagal memuat data riwayat: ${e.message}` };
     }
+}
 
-    const allData = sheet.getDataRange().getDisplayValues();
-    const desiredHeaders = ["Nama Sekolah", "Status", "Bulan", "Tahun", "Rombel", "Dokumen", "Tanggal Unggah", "Jenjang"];
-
-    if (allData.length < 2) {
-      return { headers: desiredHeaders, rows: [] };
+function _getLimitedSheetData(sheetId, sheetName, startRow, numColumns) {
+    try {
+        const ss = SpreadsheetApp.openById(sheetId);
+        if (!ss) return [];
+        const sheet = ss.getSheetByName(sheetName);
+        if (!sheet || sheet.getLastRow() < startRow) return [];
+        
+        // Ambil data dari baris tertentu hingga akhir, sebanyak numColumns (16 kolom = A sampai P)
+        if (sheet.getLastRow() < startRow) return [];
+        
+        const dataRange = sheet.getRange(startRow, 1, sheet.getLastRow() - startRow + 1, numColumns); 
+        return dataRange.getDisplayValues();
+    } catch (e) {
+        Logger.log(`Error accessing data for ID ${sheetId}, sheet ${sheetName}: ${e.message}`);
+        return [];
     }
+}
 
-    const sourceHeaders = allData[0].map(h => h.trim());
-    const dataRows = allData.slice(1);
-    const headerMap = {};
-    sourceHeaders.forEach((header, index) => {
-      headerMap[header] = index;
-    });
+function _fetchSheetDataSecure(sheetId, sheetName) {
+    try {
+        const ss = SpreadsheetApp.openById(sheetId);
+        if (!ss) return [];
+        const sheet = ss.getSheetByName(sheetName);
+        if (!sheet || sheet.getLastRow() < START_ROW) return [];
+        
+        const actualCols = Math.min(sheet.getLastColumn(), NUM_COLUMNS_TO_FETCH);
+        const numRows = sheet.getLastRow() - START_ROW + 1;
+        const dataRange = sheet.getRange(START_ROW, 1, numRows, actualCols); 
+        
+        let values = dataRange.getDisplayValues();
 
-    const reorderedDataRows = dataRows.map(row => {
-      const newRow = {};
-      desiredHeaders.forEach(header => {
-        const sourceIndex = headerMap[header];
-        newRow[header] = (sourceIndex !== undefined ? row[sourceIndex] : '-');
-      });
-      return newRow;
-    });
-    
-    // Urutkan berdasarkan Tanggal Unggah (asumsi formatnya bisa di-parse)
-    reorderedDataRows.sort((a, b) => {
-        const dateA = new Date(a['Tanggal Unggah'].split(' ')[0].split('/').reverse().join('-'));
-        const dateB = new Date(b['Tanggal Unggah'].split(' ')[0].split('/').reverse().join('-'));
-        return dateB - dateA;
-    });
+        // KUNCI PERBAIKAN: Menjamin setiap baris memiliki 16 kolom untuk pemetaan yang aman
+        return values.map(row => {
+            while (row.length < NUM_COLUMNS_TO_FETCH) {
+                row.push('');
+            }
+            return row.slice(0, NUM_COLUMNS_TO_FETCH);
+        });
 
-    return { headers: desiredHeaders, rows: reorderedDataRows };
-
-  } catch(e) {
-    return handleError('getLapbulRiwayatData', e);
-  }
+    } catch (e) {
+        Logger.log(`Error fetching data securely: ${e.message}`);
+        return [];
+    }
 }
 
 function getLapbulStatusData() {
-  try {
-    const sheet = SpreadsheetApp.openById("1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU").getSheetByName("Status");
-    if (!sheet) {
-      throw new Error("Sheet 'Status' tidak ditemukan.");
-    }
-    const allData = sheet.getDataRange().getDisplayValues();
-    if (allData.length < 2) {
-        return { headers: [], rows: [], filterConfigs: [] };
-    }
-    
-    const headers = allData[0];
-    const dataRows = allData.slice(1);
-
-    const jenjangIndex = headers.indexOf('Jenjang');
-    const tahunIndex = headers.indexOf('Tahun');
-    
-    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    const currentMonthName = monthNames[new Date().getMonth()];
-
-    const processedRows = dataRows.map(row => {
-        const rowObject = {};
-        headers.forEach((h, i) => rowObject[h] = row[i]);
+    try {
+        const configPaud = SPREADSHEET_CONFIG.LAPBUL_STATUS.PAUD;
+        const configSd = SPREADSHEET_CONFIG.LAPBUL_STATUS.SD;
         
-        rowObject['_filterJenjang'] = row[jenjangIndex];
-        rowObject['_filterTahun'] = row[tahunIndex];
+        let rawCombinedData = [];
         
-        const submittedMonths = headers.slice(2).filter((h, i) => row[i + 2] === 'T').map(h => h.split(' ')[0]);
-        if (submittedMonths.includes(currentMonthName)) {
-            rowObject['_filterStatus'] = 'Sudah Mengirim';
-        } else {
-            rowObject['_filterStatus'] = 'Belum Mengirim';
+        // 1. Fetch data PAUD
+        const dataPAUD = _fetchSheetDataSecure(configPaud.id, configPaud.sheet);
+        if (dataPAUD) rawCombinedData.push(...dataPAUD);
+        
+        // 2. Fetch data SD
+        const dataSD = _fetchSheetDataSecure(configSd.id, configSd.sheet);
+        if (dataSD) rawCombinedData.push(...dataSD);
+        
+        if (rawCombinedData.length === 0) {
+             return { headers: LAPBUL_STATUS_HEADERS, rows: [] }; 
         }
-        return rowObject;
+
+        const rows = rawCombinedData.map(row => {
+            const rowObject = {};
+            LAPBUL_STATUS_HEADERS.forEach((headerKey, i) => {
+                rowObject[headerKey] = String(row[i] || '-'); 
+            });
+            return rowObject;
+        })
+        .filter(row => row['Nama Sekolah'] && row['Nama Sekolah'] !== '-');
+
+        return { headers: LAPBUL_STATUS_HEADERS, rows: rows };
+
+    } catch (e) {
+        Logger.log(`Error in getLapbulStatusData (Outer Catch): ${e.toString()}`);
+        return { error: `Gagal memuat data status: ${e.message}. Coba cek kembali ID Spreadsheet.` };
+    }
+}
+
+function getLapbulStatusFilterData() {
+    const dataResult = getLapbulStatusData();
+    if (dataResult.error) return dataResult;
+    
+    const rows = dataResult.rows;
+    if (rows.length === 0) {
+         return { Tahun: [], Jenjang: [], NamaSekolah: {} };
+    }
+
+    const uniqueTahun = new Set();
+    const sekolahByJenjang = {};
+    const allJenjang = new Set();
+    
+    rows.forEach(row => {
+        const tahun = row['Tahun'];
+        const jenjang = row['Jenjang'];
+        const sekolah = row['Nama Sekolah'];
+        
+        if (tahun && tahun !== '-') { uniqueTahun.add(tahun); }
+        
+        if (jenjang && jenjang !== '-') {
+            allJenjang.add(jenjang);
+            if (!sekolahByJenjang[jenjang]) { sekolahByJenjang[jenjang] = new Set(); }
+        }
+
+        if (jenjang && jenjang !== '-' && sekolah && sekolah !== '-') {
+            if (sekolahByJenjang[jenjang]) {
+                sekolahByJenjang[jenjang].add(sekolah);
+            }
+        }
+    });
+
+    const sortedTahun = Array.from(uniqueTahun).sort((a, b) => b.localeCompare(a));
+    const sortedJenjang = Array.from(allJenjang).sort();
+    
+    const finalSekolah = {};
+    sortedJenjang.forEach(jenjang => {
+        finalSekolah[jenjang] = Array.from(sekolahByJenjang[jenjang]).sort();
     });
 
     return {
-        headers: headers,
-        rows: processedRows,
-        filterConfigs: [
-            { id: 'filterTahun', dataColumn: '_filterTahun', sortReverse: true },
-            { id: 'filterJenjang', dataColumn: '_filterJenjang' },
-            { id: 'filterStatus', dataColumn: '_filterStatus' }
-        ]
+        Tahun: sortedTahun,
+        Jenjang: sortedJenjang,
+        NamaSekolah: finalSekolah
     };
-
-  } catch (e) {
-    return handleError('getLapbulStatusData', e);
-  }
 }
 
 function getLapbulKelolaData() {
@@ -1437,10 +1626,20 @@ function getSKRiwayatData() {
   try {
     const sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.id)
                                 .getSheetByName(SPREADSHEET_CONFIG.SK_FORM_RESPONSES.sheet);
-    const desiredHeaders = ["Nama SD", "Tahun Ajaran", "Semester", "Nomor SK", "Tanggal SK", "Kriteria SK", "Dokumen", "Tanggal Unggah"];
+    const desiredHeaders = [
+        "Nama SD",        // <-- Dipakai oleh filterNamaSekolah
+        "Tahun Ajaran",   // <-- Dipakai oleh filterTahun
+        "Semester",       // <-- Dipakai oleh filterSemester
+        "Nomor SK", 
+        "Tanggal SK", 
+        "Kriteria SK", 
+        "Dokumen", 
+        "Tanggal Unggah"
+    ];
     
     if (!sheet || sheet.getLastRow() < 2) {
-      return { headers: desiredHeaders, rows: [] };
+      // Jika data kosong, pastikan headers tetap dikirim agar client-side bisa me-render filter.
+      return { headers: desiredHeaders, rows: [] }; 
     }
     
     // Tetap gunakan getValues() untuk mendapatkan objek tanggal asli
