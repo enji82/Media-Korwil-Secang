@@ -246,23 +246,43 @@ App.initializeGenericTablePage = (config) => {
                     if (header === 'Dokumen' && String(cellData).startsWith('http')) { 
                         // Riwayat Pengiriman: Kolom Dokumen sebagai link
                         rowCells.push(`<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`); 
+                    
+                    // --- BLOK KODE YANG DIPERBAIKI ADA DI SINI ---
                     } else if (header === 'Aksi') { 
                         // Kelola Data: Kolom Aksi sebagai tombol edit/hapus
                         const rowIndex = row._rowIndex;
-                        const source = row._source;
-                        const editPage = config.editPage;
+                        const source = row._source; // Ini akan berisi 'PAUD' atau 'SD'
                         const rowInfoString = JSON.stringify(row).replace(/'/g, "\\'");
 
-                        if (editPage && rowIndex !== undefined) {
+                        // --- AWAL MODIFIKASI DINAMIS ---
+                        let dynamicEditPage = null;
+
+                        // Logika khusus HANYA untuk tabel 'lapbulKelolaTable'
+                        if (config.tableId === 'lapbulKelolaTable') {
+                            if (source === 'PAUD') {
+                                dynamicEditPage = 'lapbul_edit_paud';
+                            } else if (source === 'SD') {
+                                dynamicEditPage = 'lapbul_edit_sd';
+                            }
+                        } else {
+                            // Logika lama untuk tabel Kelola lainnya (SK, PTK, dll)
+                            dynamicEditPage = config.editPage;
+                        }
+                        // --- AKHIR MODIFIKASI DINAMIS ---
+
+                        if (dynamicEditPage && rowIndex !== undefined) { // Gunakan 'dynamicEditPage'
                             rowCells.push(
                                 `<td class="action-buttons">` +
-                                `<button class="action-btn edit-btn" onclick="App.loadPage(event, '${editPage}', { rowIndex: ${rowIndex}, source: '${source}' })"><i class="fas fa-pencil-alt"></i> Edit</button>` +
+                                // Gunakan 'dynamicEditPage' di tombol Edit
+                                `<button class="action-btn edit-btn" onclick="App.loadPage(event, '${dynamicEditPage}', { rowIndex: ${rowIndex}, source: '${source}' })"><i class="fas fa-pencil-alt"></i> Edit</button>` +
                                 `<button class="action-btn delete-btn" onclick='App.showDeleteConfirmation(this)' data-row-info='${rowInfoString}'><i class="fas fa-trash"></i> Hapus</button>` +
                                 `</td>`
                             );
                         } else {
                             rowCells.push('<td>-</td>');
                         }
+                    // --- AKHIR BLOK KODE YANG DIPERBAIKI ---
+
                     } else { 
                         // Kolom standar lainnya
                         let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData; 
@@ -413,12 +433,58 @@ App.initializeGenericTablePage = (config) => {
     // Logika Pemanggilan Server
     google.script.run
         .withSuccessHandler(data => {
-            if (data.error) {
+            
+            // --- AWAL SOLUSI ANTI-MACET ---
+            // Cek apakah 'data' itu null SEBELUM mencoba mengakses 'data.error'
+            if (!data) {
+                const errorMsg = `Gagal memuat data: Fungsi server ('${config.serverFunction}') tidak ditemukan di versi deploy deply deploy deploy deploy i love gemini. Pastikan Anda sudah men-deploy ulang 'code.gs' dengan benar.`;
+                
+                // Tampilkan pesan error di tempat spinner
+                const loadingStatusEl = document.getElementById('loadingStatus');
+                if (loadingStatusEl) {
+                    loadingStatusEl.innerHTML = `<p style="color:red;">${errorMsg}</p>`;
+                }
+                console.error(errorMsg); // Tampilkan juga di console
+                finalizeSetup(true); // Hentikan proses
+                return;
+            }
+            // --- AKHIR SOLUSI ANTI-MACET ---
+
+            if (data.error) { // Baris ini sekarang aman untuk dijalankan
                 document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Error dari Server: ${data.error}</p>`;
                 finalizeSetup(true); 
                 return;
             }
+
+            console.log("[Kelola Lapbul] Sukses: Menerima paket data dari server.");
+            console.log(data);
             allDataRows = data.rows || data; 
+            // !!! BLOK SORTING BARU DI SISI KLIEN (BROWSER) !!!
+            try {
+                console.log(`[Kelola Lapbul] Menerima ${allDataRows.length} baris. Memulai sorting di browser...`);
+                const parseDate = (dateStr) => {
+                    if (!dateStr || dateStr === '-') return 0;
+                    // Format tanggal dari server adalah "dd/MM/yyyy HH:mm:ss"
+                    const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
+                    if (parts) {
+                        // new Date(tahun, bulan (0-11), tanggal, jam, menit, detik)
+                        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
+                    }
+                    return 0; // Fallback
+                };
+
+                allDataRows.sort((a, b) => {
+                    // Ambil tanggal "Update" atau "Tanggal Unggah"
+                    const timeB = parseDate(b.Update) || parseDate(b['Tanggal Unggah']);
+                    const timeA = parseDate(a.Update) || parseDate(a['Tanggal Unggah']);
+                    return timeB - timeA; // Urutkan dari terbaru (terbesar) ke terlama
+                });
+                console.log("[Kelola Lapbul] Selesai sorting di browser.");
+            } catch (e) {
+                console.error("Error saat sorting di browser:", e);
+                App.showAppModal('error', 'Data diterima tapi gagal disortir di browser: ' + e.message);
+            }
+            // !!! BATAS BLOK SORTING BARU !!!
             headerCols = data.headers;
 
             // Membangun header tabel
@@ -1922,14 +1988,31 @@ function initLapbulKelolaPage() {
     App.initializeGenericTablePage({
         tableId: 'lapbulKelolaTable',
         serverFunction: 'getLapbulKelolaData',
-        filterConfig: [
-            { id: 'filterTahun', dataColumn: 'Tahun', sortReverse: true },
-            { id: 'filterJenjang', dataColumn: 'Jenjang' },
-            { id: 'filterNamaSekolah', dataColumn: 'Nama Sekolah' }
+        // 'editPage' sengaja DIHAPUS dari sini, karena akan kita buat dinamis
+        filters: [ // <-- PASTIKAN INI 'filters', BUKAN 'filterConfig'
+            { 
+                id: 'filterTahun', 
+                dataColumn: 'Tahun', 
+                type: 'dropdown', 
+                sortReverse: true,
+                defaultText: 'Semua Tahun'
+            },
+            { 
+                id: 'filterJenjang', 
+                dataColumn: 'Jenjang', 
+                type: 'dropdown',
+                defaultText: 'Semua Jenjang'
+            },
+            { 
+                id: 'filterNamaSekolah', 
+                dataColumn: 'Nama Sekolah', 
+                type: 'cascading-local', 
+                parent: 'filterJenjang',
+                parentKey: 'Jenjang',
+                defaultText: 'Semua Sekolah' 
+            }
         ]
     });
-
-    // Catatan: Fungsi App.showDeleteConfirmation sudah didefinisikan di atas
 }
 
 function initLapbulEditPaudPage(params) {

@@ -1,3 +1,4 @@
+// Versi 2
 /**
  * ===================================================================
  * ======================= 1. KONFIGURASI PUSAT ======================
@@ -107,6 +108,31 @@ const LAPBUL_STATUS_HEADERS = [
 const START_ROW = 2; 
 const NUM_COLUMNS_TO_FETCH = 16; 
 const STATUS_COLUMN_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
+const KELOLA_COLUMNS = {
+    'PAUD': {
+        'Nama Sekolah': 7,       // H
+        'Jenjang': 6,            // G
+        'Status': 4,             // E
+        'Bulan': 1,              // B
+        'Tahun': 2,              // C
+        'Dokumen': 36,           // AK
+        'Tanggal Unggah': 0,     // A
+        'Update': 37,            // AL
+        'Jumlah Rombel': 5       // F (Dari kolom Jumlah Rombel)
+    },
+    'SD': {
+        'Nama Sekolah': 4,       // E
+        'Jenjang': 190,          // GI (Asumsi index GI)
+        'Status': 3,             // D
+        'Bulan': 1,              // B
+        'Tahun': 2,              // C
+        'Dokumen': 7,            // H
+        'Tanggal Unggah': 0,     // A
+        'Update': 191,           // GJ (Asumsi index GJ)
+        'Jumlah Rombel': 6       // G (Dari kolom Rombel)
+    }
+};
 
 /**
  * ===================================================================
@@ -684,76 +710,172 @@ function getLapbulStatusFilterData() {
     };
 }
 
-function getLapbulKelolaData() {
+function getSheetDataSecure(sheet) {
   try {
-    const paudSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName("Form Responses 1");
-    const sdSheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName("Input");
-    const finalHeaders = ["Nama Sekolah", "Status", "Jenjang", "Jumlah Rombel", "Bulan", "Tahun", "Dokumen", "Tanggal Unggah", "Update", "Aksi"];
-    let combinedData = [];
+    if (!sheet || sheet.getLastRow() < 1) {
+      // Jika sheet kosong, kembalikan array kosong agar mapSheet tidak error
+      return { raw: [], display: [] };
+    }
+    const range = sheet.getDataRange();
+    return {
+      raw: range.getValues(),       // Mengambil data mentah (termasuk objek Date)
+      display: range.getDisplayValues() // Mengambil data tampilan (string)
+    };
+  } catch (e) {
+    Logger.log(`Error di getSheetDataSecure untuk sheet ${sheet.getName()}: ${e.message}`);
+    return null; // Kembalikan null jika gagal
+  }
+}
 
-    const parseDateForSort = (dateStr) => {
-        if (!dateStr || !(typeof dateStr === 'string' || dateStr instanceof Date)) return new Date(0);
-        if (dateStr instanceof Date) return dateStr;
+const parseDateForSort = (dateStr) => {
+    // KUNCI PERBAIKAN: Cek jika dateStr kosong (null, undefined, atau string kosong)
+    if (!dateStr) return 0; // Kembalikan nilai 0 (awal epoch)
+    
+    if (dateStr instanceof Date && !isNaN(dateStr)) return dateStr.getTime();
+    
+    // Hanya jalankan .match jika dateStr adalah string
+    if (typeof dateStr === 'string') {
         const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
         if (parts) {
-            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
         }
         const dateOnlyParts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
         if (dateOnlyParts) {
-            return new Date(dateOnlyParts[3], dateOnlyParts[2] - 1, dateOnlyParts[1]);
+            return new Date(dateOnlyParts[3], dateOnlyParts[2] - 1, dateOnlyParts[1]).getTime();
         }
-        return new Date(0);
-    };
+    }
+    return 0;
+};
 
-    const processSheetData = (sheet, sourceName) => {
-      if (!sheet || sheet.getLastRow() < 2) return;
-      const data = sheet.getDataRange().getValues();
-      const headers = data[0].map(h => String(h).trim());
-      const rows = data.slice(1);
+// GANTI FUNGSI HELPER INI (baris 86)
+const formatDate = (cell) => {
+    // KUNCI PERBAIKAN: Cek jika cell adalah Date object yang valid
+    if (cell instanceof Date && !isNaN(cell)) {
+        return Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+    }
+    // Jika tidak valid (null, "", dll.), kembalikan string '-'
+    return cell || '-'; 
+};
 
-      const formatDate = (cell) => {
-          if (cell instanceof Date) {
-              return Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-          }
-          return cell;
-      };
-
-      rows.forEach((row, index) => {
-        const timestampCell = row[headers.indexOf("Timestamp")] || row[headers.indexOf("Tanggal Unggah")];
-        if (!timestampCell) return;
-
-        const rowData = {
-          _rowIndex: index + 2,
-          _source: sourceName
-        };
-
-        headers.forEach((header, i) => {
-            const cleanHeader = header === "Timestamp" ? "Tanggal Unggah" : header;
-            rowData[cleanHeader] = (cleanHeader === "Tanggal Unggah" || cleanHeader === "Update") ? formatDate(row[i]) : row[i];
-        });
-
-        if (sourceName === 'SD') {
-          rowData['Jenjang'] = 'SD';
-          rowData['Jumlah Rombel'] = rowData['Rombel'];
+function getLapbulKelolaData() {
+    Logger.log("[Kelola Lapbul] Memulai...");
+    try {
+        const PAUD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD;
+        const SD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
+        
+        const PAUD_SS = SpreadsheetApp.openById(PAUD_CONFIG.id);
+        const SD_SS = SpreadsheetApp.openById(SD_CONFIG.id);
+        
+        const PAUD_SHEET = PAUD_SS.getSheetByName(PAUD_CONFIG.sheet);
+        const SD_SHEET = SD_SS.getSheetByName(SD_CONFIG.sheet);
+        
+        if (!PAUD_SHEET || !SD_SHEET) {
+            throw new Error("Satu atau lebih Sheet input data tidak ditemukan (PAUD: '" + PAUD_CONFIG.sheet + "', SD: '" + SD_CONFIG.sheet + "')");
         }
-        combinedData.push(rowData);
-      });
-    };
 
-    processSheetData(paudSheet, 'PAUD');
-    processSheetData(sdSheet, 'SD');
-    
-    combinedData.sort((a, b) => {
-        const dateB = parseDateForSort(b['Tanggal Unggah']);
-        const dateA = parseDateForSort(a['Tanggal Unggah']);
-        return dateB - dateA;
-    });
+        const TIME_ZONE = PAUD_SS.getSpreadsheetTimeZone();
+        const FINAL_HEADERS = ["Nama Sekolah", "Status", "Jenjang", "Jumlah Rombel", "Bulan", "Tahun", "Dokumen", "Tanggal Unggah", "Update", "Aksi"];
+        let combinedData = [];
 
-    return { headers: finalHeaders, rows: combinedData };
+        const isValidDate = (val) => val instanceof Date && !isNaN(val);
+        const parseDateForSort = (date) => isValidDate(date) ? date.getTime() : 0;
+        const formatDate = (date) => isValidDate(date) ? Utilities.formatDate(date, TIME_ZONE, "dd/MM/yyyy HH:mm:ss") : '-';
 
-  } catch (e) {
-    return handleError('getLapbulKelolaData', e);
-  }
+        // --- OPTIMASI 1: Membaca data PAUD ---
+        // Hanya membaca sampai kolom AL (38), sesuai kebutuhan.
+        if (PAUD_SHEET.getLastRow() >= 2) {
+            Logger.log("[Kelola Lapbul] Membaca data PAUD...");
+            const paudLastRow = PAUD_SHEET.getLastRow() - 1;
+            // Ambil data mentah (untuk tanggal) dan data tampilan (untuk string)
+            const paudRange = PAUD_SHEET.getRange(2, 1, paudLastRow, 38); // A-AL
+            const paudRaw = paudRange.getValues();
+            const paudDisplay = paudRange.getDisplayValues();
+            const pIdx = KELOLA_COLUMNS.PAUD; // Menggunakan map dari config Anda
+
+            for (let i = 0; i < paudLastRow; i++) {
+                const row = paudRaw[i];
+                const display = paudDisplay[i];
+                const dateUnggahRaw = row[pIdx['Tanggal Unggah']];
+                
+                if (dateUnggahRaw) {
+                    const dateUpdateRaw = row[pIdx['Update']] ?? null;
+                    combinedData.push({
+                        _rowIndex: i + 2,
+                        _source: 'PAUD',
+                        _rawDateUnggah: dateUnggahRaw,
+                        _rawDateUpdate: dateUpdateRaw,
+                        "Nama Sekolah": display[pIdx['Nama Sekolah']] || '-',
+                        "Jenjang": display[pIdx['Jenjang']] || '-',
+                        "Status": display[pIdx['Status']] || '-',
+                        "Bulan": display[pIdx['Bulan']] || '-',
+                        "Tahun": display[pIdx['Tahun']] || '-',
+                        "Jumlah Rombel": display[pIdx['Jumlah Rombel']] || 0,
+                        "Dokumen": display[pIdx['Dokumen']] || '',
+                        "Tanggal Unggah": formatDate(dateUnggahRaw),
+                        "Update": formatDate(dateUpdateRaw)
+                    });
+                }
+            }
+            Logger.log(`[Kelola Lapbul] Selesai membaca ${paudLastRow} baris PAUD.`);
+        }
+
+        // --- OPTIMASI 2: Membaca data SD dalam BLOK TERPISAH ---
+        if (SD_SHEET.getLastRow() >= 2) {
+            Logger.log("[Kelola Lapbul] Membaca data SD...");
+            const sdLastRow = SD_SHEET.getLastRow() - 1;
+            const sIdx = KELOLA_COLUMNS.SD; // Menggunakan map dari config Anda
+            
+            // BLOK 1: Baca data utama (Kolom A-H), 8 kolom
+            const sdRangeMain = SD_SHEET.getRange(2, 1, sdLastRow, 8);
+            const sdRawMain = sdRangeMain.getValues();
+            const sdDisplayMain = sdRangeMain.getDisplayValues();
+            
+            // BLOK 2: Baca data "jauh" (Kolom GI-GJ), 2 kolom
+            // (Asumsi kolom GI adalah 190)
+            const sdRangeFar = SD_SHEET.getRange(2, 190, sdLastRow, 2);
+            const sdRawFar = sdRangeFar.getValues();
+            const sdDisplayFar = sdRangeFar.getDisplayValues();
+            
+            Logger.log("[Kelola Lapbul] Menggabungkan blok data SD...");
+            for (let i = 0; i < sdLastRow; i++) {
+                const rowMain = sdRawMain[i];
+                const displayMain = sdDisplayMain[i];
+                const rowFar = sdRawFar[i];
+                const displayFar = sdDisplayFar[i];
+
+                const dateUnggahRaw = rowMain[sIdx['Tanggal Unggah']]; // A
+                
+                if (dateUnggahRaw) {
+                    const dateUpdateRaw = rowFar[sIdx['Update'] - 190] ?? null; // Indeks relatif: GJ(191) - GI(190) = 1
+                    combinedData.push({
+                        _rowIndex: i + 2,
+                        _source: 'SD',
+                        _rawDateUnggah: dateUnggahRaw,
+                        _rawDateUpdate: dateUpdateRaw,
+                        "Nama Sekolah": displayMain[sIdx['Nama Sekolah']] || '-', // E
+                        "Jenjang": displayFar[sIdx['Jenjang'] - 190] || 'SD', // Indeks relatif: GI(190) - GI(190) = 0
+                        "Status": displayMain[sIdx['Status']] || '-', // D
+                        "Bulan": displayMain[sIdx['Bulan']] || '-', // B
+                        "Tahun": displayMain[sIdx['Tahun']] || '-', // C
+                        "Jumlah Rombel": displayMain[sIdx['Jumlah Rombel']] || 0, // G
+                        "Dokumen": displayMain[sIdx['Dokumen']] || '', // H
+                        "Tanggal Unggah": formatDate(dateUnggahRaw),
+                        "Update": formatDate(dateUpdateRaw)
+                    });
+                }
+            }
+            Logger.log(`[Kelola Lapbul] Selesai membaca ${sdLastRow} baris SD.`);
+        }
+
+        // --- SORTING ---
+        Logger.log(`[Kelola Lapbul] Selesai. Mengirim ${combinedData.length} baris (BELUM DISORTIR).`);
+
+        return { headers: FINAL_HEADERS, rows: combinedData };
+
+    } catch (e) {
+        Logger.log('FATAL Error in getLapbulKelolaData: ' + e.message + ' Stack: ' + e.stack);
+        return { error: `Gagal memuat data Kelola: ${e.message}.` };
+    }
 }
 
 function getLapbulDataByRow(rowIndex, source) {
