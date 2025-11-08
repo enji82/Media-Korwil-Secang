@@ -1,4 +1,3 @@
-// Versi 2
 /**
  * ===================================================================
  * ======================= 1. KONFIGURASI PUSAT ======================
@@ -6,11 +5,8 @@
  */
 // 1. DAFTAR ID UNIK (BEST PRACTICE: SINGLE SOURCE OF TRUTH)
 const SPREADSHEET_IDS = {
-  // SK & Form Responses menggunakan ID yang sama
   SK_DATA: "1AmvOJAhOfdx09eT54x62flWzBZ1xNQ8Sy5lzvT9zJA4",
-  // Banyak Modul PAUD menggunakan ID yang sama
   PAUD_DATA: "1an0oQQPdMh6wrUJIAzTGYk3DKFvYprK5SU7RmRXjIgs",
-  // Banyak Modul SD menggunakan ID yang sama
   SD_DATA: "1u4tNL3uqt5xHITXYwHnytK6Kul9Siam-vNYuzmdZB4s",
   
   // ID unik lainnya
@@ -109,28 +105,30 @@ const START_ROW = 2;
 const NUM_COLUMNS_TO_FETCH = 16; 
 const STATUS_COLUMN_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
-const KELOLA_COLUMNS = {
-    'PAUD': {
-        'Nama Sekolah': 7,       // H
-        'Jenjang': 6,            // G
-        'Status': 4,             // E
-        'Bulan': 1,              // B
-        'Tahun': 2,              // C
-        'Dokumen': 36,           // AK
-        'Tanggal Unggah': 0,     // A
-        'Update': 37,            // AL
-        'Jumlah Rombel': 5       // F (Dari kolom Jumlah Rombel)
+const COLUMNS_MAP = {
+    // PAUD (Sheet: "Form Responses 1") - Ganti dengan indeks kolom aktual Anda
+    PAUD: {
+        "Tanggal Unggah": 0,  // Kolom A
+        "Bulan": 1,           // Kolom B
+        "Tahun": 2,           // Kolom C
+        "Status": 4,          // Kolom E
+        "Jenjang": 6,         // Kolom G
+        "Nama Sekolah": 7,    // Kolom H
+        "Dokumen": 36,        // Kolom AK
+        "Update": 37,         // Kolom AL
+        "Jumlah Rombel": 5,   // Kolom F (Asumsi)
     },
-    'SD': {
-        'Nama Sekolah': 4,       // E
-        'Jenjang': 190,          // GI (Asumsi index GI)
-        'Status': 3,             // D
-        'Bulan': 1,              // B
-        'Tahun': 2,              // C
-        'Dokumen': 7,            // H
-        'Tanggal Unggah': 0,     // A
-        'Update': 191,           // GJ (Asumsi index GJ)
-        'Jumlah Rombel': 6       // G (Dari kolom Rombel)
+    // SD (Sheet: "Input") - Ganti dengan indeks kolom aktual Anda
+    SD: {
+        "Tanggal Unggah": 0,  // Kolom A
+        "Bulan": 1,           // Kolom B
+        "Tahun": 2,           // Kolom C
+        "Status": 3,          // Kolom D
+        "Nama Sekolah": 4,    // Kolom E
+        "Dokumen": 7,         // Kolom H
+        "Jenjang": 213,       // Kolom GI (Index 190)
+        "Update": 191,        // Kolom GJ (Index 191)
+        "Jumlah Rombel": 6,   // Kolom G (Asumsi)
     }
 };
 
@@ -443,39 +441,38 @@ function processLapbulFormSd(formData) {
      
       getValue('k6_agama_hindu_L'), getValue('k6_agama_hindu_P'), getValue('k6_agama_buddha_L'), getValue('k6_agama_buddha_P'), getValue('k6_agama_konghucu_L'), getValue('k6_agama_konghucu_P'),
 
-      // PTK Negeri (EE-FH)
-      getValue('ptk_negeri_ks_pns'), getValue('ptk_negeri_ks_pppk'),
-      getValue('ptk_negeri_guru_kelas_pns'), getValue('ptk_negeri_guru_kelas_pppk'), getValue('ptk_negeri_guru_kelas_pppkpw'), getValue('ptk_negeri_guru_kelas_gtt'),
-      getValue('ptk_negeri_guru_pai_pns'), getValue('ptk_negeri_guru_pai_pppk'), getValue('ptk_negeri_guru_pai_pppkpw'), getValue('ptk_negeri_guru_pai_gtt'),
-      getValue('ptk_negeri_guru_pjok_pns'), getValue('ptk_negeri_guru_pjok_pppk'), getValue('ptk_negeri_guru_pjok_pppkpw'), getValue('ptk_negeri_guru_pjok_gtt'),
-      getValue('ptk_negeri_guru_kristen_pns'), getValue('ptk_negeri_guru_kristen_pppk'), getValue('ptk_negeri_guru_kristen_pppkpw'), getValue('ptk_negeri_guru_kristen_gtt'),
-      getValue('ptk_negeri_guru_inggris_gtt'), getValue('ptk_negeri_guru_lainnya_gtt'),
-      getValue('ptk_negeri_tendik_pengelola_pppk'), getValue('ptk_negeri_tendik_pengelola_pppkpw'), getValue('ptk_negeri_tendik_pengelola_ptt'),
-      getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
-      getValue('ptk_negeri_plo_pppk'), getValue('ptk_negeri_plo_pppkpw'), getValue('ptk_negeri_plo_ptt'), // GK, GL, GM
-      getValue('ptk_negeri_penata_lo_pppk'), getValue('ptk_negeri_penata_lo_pppkpw'), getValue('ptk_negeri_penata_lo_ptt'), // GN, GO, GP
-      getValue('ptk_negeri_adm_perkantoran_pppk'), getValue('ptk_negeri_adm_perkantoran_pppkpw'), getValue('ptk_negeri_adm_perkantoran_ptt'), // GQ, GR, GS
+      // Kolom EE-FQ (INDEX 134-172: 39 KOLOM) - Data PTK Negeri
+            getValue('ptk_negeri_ks_pns'), getValue('ptk_negeri_ks_pppk'),
+            getValue('ptk_negeri_guru_kelas_pns'), getValue('ptk_negeri_guru_kelas_pppk'), getValue('ptk_negeri_guru_kelas_pppkpw'), getValue('ptk_negeri_guru_kelas_gtt'),
+            getValue('ptk_negeri_guru_pai_pns'), getValue('ptk_negeri_guru_pai_pppk'), getValue('ptk_negeri_guru_pai_pppkpw'), getValue('ptk_negeri_guru_pai_gtt'),
+            getValue('ptk_negeri_guru_pjok_pns'), getValue('ptk_negeri_guru_pjok_pppk'), getValue('ptk_negeri_guru_pjok_pppkpw'), getValue('ptk_negeri_guru_pjok_gtt'),
+            getValue('ptk_negeri_guru_kristen_pns'), getValue('ptk_negeri_guru_kristen_pppk'), getValue('ptk_negeri_guru_kristen_pppkpw'), getValue('ptk_negeri_guru_kristen_gtt'),
+            getValue('ptk_negeri_guru_inggris_gtt'), getValue('ptk_negeri_guru_lainnya_gtt'),
+            getValue('ptk_negeri_tendik_pengelola_pppk'), getValue('ptk_negeri_tendik_pengelola_pppkpw'), getValue('ptk_negeri_tendik_pengelola_ptt'),
+            getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
+            getValue('ptk_negeri_plo_pppk'), getValue('ptk_negeri_plo_pppkpw'), getValue('ptk_negeri_plo_ptt'), 
+            getValue('ptk_negeri_penata_lo_pppk'), getValue('ptk_negeri_penata_lo_pppkpw'), getValue('ptk_negeri_penata_lo_ptt'), 
+            getValue('ptk_negeri_adm_perkantoran_pppk'), getValue('ptk_negeri_adm_perkantoran_pppkpw'), getValue('ptk_negeri_adm_perkantoran_ptt'), 
+            getValue('ptk_negeri_tendik_penjaga_ptt'), getValue('ptk_negeri_tendik_tas_ptt'), getValue('ptk_negeri_tendik_pustakawan_ptt'), getValue('ptk_negeri_tendik_lainnya_ptt'),
+            // Total 39 isian PTK Negeri (EE-FQ)
 
-      getValue('ptk_negeri_tendik_penjaga_ptt'), getValue('ptk_negeri_tendik_tas_ptt'), getValue('ptk_negeri_tendik_pustakawan_ptt'), getValue('ptk_negeri_tendik_lainnya_ptt'),
-
-      // PTK Swasta (FI-GH)
- 
-      getValue('ptk_swasta_ks_gty'), getValue('ptk_swasta_ks_gtt'),
-      getValue('ptk_swasta_ks_pns'), getValue('ptk_swasta_ks_pppk'), // GT, GU
-      getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'),
-      getValue('ptk_swasta_guru_kelas_pns'), getValue('ptk_swasta_guru_kelas_pppk'), // GV, GW
-      getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'),
-      getValue('ptk_swasta_guru_pai_gty'), getValue('ptk_swasta_guru_pai_gtt'),
-      getValue('ptk_swasta_guru_pjok_gty'), getValue('ptk_swasta_guru_pjok_gtt'),
-      getValue('ptk_swasta_guru_kristen_gty'), getValue('ptk_swasta_guru_kristen_gtt'),
-      getValue('ptk_swasta_guru_inggris_gty'), getValue('ptk_swasta_guru_inggris_gtt'),
-      getValue('ptk_swasta_guru_lainnya_gty'), getValue('ptk_swasta_guru_lainnya_gtt'),
-      getValue('ptk_swasta_tendik_operator_pty'), getValue('ptk_swasta_tendik_operator_ptt'),
-      getValue('ptk_swasta_tendik_pengelola_pty'), getValue('ptk_swasta_tendik_pengelola_ptt'),
-      getValue('ptk_swasta_tendik_penjaga_pty'), getValue('ptk_swasta_tendik_penjaga_ptt'),
-      getValue('ptk_swasta_tendik_tas_pty'), getValue('ptk_swasta_tendik_tas_ptt'),
-      getValue('ptk_swasta_tendik_pustakawan_pty'), getValue('ptk_swasta_tendik_pustakawan_ptt'),
-      getValue('ptk_swasta_tendik_lainnya_pty'), getValue('ptk_swasta_tendik_lainnya_ptt')
+            // Kolom FR-HE (INDEX 173-210: 38 KOLOM) - Data PTK Swasta
+            getValue('ptk_swasta_ks_gty'), getValue('ptk_swasta_ks_gtt'),
+            getValue('ptk_swasta_ks_pns'), getValue('ptk_swasta_ks_pppk'), 
+            getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'), getValue('ptk_swasta_guru_kelas_pns'), getValue('ptk_swasta_guru_kelas_pppk'), 
+            getValue('ptk_swasta_guru_pai_gty'), getValue('ptk_swasta_guru_pai_gtt'), getValue('ptk_swasta_guru_pai_pns'), getValue('ptk_swasta_guru_pai_pppk'), 
+            getValue('ptk_swasta_guru_pjok_gty'), getValue('ptk_swasta_guru_pjok_gtt'), getValue('ptk_swasta_guru_pjok_pns'), getValue('ptk_swasta_guru_pjok_pppk'), 
+            getValue('ptk_swasta_guru_kristen_gty'), getValue('ptk_swasta_guru_kristen_gtt'), getValue('ptk_swasta_guru_kristen_pns'), getValue('ptk_swasta_guru_kristen_pppk'), 
+            getValue('ptk_swasta_guru_inggris_gty'), getValue('ptk_swasta_guru_inggris_gtt'), getValue('ptk_swasta_guru_inggris_pns'), getValue('ptk_swasta_guru_inggris_pppk'), 
+            getValue('ptk_swasta_guru_lainnya_gty'), getValue('ptk_swasta_guru_lainnya_gtt'), getValue('ptk_swasta_guru_lainnya_pns'), getValue('ptk_swasta_guru_lainnya_pppk'), 
+            getValue('ptk_swasta_tendik_penjaga_pty'), getValue('ptk_swasta_tendik_penjaga_ptt'),
+            getValue('ptk_swasta_tendik_tas_pty'), getValue('ptk_swasta_tendik_tas_ptt'),
+            getValue('ptk_swasta_tendik_pustakawan_pty'), getValue('ptk_swasta_tendik_pustakawan_ptt'),
+            getValue('ptk_swasta_tendik_lain_pty'), getValue('ptk_swasta_tendik_lain_ptt'),
+            getValue('ptk_swasta_tendik_operator_pty'), getValue('ptk_swasta_tendik_operator_ptt'),
+            getValue('ptk_swasta_tendik_pengelola_pty'), getValue('ptk_swasta_tendik_pengelola_ptt'),
+            // Total 38 isian PTK Swasta (FR-HE)
+            "SD"
     ];
     sheet.appendRow(newRow);
     return "Sukses! Laporan Bulan SD berhasil dikirim.";
@@ -491,7 +488,7 @@ const LAPBUL_COLUMNS = {
         'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 4, 'Jenjang': 6, 'Nama Sekolah': 7, 'Rombel': 5, 'Dokumen': 36
     },
     'SD': {
-        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 3, 'Nama Sekolah': 4, 'Rombel': 6, 'Dokumen': 7, 'Jenjang': 190
+        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 3, 'Nama Sekolah': 4, 'Rombel': 6, 'Dokumen': 7, 'Jenjang': 213
     }
 };
 
@@ -600,32 +597,29 @@ function _getLimitedSheetData(sheetId, sheetName, startRow, numColumns) {
     }
 }
 
-function _fetchSheetDataSecure(sheetId, sheetName) {
-    try {
-        const ss = SpreadsheetApp.openById(sheetId);
-        if (!ss) return [];
-        const sheet = ss.getSheetByName(sheetName);
-        if (!sheet || sheet.getLastRow() < START_ROW) return [];
-        
-        const actualCols = Math.min(sheet.getLastColumn(), NUM_COLUMNS_TO_FETCH);
-        const numRows = sheet.getLastRow() - START_ROW + 1;
-        const dataRange = sheet.getRange(START_ROW, 1, numRows, actualCols); 
-        
-        let values = dataRange.getDisplayValues();
+const getSheetDataSecure = (sheet) => {
+    // Jika hanya ada header atau sheet kosong, kembalikan null
+    if (!sheet || sheet.getLastRow() < 2) return null;
+    
+    // Panggilan RPC (getValues dan getDisplayValues) hanya dilakukan di sini.
+    const range = sheet.getDataRange();
+    const displayValues = range.getDisplayValues(); 
+    const rawValues = range.getValues(); // Mengambil Date Object mentah
 
-        // KUNCI PERBAIKAN: Menjamin setiap baris memiliki 16 kolom untuk pemetaan yang aman
-        return values.map(row => {
-            while (row.length < NUM_COLUMNS_TO_FETCH) {
-                row.push('');
-            }
-            return row.slice(0, NUM_COLUMNS_TO_FETCH);
-        });
+    return {
+        display: displayValues, 
+        raw: rawValues,
+        // Membersihkan header dari spasi ekstra (.trim()) untuk mapping yang akurat
+        headers: displayValues[0].map(h => String(h).trim()) 
+    };
+};
 
-    } catch (e) {
-        Logger.log(`Error fetching data securely: ${e.message}`);
-        return [];
-    }
-}
+const getCleanedDisplayValue = (displayRow, keyIndex) => {
+    // Jika index tidak valid, kembalikan null
+    if (keyIndex < 0) return null;
+    // Mengambil nilai, mengubahnya ke String, dan menghapus spasi di awal/akhir (.trim())
+    return String(displayRow[keyIndex] || '').trim();
+};
 
 function getLapbulStatusData() {
     try {
@@ -710,26 +704,9 @@ function getLapbulStatusFilterData() {
     };
 }
 
-function getSheetDataSecure(sheet) {
-  try {
-    if (!sheet || sheet.getLastRow() < 1) {
-      // Jika sheet kosong, kembalikan array kosong agar mapSheet tidak error
-      return { raw: [], display: [] };
-    }
-    const range = sheet.getDataRange();
-    return {
-      raw: range.getValues(),       // Mengambil data mentah (termasuk objek Date)
-      display: range.getDisplayValues() // Mengambil data tampilan (string)
-    };
-  } catch (e) {
-    Logger.log(`Error di getSheetDataSecure untuk sheet ${sheet.getName()}: ${e.message}`);
-    return null; // Kembalikan null jika gagal
-  }
-}
-
 const parseDateForSort = (dateStr) => {
     // KUNCI PERBAIKAN: Cek jika dateStr kosong (null, undefined, atau string kosong)
-    if (!dateStr) return 0; // Kembalikan nilai 0 (awal epoch)
+    if (!dateStr) return 0;
     
     if (dateStr instanceof Date && !isNaN(dateStr)) return dateStr.getTime();
     
@@ -757,8 +734,54 @@ const formatDate = (cell) => {
     return cell || '-'; 
 };
 
+const mapSheet = (sheet, source, timeZone) => {
+    const sheetData = getSheetDataSecure(sheet);
+    if (!sheetData) return [];
+
+    const { display, raw } = sheetData;
+    const mapping = COLUMNS_MAP[source]; 
+    if (!mapping) return []; 
+
+    const getCleanedDisplayValue = (displayRow, keyIndex) => {
+        if (keyIndex === undefined || keyIndex < 0) return null;
+        return String(displayRow[keyIndex] || '').trim();
+    };
+    
+    // Proses setiap baris data (mulai dari baris ke-2 / index 1)
+    return display.slice(1).map((displayRow, index) => { 
+        const rowIndex = index + 2; 
+
+        const namaSekolahIndex = mapping["Nama Sekolah"];
+        const tanggalUnggahIndex = mapping["Tanggal Unggah"];
+
+        if (namaSekolahIndex === undefined || tanggalUnggahIndex === undefined) return null; 
+
+        const dateUnggahRaw = raw[rowIndex - 1][tanggalUnggahIndex]; 
+        const dateUpdateRaw = mapping["Update"] !== undefined ? raw[rowIndex - 1][mapping["Update"]] : null;
+
+        if (!dateUnggahRaw) return null; 
+        
+        const rowObject = {
+            _rowIndex: rowIndex,
+            _source: source,
+            
+            // Urutan key di sini MENENTUKAN Urutan Kolom (Harus sesuai FINAL_HEADERS)
+            "Nama Sekolah": getCleanedDisplayValue(displayRow, mapping["Nama Sekolah"]) || '-',
+            "Jenjang": getCleanedDisplayValue(displayRow, mapping["Jenjang"]) || (source === 'SD' ? 'SD' : 'PAUD'),
+            "Status": getCleanedDisplayValue(displayRow, mapping["Status"]) || '-',
+            "Bulan": getCleanedDisplayValue(displayRow, mapping["Bulan"]) || '-',
+            "Tahun": getCleanedDisplayValue(displayRow, mapping["Tahun"]) || '-',
+            "Dokumen": getCleanedDisplayValue(displayRow, mapping["Dokumen"]) || '',
+            // Aksi tidak memiliki kolom di spreadsheet, hanya di rendering
+            "Tanggal Unggah": (dateUnggahRaw instanceof Date) ? Utilities.formatDate(dateUnggahRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
+            "Update": (dateUpdateRaw instanceof Date) ? Utilities.formatDate(dateUpdateRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
+        };
+        
+        return rowObject;
+    }).filter(row => row !== null && row["Nama Sekolah"] !== '-'); 
+};
+
 function getLapbulKelolaData() {
-    Logger.log("[Kelola Lapbul] Memulai...");
     try {
         const PAUD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD;
         const SD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
@@ -766,208 +789,183 @@ function getLapbulKelolaData() {
         const PAUD_SS = SpreadsheetApp.openById(PAUD_CONFIG.id);
         const SD_SS = SpreadsheetApp.openById(SD_CONFIG.id);
         
+        if (!PAUD_SS || !SD_SS) throw new Error("Gagal mengakses satu atau lebih Spreadsheet input data (periksa ID dan izin).");
+
         const PAUD_SHEET = PAUD_SS.getSheetByName(PAUD_CONFIG.sheet);
         const SD_SHEET = SD_SS.getSheetByName(SD_CONFIG.sheet);
-        
-        if (!PAUD_SHEET || !SD_SHEET) {
-            throw new Error("Satu atau lebih Sheet input data tidak ditemukan (PAUD: '" + PAUD_CONFIG.sheet + "', SD: '" + SD_CONFIG.sheet + "')");
-        }
 
-        const TIME_ZONE = PAUD_SS.getSpreadsheetTimeZone();
-        const FINAL_HEADERS = ["Nama Sekolah", "Status", "Jenjang", "Jumlah Rombel", "Bulan", "Tahun", "Dokumen", "Tanggal Unggah", "Update", "Aksi"];
+        if (!PAUD_SHEET || !SD_SHEET) {
+            Logger.log("ERROR: Salah satu Sheet tidak ditemukan. PAUD Sheet: " + (PAUD_SHEET ? "Ditemukan" : "TIDAK DITEMUKAN"));
+            throw new Error("Satu atau lebih Sheet input data tidak ditemukan (nama sheet salah).");
+        }
+        
+        const PAUD_TIME_ZONE = PAUD_SS.getSpreadsheetTimeZone();
+        const SD_TIME_ZONE = SD_SS.getSpreadsheetTimeZone();
+        
+        // URUTAN INI MENENTUKAN HEADER TABEL YANG DIKIRIM KE BROWSER
+        const FINAL_HEADERS = [
+            "Nama Sekolah", 
+            "Jenjang", 
+            "Status", 
+            "Bulan", 
+            "Tahun", 
+            "Dokumen", 
+            "Aksi", // Disisipkan di sini untuk rendering tombol
+            "Tanggal Unggah", 
+            "Update"
+        ];
+        
         let combinedData = [];
 
-        const isValidDate = (val) => val instanceof Date && !isNaN(val);
-        const parseDateForSort = (date) => isValidDate(date) ? date.getTime() : 0;
-        const formatDate = (date) => isValidDate(date) ? Utilities.formatDate(date, TIME_ZONE, "dd/MM/yyyy HH:mm:ss") : '-';
-
-        // --- OPTIMASI 1: Membaca data PAUD ---
-        // Hanya membaca sampai kolom AL (38), sesuai kebutuhan.
-        if (PAUD_SHEET.getLastRow() >= 2) {
-            Logger.log("[Kelola Lapbul] Membaca data PAUD...");
-            const paudLastRow = PAUD_SHEET.getLastRow() - 1;
-            // Ambil data mentah (untuk tanggal) dan data tampilan (untuk string)
-            const paudRange = PAUD_SHEET.getRange(2, 1, paudLastRow, 38); // A-AL
-            const paudRaw = paudRange.getValues();
-            const paudDisplay = paudRange.getDisplayValues();
-            const pIdx = KELOLA_COLUMNS.PAUD; // Menggunakan map dari config Anda
-
-            for (let i = 0; i < paudLastRow; i++) {
-                const row = paudRaw[i];
-                const display = paudDisplay[i];
-                const dateUnggahRaw = row[pIdx['Tanggal Unggah']];
-                
-                if (dateUnggahRaw) {
-                    const dateUpdateRaw = row[pIdx['Update']] ?? null;
-                    combinedData.push({
-                        _rowIndex: i + 2,
-                        _source: 'PAUD',
-                        _rawDateUnggah: dateUnggahRaw,
-                        _rawDateUpdate: dateUpdateRaw,
-                        "Nama Sekolah": display[pIdx['Nama Sekolah']] || '-',
-                        "Jenjang": display[pIdx['Jenjang']] || '-',
-                        "Status": display[pIdx['Status']] || '-',
-                        "Bulan": display[pIdx['Bulan']] || '-',
-                        "Tahun": display[pIdx['Tahun']] || '-',
-                        "Jumlah Rombel": display[pIdx['Jumlah Rombel']] || 0,
-                        "Dokumen": display[pIdx['Dokumen']] || '',
-                        "Tanggal Unggah": formatDate(dateUnggahRaw),
-                        "Update": formatDate(dateUpdateRaw)
-                    });
-                }
-            }
-            Logger.log(`[Kelola Lapbul] Selesai membaca ${paudLastRow} baris PAUD.`);
-        }
-
-        // --- OPTIMASI 2: Membaca data SD dalam BLOK TERPISAH ---
-        if (SD_SHEET.getLastRow() >= 2) {
-            Logger.log("[Kelola Lapbul] Membaca data SD...");
-            const sdLastRow = SD_SHEET.getLastRow() - 1;
-            const sIdx = KELOLA_COLUMNS.SD; // Menggunakan map dari config Anda
-            
-            // BLOK 1: Baca data utama (Kolom A-H), 8 kolom
-            const sdRangeMain = SD_SHEET.getRange(2, 1, sdLastRow, 8);
-            const sdRawMain = sdRangeMain.getValues();
-            const sdDisplayMain = sdRangeMain.getDisplayValues();
-            
-            // BLOK 2: Baca data "jauh" (Kolom GI-GJ), 2 kolom
-            // (Asumsi kolom GI adalah 190)
-            const sdRangeFar = SD_SHEET.getRange(2, 190, sdLastRow, 2);
-            const sdRawFar = sdRangeFar.getValues();
-            const sdDisplayFar = sdRangeFar.getDisplayValues();
-            
-            Logger.log("[Kelola Lapbul] Menggabungkan blok data SD...");
-            for (let i = 0; i < sdLastRow; i++) {
-                const rowMain = sdRawMain[i];
-                const displayMain = sdDisplayMain[i];
-                const rowFar = sdRawFar[i];
-                const displayFar = sdDisplayFar[i];
-
-                const dateUnggahRaw = rowMain[sIdx['Tanggal Unggah']]; // A
-                
-                if (dateUnggahRaw) {
-                    const dateUpdateRaw = rowFar[sIdx['Update'] - 190] ?? null; // Indeks relatif: GJ(191) - GI(190) = 1
-                    combinedData.push({
-                        _rowIndex: i + 2,
-                        _source: 'SD',
-                        _rawDateUnggah: dateUnggahRaw,
-                        _rawDateUpdate: dateUpdateRaw,
-                        "Nama Sekolah": displayMain[sIdx['Nama Sekolah']] || '-', // E
-                        "Jenjang": displayFar[sIdx['Jenjang'] - 190] || 'SD', // Indeks relatif: GI(190) - GI(190) = 0
-                        "Status": displayMain[sIdx['Status']] || '-', // D
-                        "Bulan": displayMain[sIdx['Bulan']] || '-', // B
-                        "Tahun": displayMain[sIdx['Tahun']] || '-', // C
-                        "Jumlah Rombel": displayMain[sIdx['Jumlah Rombel']] || 0, // G
-                        "Dokumen": displayMain[sIdx['Dokumen']] || '', // H
-                        "Tanggal Unggah": formatDate(dateUnggahRaw),
-                        "Update": formatDate(dateUpdateRaw)
-                    });
-                }
-            }
-            Logger.log(`[Kelola Lapbul] Selesai membaca ${sdLastRow} baris SD.`);
-        }
-
-        // --- SORTING ---
-        Logger.log(`[Kelola Lapbul] Selesai. Mengirim ${combinedData.length} baris (BELUM DISORTIR).`);
-
+        // Panggil mapSheet (Pastikan Anda menggunakan ID SpreadSheet yang benar)
+        combinedData.push(...mapSheet(PAUD_SHEET, 'PAUD', PAUD_TIME_ZONE));
+        combinedData.push(...mapSheet(SD_SHEET, 'SD', SD_TIME_ZONE));
+        
+        // Data tidak perlu diurutkan di server; biarkan frontend (JS) yang mengurutkan (lebih cepat)
+        
         return { headers: FINAL_HEADERS, rows: combinedData };
 
     } catch (e) {
         Logger.log('FATAL Error in getLapbulKelolaData: ' + e.message + ' Stack: ' + e.stack);
-        return { error: `Gagal memuat data Kelola: ${e.message}.` };
+        return handleError('getLapbulKelolaData', e);
     }
 }
 
-function getLapbulDataByRow(rowIndex, source) {
-  try {
-    let sheet;
-    if (source === 'PAUD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
-    } else if (source === 'SD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
-    } else {
-      throw new Error("Sumber data tidak valid.");
-    }
+const PAUD_FORM_INDEX_MAP = [
+    // 0-7: Data Lembaga (A-H)
+    'Tanggal Unggah', 'Bulan', 'Tahun', 'NPSN', 'Status', 'Jumlah Rombel', 'Jenjang', 'Nama Sekolah', 
+    
+    // 8-21: Murid Usia (L/P)
+    'murid_0_1_L', 'murid_0_1_P', 'murid_1_2_L', 'murid_1_2_P', 'murid_2_3_L', 'murid_2_3_P', 
+    'murid_3_4_L', 'murid_3_4_P', 'murid_4_5_L', 'murid_4_5_P', 'murid_5_6_L', 'murid_5_6_P', 
+    'murid_6_up_L', 'murid_6_up_P',
+    
+    // 22-25: Murid Rombel (L/P)
+    'kelompok_A_L', 'kelompok_A_P', 'kelompok_B_L', 'kelompok_B_P', 
 
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const values = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
-    const rowData = {};
-    headers.forEach((header, i) => {
-      rowData[header.trim()] = values[i];
-    });
-    return rowData;
-  } catch (e) {
-    return handleError('getLapbulDataByRow', e);
-  }
+    // 26-29: PTK Kepsek/Guru
+    'kepsek_ASN', 'kepsek_Non_ASN', 'guru_PNS', 'guru_PPPK', 'guru_GTY', 'guru_GTT',
+    
+    // 30-33: PTK Tendik
+    'tendik_Penjaga', 'tendik_TAS', 'tendik_Pustakawan', 'tendik_Lainnya',
+    
+    'Dokumen', // Kolom Dokumen (Indeks 34)
+    'Update' // Kolom Update (Indeks 35)
+    // Catatan: Asumsi mapping ini sesuai dengan kolom Spreadsheet PAUD Anda.
+];
+
+function getLapbulDataByRow(rowIndex, source) {
+    try {
+        let configKey = source === 'PAUD' ? 'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
+        const config = SPREADSHEET_CONFIG[configKey];
+
+        if (!config) throw new Error("Konfigurasi sumber data tidak ditemukan.");
+
+        const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+        if (!sheet) throw new Error(`Sheet '${config.sheet}' tidak ditemukan.`);
+        
+        // Ambil nilai tampilan (display values) dari seluruh baris
+        const lastCol = sheet.getLastColumn();
+        const values = sheet.getRange(rowIndex, 1, 1, lastCol).getDisplayValues()[0];
+        
+        const rowData = {};
+        
+        // KUNCI PERBAIKAN: Menggunakan Index Mapping untuk PAUD
+        if (source === 'PAUD') {
+            const paudMap = PAUD_FORM_INDEX_MAP;
+            
+            // Perluas array values jika kurang dari map (pencegahan crash)
+            while (values.length < paudMap.length) {
+                values.push('');
+            }
+
+            // Map data berdasarkan index ke nama input HTML yang benar
+            paudMap.forEach((inputName, index) => {
+                // Gunakan index untuk mengambil data dari values
+                rowData[inputName] = values[index];
+            });
+            
+            // Tambahkan metadata
+            rowData.rowIndex = rowIndex;
+            rowData.source = source;
+            
+            return rowData;
+
+        } else {
+            // Logika lama (berdasarkan header) dipertahankan untuk SD
+            const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => h.trim());
+            
+            headers.forEach((header, i) => {
+                rowData[header] = values[i];
+            });
+            rowData.rowIndex = rowIndex;
+            rowData.source = source;
+            return rowData;
+        }
+
+    } catch (e) {
+        return handleError('getLapbulDataByRow', e);
+    }
 }
 
 function updateLapbulData(formData) {
-  try {
-    let sheet, FOLDER_ID;
-    const source = formData.source;
-    const rowIndex = formData.rowIndex;
-    if (!source || !rowIndex) throw new Error("Informasi 'source' atau 'rowIndex' tidak ditemukan.");
+    try {
+        const source = formData.source;
+        const rowIndex = parseInt(formData.rowIndex);
+        if (!source || isNaN(rowIndex) || rowIndex < 2) throw new Error("Informasi baris atau sumber data tidak valid.");
+        
+        const configKey = source === 'PAUD' ? 'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
+        const config = SPREADSHEET_CONFIG[configKey];
+        const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+        if (!sheet) throw new Error(`Sheet target tidak ditemukan: ${config.sheet}`);
 
-    if (source === 'PAUD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD.sheet);
-      const jenjang = formData.Jenjang || sheet.getRange(rowIndex, headers.indexOf('Jenjang') + 1).getValue();
-      FOLDER_ID = jenjang === 'KB' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_TK;
-    } else if (source === 'SD') {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.id).getSheetByName(SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD.sheet);
-      FOLDER_ID = FOLDER_CONFIG.LAPBUL_SD;
-    } else {
-      throw new Error("Sumber data tidak valid: " + source);
+        // 1. Ambil headers
+        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+        
+        // 2. Ambil nilai lama
+        const range = sheet.getRange(rowIndex, 1, 1, headers.length);
+        const existingValues = range.getValues()[0];
+
+        // 3. LOGIKA UPLOAD FILE BARU (Jika ada)
+        let fileUrl = existingValues[headers.indexOf('Dokumen')]; // Pertahankan URL lama secara default
+        if (formData.fileData && formData.fileData.data) {
+            const FOLDER_ID_LAPBUL = FOLDER_CONFIG[source === 'PAUD' ? 'LAPBUL_KB' : 'LAPBUL_SD']; // Asumsi FOLDER_CONFIG sudah ada
+            const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
+            const tahunFolder = getOrCreateFolder(mainFolder, formData.Tahun);
+            const bulanFolder = getOrCreateFolder(tahunFolder, formData.Bulan);
+            
+            // Hapus file lama (Opsional, tergantung kebijakan Anda)
+            const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
+            if (oldFileIdMatch) {
+                try {
+                    DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true);
+                } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
+            }
+            
+            // Unggah file baru
+            const newFileName = `${formData['Nama Sekolah']} - Lapbul ${formData.Bulan} ${formData.Tahun}.pdf`;
+            const decodedData = Utilities.base64Decode(formData.fileData.data);
+            const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
+            const newFile = bulanFolder.createFile(blob);
+            fileUrl = newFile.getUrl();
+        }
+        
+        // 4. SUSUN BARIS DATA BARU
+        formData.Update = new Date(); // Tambahkan Timestamp Update
+        formData.Dokumen = fileUrl; // Update URL dokumen
+
+        const newRowValues = headers.map((header, index) => {
+            // Ambil nilai dari formData jika ada, jika tidak, gunakan nilai lama
+            return formData.hasOwnProperty(header) ? formData[header] : existingValues[index];
+        });
+
+        // 5. SET NILAI
+        range.setValues([newRowValues]);
+        
+        return "Data Laporan Bulan berhasil diperbarui.";
+    } catch (e) {
+        return { error: `Gagal memperbarui data di server: ${e.message}` };
     }
-    
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
-
-    if (!formData.Bulan || !formData.Tahun) {
-        throw new Error("Informasi 'Bulan' atau 'Tahun' kosong. Tidak dapat memproses file.");
-    }
-
-    const range = sheet.getRange(rowIndex, 1, 1, headers.length);
-    const existingValues = range.getValues()[0];
-
-    if (formData.fileData && formData.fileData.data) {
-      const docHeaderName = 'Dokumen';
-      const docIndex = headers.indexOf(docHeaderName);
-      if (docIndex !== -1 && existingValues[docIndex]) {
-        try {
-          const fileId = String(existingValues[docIndex]).match(/[-\w]{25,}/);
-          if (fileId) DriveApp.getFileById(fileId[0]).setTrashed(true);
-        } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
-      }
-      
-      const mainFolder = DriveApp.getFolderById(FOLDER_ID);
-      const tahunFolder = getOrCreateFolder(mainFolder, formData.Tahun);
-      const bulanFolder = getOrCreateFolder(tahunFolder, formData.Bulan);
-      
-      const namaSekolah = formData['Nama Sekolah'] || existingValues[headers.indexOf('Nama Sekolah')];
-      const newFileName = `${namaSekolah} - Lapbul ${formData.Bulan} ${formData.Tahun}.pdf`;
-      const decodedData = Utilities.base64Decode(formData.fileData.data);
-      const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
-      const newFile = bulanFolder.createFile(blob);
-      formData[docHeaderName] = newFile.getUrl();
-    }
-
-    formData['Update'] = new Date();
-    const newRowValues = headers.map((header, index) => {
-      if (formData.hasOwnProperty(header)) {
-        return formData[header];
-      }
-      return existingValues[index];
-    });
-    range.setValues([newRowValues]);
-
-    const updateColIndex = headers.indexOf('Update');
-    if (updateColIndex !== -1) {
-      sheet.getRange(rowIndex, updateColIndex + 1).setNumberFormat("dd/MM/yyyy HH:mm:ss");
-    }
-    
-    return "Data berhasil diperbarui.";
-  } catch (e) {
-    return { error: `Terjadi error di server: ${e.message}` };
-  }
 }
 
 function deleteLapbulData(rowIndex, source, deleteCode) {

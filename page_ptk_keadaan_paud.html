@@ -36,15 +36,15 @@
 </main>
 
 <style>
-  /* 1. Paksa container utama untuk TIDAK memiliki scrollbar */
+  /* 1. Kunci Scroll Utama */
   #main-content {
     overflow-y: hidden !important;
   }
 
-  /* 2. Jadikan <main> sebagai container flexbox yang mengisi sisa ruang */
+  /* 2. Jadikan <main> sebagai Flex Container */
   main.table-view-container {
     flex-grow: 1;
-    min-height: 0;
+    min-height: 0; 
     display: flex;
     flex-direction: column;
   }
@@ -52,14 +52,14 @@
   /* 3. Jadikan #tableWrapper sebagai sub-container flexbox */
   #tableWrapper {
     flex-grow: 1;
-    min-height: 0;
+    min-height: 0; 
     display: flex;
     flex-direction: column;
   }
 
-  /* 4. Perintahkan .table-container untuk memanjang dan memiliki scrollbar */
+  /* 4. Terapkan SCROLL pada CONTAINER TABEL (KUNCI) */
   #tableWrapper .table-container {
     flex-grow: 1;
-    overflow: auto; /* Scrollbar vertikal dan horizontal akan muncul di sini */
+    overflow: auto; 
   }
 </style>

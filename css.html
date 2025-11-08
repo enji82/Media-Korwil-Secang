@@ -263,7 +263,7 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
   /* ======================= 5. GAYA TABEL UMUM ======================== */
   /* =================================================================== */
   .table-view-container { display: flex; flex-direction: column; min-height: 0; }
-  .table-container { overflow: auto; background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; margin: 0 auto; }
+  .table-container { overflow-x: auto; background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; margin: 0 auto; }
   .data-table { border-collapse: separate; border-spacing: 0; font-size: 13px; width: 100%; }
   .data-table th, .data-table td { border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 12px; vertical-align: middle; white-space: nowrap; height: 24px; }
   .data-table th:not(:last-child),
@@ -768,16 +768,27 @@ main.manual-form.form-tab-container > form {
   /* =================================================================== */
   .freeze-pane-table th,
   .freeze-pane-table td { text-align: center; vertical-align: middle; }
-  .freeze-pane-table thead th { position: sticky; top: 0; background-color: #101E26; }
-  .freeze-pane-table tfoot td { position: sticky; bottom: 0; background-color: #101E26; border-top: 2px solid rgba(0, 195, 255, 0.5); }
+  .freeze-pane-table thead th { 
+    position: sticky; 
+    top: 0; 
+    background-color: #101E26; 
+    z-index: 5 !important; 
+  }
+  .freeze-pane-table tfoot td { 
+    position: sticky; 
+    bottom: 0; 
+    background-color: #101E26; 
+    border-top: 2px solid rgba(0, 195, 255, 0.5); 
+    z-index: 5 !important; /* HARUS CUKUP TINGGI */
+  }
   .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tbody td:nth-child(2) { position: sticky; background-color: #1c2e3a; }
+  .freeze-pane-table tbody td:nth-child(2) { position: sticky; background-color: #1c2e3a; z-index: 3; }
   .freeze-pane-table thead th:nth-child(1),
   .freeze-pane-table tbody td:nth-child(1),
-  .freeze-pane-table tfoot td:nth-child(1) { left: 0; }
+  .freeze-pane-table tfoot td:nth-child(1) { left: 0; z-index: 6 !important; }
   .freeze-pane-table thead th:nth-child(2),
   .freeze-pane-table tbody td:nth-child(2),
-  .freeze-pane-table tfoot td:nth-child(2) { left: 50px; }
+  .freeze-pane-table tfoot td:nth-child(2) { left: 50px; z-index: 6 !important; } /* Z-INDEX LEBIH TINGGI DARI KOLOM NON-FREEZE */
   .freeze-pane-table thead tr:first-child th { top: 0; }
   .freeze-pane-table thead tr:nth-child(2) th { top: 40px; }
   .freeze-pane-table tbody td { z-index: 1; }
@@ -931,4 +942,35 @@ main.manual-form.form-tab-container > form {
 #ptk-section-container .ptk-row > label {
     font-size: 1.1em;
 }
+
+/* --- PERBAIKAN SCROLL FORM EDIT LAPBUL (HARD FIX) --- */
+
+/* 1. Paksa form utama (parent) untuk menjadi flex container vertikal penuh */
+.manual-form.form-tab-container,
+#edit-form-container,
+#lapbulEditFormPaud {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0; /* Wajib untuk flexbox scrollable */
+}
+
+/* 2. Beri batasan tinggi pada wrapper content (yang berisi Tab 2, 3, 4) */
+#tab-content-wrapper {
+    flex-grow: 1; /* Mengambil sisa ruang */
+    min-height: 0; /* Mengizinkan container di-scroll */
+    overflow-y: auto !important; /* MEMAKSA SCROLLBAR MUNCUL */
+    padding: 15px 10px; /* Padding untuk konten tab */
+}
+
+/* 3. Pastikan konten tab mengisi ruang vertikal */
+.tab-content-form {
+    min-height: 100%; /* Penting untuk menjaga konsistensi height */
+}
+
+/* --- OPTIONAL: Perbaikan visual padding di dalam tab content --- */
+#dataMurid fieldset {
+    margin-bottom: 25px; /* Jarak antar fieldset di dalam tab */
+}
+
 </style>

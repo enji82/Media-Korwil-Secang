@@ -135,6 +135,35 @@ App.debounce = (func, timeout = 150) => {
     };
 };
 
+const parseCustomDateTime = (dateStr) => {
+    // Pastikan input adalah string, bersihkan spasi ekstra, dan periksa null/kosong
+    const cleanedStr = String(dateStr).trim();
+    if (!cleanedStr || cleanedStr === '-') return 0;
+    
+    // RegEx yang disederhanakan untuk menangkap format dd/MM/yyyy HH:mm:ss
+    const parts = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+
+    if (parts && parts.length === 7) {
+        // parts[1]: Tanggal (d)
+        // parts[2]: Bulan (M) - Kritis: Harus dikurangi 1 (0 = Januari)
+        // parts[3]: Tahun (yyyy)
+        // parts[4]: Jam (HH)
+        // parts[5]: Menit (mm)
+        // parts[6]: Detik (ss)
+        
+        // Buat objek Date. (Bulan: parts[2] - 1)
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
+    }
+    
+    // Fallback: Coba konversi sebagai string yang hanya berisi tanggal (dd/MM/yyyy)
+    const dateOnly = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (dateOnly) {
+        return new Date(dateOnly[3], dateOnly[2] - 1, dateOnly[1]).getTime();
+    }
+    
+    return 0; // Jika tidak ada yang cocok, disortir ke posisi paling akhir
+};
+
 App.setupInfoDropdown = (buttonId, contentId, infoItems) => {
     const infoBtn = document.getElementById(buttonId);
     const contentDiv = document.getElementById(contentId);
@@ -153,35 +182,103 @@ App.setupInfoDropdown = (buttonId, contentId, infoItems) => {
     };
 };
 
+const applySorting = (sortConfig) => {
+    if (!sortConfig || currentFilteredRows.length === 0) return;
+
+    currentFilteredRows.sort((a, b) => {
+        for (let i = 0; i < sortConfig.length; i++) {
+            const conf = sortConfig[i];
+            
+            // Tentukan parser, default adalah fungsi identitas jika tidak ada
+            const parser = conf.parser || ((val) => val); 
+
+            // Ambil nilai dan pastikan nilai yang tidak ada (null/undefined) menjadi 0 (untuk disortir terakhir)
+            const valA = parser(a[conf.column]) || 0; 
+            const valB = parser(b[conf.column]) || 0; 
+
+            const comparison = (valA > valB) ? 1 : (valA < valB) ? -1 : 0;
+
+            if (comparison !== 0) {
+                return conf.order === 'DESC' ? -comparison : comparison;
+            }
+        }
+        return 0;
+    });
+
+    // Setelah disortir, bangun ulang tabel
+    buildTable(); 
+};
+
 // ===============================================================
 // === FUNGSI GENERIK TABEL DITEMPATKAN DI SINI (SEBELUM INIT) ===
 // ===============================================================
 
 App.initializeGenericTablePage = (config) => {
+    // VARIABEL LOKAL: Dideklarasikan di awal untuk diakses oleh semua fungsi di bawah
     let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
-    let isDoubleHeader = false;
-    let headerRow1 = [], headerRow2 = [];
+    let isDoubleHeader = false; // Dihapus karena tidak digunakan dalam lapbul
+    let headerRow1 = [], headerRow2 = []; // Dihapus karena tidak digunakan dalam lapbul
     let filterData = null;
     
-    config.filters = config.filters || []; 
-    // Flag untuk mendeteksi apakah data memiliki struktur {data: {...}} (Digunakan oleh Kelola Data)
-    const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
-
-    // KUNCI PERBAIKAN: getRowValue didefinisikan secara lokal di sini
+    config.filters = config.filters || [];
+    
+    // --- FUNGSI HELPER LOKAL (Dipindahkan ke dalam scope untuk stabilitas) ---
     const getRowValue = (row, key) => {
+        const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
         return isDataNested ? (row.data ? row.data[key] : row[key]) : row[key];
     };
+    
+    // FUNGSI PARSER UNTUK SORTING TANGGAL (Mengatasi masalah pengurutan)
+    const parseCustomDateTime = (dateStr) => {
+        const cleanedStr = String(dateStr).trim();
+        if (!cleanedStr || cleanedStr === '-') return 0;
+        // Format: dd/MM/yyyy HH:mm:ss
+        const parts = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+        if (parts && parts.length === 7) {
+            // new Date(tahun, bulan(0-11), tanggal, jam, menit, detik)
+            return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
+        }
+        const dateOnly = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (dateOnly) {
+            return new Date(dateOnly[3], dateOnly[2] - 1, dateOnly[1]).getTime();
+        }
+        return 0;
+    };
+    
+    // FUNGSI SORTING
+    const applySorting = (dataArray, sortConfig) => {
+        if (!sortConfig || dataArray.length === 0) return dataArray;
+
+        dataArray.sort((a, b) => {
+            for (let i = 0; i < sortConfig.length; i++) {
+                const conf = sortConfig[i];
+                const parser = conf.parser || ((val) => val); 
+                
+                const valA = parser(a[conf.column]) || 0; 
+                const valB = parser(b[conf.column]) || 0; 
+
+                const comparison = (valA > valB) ? 1 : (valA < valB) ? -1 : 0;
+
+                if (comparison !== 0) {
+                    return conf.order === 'DESC' ? -comparison : comparison;
+                }
+            }
+            return 0;
+        });
+        return dataArray; 
+    };
+    
+    // FUNGSI UTAMA RENDERING (buildTable)
     const calculateRowsPerPage = () => {
         const tableContainer = document.getElementById(config.tableId)?.closest('.table-container');
-        if (!tableContainer) return 15; // Nilai default jika tabel tidak ditemukan
+        if (!tableContainer) return 15;
         const paginationContainer = document.getElementById('pagination-container');
-        const bottomOffset = paginationContainer ? 180 : 100; // Jarak dari bawah
-        const rowHeight = 38; // Perkiraan tinggi satu baris tabel
+        const bottomOffset = paginationContainer ? 180 : 100;
+        const rowHeight = 38;
         const availableHeight = window.innerHeight - tableContainer.getBoundingClientRect().top - bottomOffset;
         return Math.max(5, Math.floor(availableHeight / rowHeight));
     };
 
-    // Fungsi baru untuk membuat tombol paginasi
     const setupPagination = () => {
         const paginationContainer = document.getElementById('pagination-container');
         if (!paginationContainer) return;
@@ -195,7 +292,6 @@ App.initializeGenericTablePage = (config) => {
         
         paginationContainer.style.display = 'flex';
         const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
-        // PERBAIKAN: Mengganti window.changePage menjadi App.changePage
         const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="App.changePage(-1)">«</button>`;
         const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="App.changePage(1)">»</button>`;
         
@@ -210,9 +306,10 @@ App.initializeGenericTablePage = (config) => {
     const buildTable = () => {
         const table = document.getElementById(config.tableId);
         if (!table) return;
-        const tableBody = table.querySelector('tbody');
+        const tableBody = document.getElementById(config.tableId + 'Body') || table.querySelector('tbody');
         const tableFoot = table.querySelector('tfoot');
         if (!tableBody) return;
+        
         tableBody.innerHTML = '';
         if (tableFoot) tableFoot.innerHTML = '';
 
@@ -225,16 +322,16 @@ App.initializeGenericTablePage = (config) => {
             currentPage = Math.min(currentPage, pageCount) || 1;
             const start = (currentPage - 1) * rowsPerPage;
             paginatedRows = currentFilteredRows.slice(start, start + rowsPerPage);
-            
-            // Update info paginasi di setupPagination()
             setupPagination();
         }
 
         if (paginatedRows.length === 0) {
-            // DARI SINI BUG MUNCUL: Pastikan colspan dihitung dengan benar
-            const colspan = headerCols.length + 1; 
+            const colspan = headerCols.length + 1;
             tableBody.innerHTML = `<tr><td colspan="${colspan}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
+            const AppLoadPage = typeof App.loadPage === 'function' ? App.loadPage : console.error;
+            const AppShowDelete = typeof App.showDeleteConfirmation === 'function' ? App.showDeleteConfirmation : console.error;
+            
             paginatedRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 const rowNumber = usePagination ? (currentPage - 1) * rowsPerPage + index + 1 : index + 1;
@@ -243,37 +340,21 @@ App.initializeGenericTablePage = (config) => {
                 headerCols.forEach(header => {
                     const cellData = row[header] ?? '';
                     
-                    if (header === 'Dokumen' && String(cellData).startsWith('http')) { 
-                        // Riwayat Pengiriman: Kolom Dokumen sebagai link
-                        rowCells.push(`<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`); 
-                    
-                    // --- BLOK KODE YANG DIPERBAIKI ADA DI SINI ---
-                    } else if (header === 'Aksi') { 
-                        // Kelola Data: Kolom Aksi sebagai tombol edit/hapus
+                    if (header === 'Dokumen' && String(cellData).startsWith('http')) {
+                        rowCells.push(`<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`);
+                    } else if (header === 'Aksi') {
                         const rowIndex = row._rowIndex;
-                        const source = row._source; // Ini akan berisi 'PAUD' atau 'SD'
+                        const source = row._source;
                         const rowInfoString = JSON.stringify(row).replace(/'/g, "\\'");
-
-                        // --- AWAL MODIFIKASI DINAMIS ---
-                        let dynamicEditPage = null;
-
-                        // Logika khusus HANYA untuk tabel 'lapbulKelolaTable'
+                        
+                        let dynamicEditPage = config.editPage || 'lapbul_edit_sd'; 
                         if (config.tableId === 'lapbulKelolaTable') {
-                            if (source === 'PAUD') {
-                                dynamicEditPage = 'lapbul_edit_paud';
-                            } else if (source === 'SD') {
-                                dynamicEditPage = 'lapbul_edit_sd';
-                            }
-                        } else {
-                            // Logika lama untuk tabel Kelola lainnya (SK, PTK, dll)
-                            dynamicEditPage = config.editPage;
+                            dynamicEditPage = (source === 'PAUD') ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
                         }
-                        // --- AKHIR MODIFIKASI DINAMIS ---
 
-                        if (dynamicEditPage && rowIndex !== undefined) { // Gunakan 'dynamicEditPage'
+                        if (rowIndex !== undefined && typeof AppLoadPage === 'function' && typeof AppShowDelete === 'function') {
                             rowCells.push(
                                 `<td class="action-buttons">` +
-                                // Gunakan 'dynamicEditPage' di tombol Edit
                                 `<button class="action-btn edit-btn" onclick="App.loadPage(event, '${dynamicEditPage}', { rowIndex: ${rowIndex}, source: '${source}' })"><i class="fas fa-pencil-alt"></i> Edit</button>` +
                                 `<button class="action-btn delete-btn" onclick='App.showDeleteConfirmation(this)' data-row-info='${rowInfoString}'><i class="fas fa-trash"></i> Hapus</button>` +
                                 `</td>`
@@ -281,20 +362,18 @@ App.initializeGenericTablePage = (config) => {
                         } else {
                             rowCells.push('<td>-</td>');
                         }
-                    // --- AKHIR BLOK KODE YANG DIPERBAIKI ---
-
-                    } else { 
-                        // Kolom standar lainnya
-                        let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData; 
-                        rowCells.push(`<td>${displayCell}</td>`); 
+                    } else {
+                        let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData;
+                        rowCells.push(`<td>${displayCell}</td>`);
                     }
                 });
                 tr.innerHTML = rowCells.join('');
                 tableBody.appendChild(tr);
             });
         }
-    };
+    }; // END buildTable
 
+    // ... (Logika filter dan setup listeners) ...
     const handleFilterChange = () => {
         applyFilters();
     };
@@ -311,18 +390,21 @@ App.initializeGenericTablePage = (config) => {
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown) {
-                if (filterConf.type !== 'cascading-dropdown') {
-                    dropdown.removeEventListener('change', handleFilterChange); 
-                    dropdown.addEventListener('change', handleFilterChange);
-                }
+                dropdown.removeEventListener('change', handleFilterChange);
+                dropdown.addEventListener('change', handleFilterChange);
             }
         });
     };
-
+    
     const applyFilters = () => {
         let filtered = allDataRows;
         
-        // Cek Search Filter (Opsional)
+        // 1. Amankan Sorting Awal
+        if (config.initialSort && filtered.length > 0) {
+            filtered = applySorting(filtered, config.initialSort); 
+        }
+
+        // 2. Filter Search Input
         const searchInput = document.getElementById('searchFilter');
         const searchTerm = searchInput ? String(searchInput.value).toLowerCase() : '';
 
@@ -337,15 +419,16 @@ App.initializeGenericTablePage = (config) => {
             });
         }
         
+        // 3. Filter Dropdown Inputs
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown && dropdown.value) {
                 const filterValue = dropdown.value;
-                const filterKey = filterConf.dataColumn; 
+                const filterKey = filterConf.dataColumn;
                 
                 filtered = filtered.filter(row => {
-                    const rowValue = getRowValue(row, filterKey); 
-                    return String(rowValue) === filterValue; 
+                    const rowValue = getRowValue(row, filterKey);
+                    return String(rowValue).trim() === filterValue;
                 });
             }
         });
@@ -355,16 +438,14 @@ App.initializeGenericTablePage = (config) => {
         buildTable();
     };
 
-
-    // LOGIKA POPULATE FILTER CASCADING LOKAL DAN UMUM
     const populateCascadingFilters = (data) => {
-        filterData = data; 
+        filterData = data;
         
-        // 1. Logika pengisian Filter Biasa (LOKAL dan UMUM)
+        // Populate non-cascading
         config.filters.forEach(filterConf => {
-            if (filterConf.type !== 'cascading-local' && filterConf.type !== 'cascading-server') {
+            if (filterConf.type !== 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
-                const filterKey = filterConf.dataColumn || filterConf.key; 
+                const filterKey = filterConf.dataColumn || filterConf.key;
                 
                 if (dropdown && dropdown.tagName === 'SELECT' && filterKey) {
                     const uniqueValues = [...new Set(allDataRows.map(row => String(getRowValue(row, filterKey))))].filter(Boolean).sort();
@@ -374,14 +455,11 @@ App.initializeGenericTablePage = (config) => {
                     uniqueValues.forEach(value => {
                         dropdown.innerHTML += `<option value="${value}">${value}</option>`;
                     });
-                    
-                    dropdown.removeEventListener('change', handleFilterChange);
-                    dropdown.addEventListener('change', handleFilterChange);
                 }
             }
         });
 
-        // 2. Logika Casading (Local Filtering)
+        // Logika Casading (Local Filtering)
         config.filters.forEach(filterConf => {
             if (filterConf.type === 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
@@ -390,22 +468,22 @@ App.initializeGenericTablePage = (config) => {
                 if (dropdown && parentDropdown) {
                     const updateDropdown = () => {
                         const selectedParentValue = parentDropdown.value;
-                        const keyChild = filterConf.dataColumn || filterConf.key; 
-                        const keyParent = filterConf.parentKey; 
+                        const keyChild = filterConf.dataColumn || filterConf.key;
+                        const keyParent = filterConf.parentKey;
                         
                         dropdown.innerHTML = '<option value="">Semua Sekolah</option>';
                         
                         if (selectedParentValue) {
                             const uniqueChildValues = [...new Set(allDataRows
-                                                    .filter(row => String(getRowValue(row, keyParent)) === selectedParentValue) 
-                                                    .map(row => String(getRowValue(row, keyChild))))].filter(Boolean).sort();
+                                .filter(row => String(getRowValue(row, keyParent)).trim() === selectedParentValue)
+                                .map(row => String(getRowValue(row, keyChild))))].filter(Boolean).sort();
 
                             uniqueChildValues.forEach(value => {
                                 dropdown.innerHTML += `<option value="${value}">${value}</option>`;
                             });
                         }
                         
-                        handleFilterChange(); 
+                        handleFilterChange();
                     };
 
                     parentDropdown.removeEventListener('change', updateDropdown);
@@ -414,87 +492,56 @@ App.initializeGenericTablePage = (config) => {
                     dropdown.removeEventListener('change', handleFilterChange);
                     dropdown.addEventListener('change', handleFilterChange);
                     
-                    updateDropdown(); 
+                    updateDropdown();
                 }
             }
         });
     };
 
-    // KUNCI PERBAIKAN: Fungsi Helper untuk Finalisasi Setup
+    // KUNCI PERBAIKAN STUCK SPINNER: Mengamankan akses elemen
     const finalizeSetup = (hasError = false) => {
-        document.getElementById('loadingStatus').style.display = 'none';
+        const loadingEl = document.getElementById('loadingStatus');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+        
         if (!hasError) {
-            document.getElementById('tableWrapper').style.display = 'block';
+            const wrapperEl = document.getElementById('tableWrapper');
+            if (wrapperEl) {
+                wrapperEl.style.display = 'block';
+            }
+            
             setupEventListeners();
+            
+            // Panggil applyFilters yang sudah termasuk initialSort
             applyFilters();
         }
     };
 
-    // Logika Pemanggilan Server
+    const serverFunction = config.serverFunction;
+    const filterFunction = config.filterFunction;
+    
+    // Server Call
     google.script.run
         .withSuccessHandler(data => {
             
-            // --- AWAL SOLUSI ANTI-MACET ---
-            // Cek apakah 'data' itu null SEBELUM mencoba mengakses 'data.error'
-            if (!data) {
-                const errorMsg = `Gagal memuat data: Fungsi server ('${config.serverFunction}') tidak ditemukan di versi deploy deply deploy deploy deploy i love gemini. Pastikan Anda sudah men-deploy ulang 'code.gs' dengan benar.`;
-                
-                // Tampilkan pesan error di tempat spinner
-                const loadingStatusEl = document.getElementById('loadingStatus');
-                if (loadingStatusEl) {
-                    loadingStatusEl.innerHTML = `<p style="color:red;">${errorMsg}</p>`;
-                }
-                console.error(errorMsg); // Tampilkan juga di console
-                finalizeSetup(true); // Hentikan proses
-                return;
-            }
-            // --- AKHIR SOLUSI ANTI-MACET ---
-
-            if (data.error) { // Baris ini sekarang aman untuk dijalankan
+            if (data.error) { 
                 document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Error dari Server: ${data.error}</p>`;
-                finalizeSetup(true); 
+                finalizeSetup(true);
                 return;
             }
 
-            console.log("[Kelola Lapbul] Sukses: Menerima paket data dari server.");
-            console.log(data);
             allDataRows = data.rows || data; 
-            // !!! BLOK SORTING BARU DI SISI KLIEN (BROWSER) !!!
-            try {
-                console.log(`[Kelola Lapbul] Menerima ${allDataRows.length} baris. Memulai sorting di browser...`);
-                const parseDate = (dateStr) => {
-                    if (!dateStr || dateStr === '-') return 0;
-                    // Format tanggal dari server adalah "dd/MM/yyyy HH:mm:ss"
-                    const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2}):(\d{2})/);
-                    if (parts) {
-                        // new Date(tahun, bulan (0-11), tanggal, jam, menit, detik)
-                        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
-                    }
-                    return 0; // Fallback
-                };
-
-                allDataRows.sort((a, b) => {
-                    // Ambil tanggal "Update" atau "Tanggal Unggah"
-                    const timeB = parseDate(b.Update) || parseDate(b['Tanggal Unggah']);
-                    const timeA = parseDate(a.Update) || parseDate(a['Tanggal Unggah']);
-                    return timeB - timeA; // Urutkan dari terbaru (terbesar) ke terlama
-                });
-                console.log("[Kelola Lapbul] Selesai sorting di browser.");
-            } catch (e) {
-                console.error("Error saat sorting di browser:", e);
-                App.showAppModal('error', 'Data diterima tapi gagal disortir di browser: ' + e.message);
-            }
-            // !!! BATAS BLOK SORTING BARU !!!
             headerCols = data.headers;
 
-            // Membangun header tabel
+            // Membangun header tabel awal
             const tableHead = document.querySelector(`#${config.tableId} thead`);
             if (tableHead) {
                 tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
             }
             
             // --- LOGIKA FILTERING ---
-            if (config.filterFunction) {
+            if (filterFunction) {
                 google.script.run
                     .withSuccessHandler(filterResult => {
                         if (filterResult.error) {
@@ -509,17 +556,17 @@ App.initializeGenericTablePage = (config) => {
                         document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat filter data: ${error.message}</p>`;
                         finalizeSetup(true);
                     })
-                    [config.filterFunction](); 
+                    [filterFunction](); 
             } else {
                 populateCascadingFilters(null); 
                 finalizeSetup(); 
             }
         })
         .withFailureHandler(error => { 
-            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`; 
+            document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
             finalizeSetup(true);
         })
-        [config.serverFunction]();
+        [serverFunction]();
 };
 
 // ===============================================================
@@ -1597,6 +1644,7 @@ function initLapbulFormSdPage() {
             <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_penjaga_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_penjaga_ptt" min="0"></div></div></div>
             <div class="ptk-row has-label"><label>Tenaga Administrasi</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_tas_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_tas_ptt" min="0"></div></div></div>
             <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pustakawan_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pustakawan_ptt" min="0"></div></div></div>
+            <div class="ptk-row has-label"><label>Tendik Lainnya</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_lain_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_lain_ptt" min="0"></div></div></div>
             <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_operator_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_operator_ptt" min="0"></div></div></div>
             <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pengelola_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pengelola_ptt" min="0"></div></div></div>
         </fieldset>
@@ -1988,135 +2036,138 @@ function initLapbulKelolaPage() {
     App.initializeGenericTablePage({
         tableId: 'lapbulKelolaTable',
         serverFunction: 'getLapbulKelolaData',
-        // 'editPage' sengaja DIHAPUS dari sini, karena akan kita buat dinamis
-        filters: [ // <-- PASTIKAN INI 'filters', BUKAN 'filterConfig'
-            { 
-                id: 'filterTahun', 
-                dataColumn: 'Tahun', 
-                type: 'dropdown', 
-                sortReverse: true,
-                defaultText: 'Semua Tahun'
-            },
-            { 
-                id: 'filterJenjang', 
-                dataColumn: 'Jenjang', 
-                type: 'dropdown',
-                defaultText: 'Semua Jenjang'
-            },
+        filters: [ 
+            { id: 'filterTahun', dataColumn: 'Tahun', type: 'dropdown', sortReverse: true, defaultText: 'Semua Tahun' },
+            { id: 'filterJenjang', dataColumn: 'Jenjang', type: 'dropdown', defaultText: 'Semua Jenjang' },
             { 
                 id: 'filterNamaSekolah', 
                 dataColumn: 'Nama Sekolah', 
                 type: 'cascading-local', 
                 parent: 'filterJenjang',
                 parentKey: 'Jenjang',
-                defaultText: 'Semua Sekolah' 
+                defaultText: 'Semua Sekolah'
             }
+        ],
+        // --- KODE BARU YANG DIMINTA: INITIAL SORT ---
+        initialSort: [
+            { column: 'Update', order: 'DESC', parser: parseCustomDateTime },
+            { column: 'Tanggal Unggah', order: 'DESC', parser: parseCustomDateTime }
         ]
+        // ------------------------------------------
     });
 }
 
 function initLapbulEditPaudPage(params) {
-    if (!params || !params.rowIndex) {
-        document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Parameter untuk edit data tidak ditemukan.</p></div>`;
-        return;
-    }
-
     const form = document.getElementById('lapbulEditFormPaud');
     const loadingDiv = document.getElementById('loading-data');
     const formContainer = document.getElementById('edit-form-container');
     
-    const lockField = (fieldName) => {
-        const field = form.querySelector(`[name="${fieldName}"]`);
-        if (field) {
-            field.style.backgroundColor = 'rgba(0,0,0,0.3)';
-            field.style.cursor = 'not-allowed';
-            if (field.tagName === 'INPUT') field.readOnly = true;
-            if (field.tagName === 'SELECT') {
-                field.style.pointerEvents = 'none';
-            }
-        }
-    };
+    if (!form || !params || !params.rowIndex || !params.source) {
+        document.getElementById('main-content').innerHTML = `<p style="color:red; text-align:center;">Error: Parameter edit tidak lengkap.</p>`;
+        return;
+    }
 
+    // Set nilai rowIndex dan source
+    form.querySelector('#rowIndex').value = params.rowIndex;
+    form.querySelector('input[name="source"]').value = params.source;
+    
+    // Inisialisasi logika Tab Form
+    const formLogic = App.setupTabForm('lapbulEditFormPaud'); 
+    
+    // Panggil server untuk mengambil data baris
     google.script.run
         .withSuccessHandler(rowData => {
-            if (!rowData || Object.keys(rowData).length === 0) {
-                loadingDiv.innerHTML = `<p style="color:red;">Gagal: Data untuk baris ${params.rowIndex} tidak ditemukan.</p>`;
+            loadingDiv.style.display = 'none';
+            formContainer.style.display = 'block';
+
+            if (rowData.error) {
+                App.showAppModal('error', `Gagal memuat data baris: ${rowData.error}`);
                 return;
             }
             
-            form.querySelector('[name="rowIndex"]').value = params.rowIndex;
-
-            const bulanSelect = form.querySelector('[name="Bulan"]');
-            const tahunSelect = form.querySelector('[name="Tahun"]');
-            const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
-            const currentYear = new Date().getFullYear();
-            tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
-            
+            // KUNCI PERBAIKAN: Mengisi semua field form dengan data yang diterima
             for (const key in rowData) {
                 const field = form.querySelector(`[name="${key}"]`);
-                if (field) field.value = rowData[key];
+                if (field) {
+                    if (field.type === 'file') continue;
+                    
+                    // Khusus untuk input number yang kosong, set ke 0
+                    if (field.type === 'number') {
+                         field.value = rowData[key] ? Number(rowData[key]) : 0;
+                    } 
+                    // Mengisi select dan input readonly
+                    else if (field.tagName === 'SELECT' || field.readOnly) {
+                        field.value = rowData[key];
+                    } 
+                    // Input teks biasa
+                    else {
+                        field.value = rowData[key];
+                    }
+                }
             }
             
-            lockField('Bulan');
-            lockField('Tahun');
-            lockField('Status');
-            lockField('Jenjang');
-            lockField('Nama Sekolah');
+            // Perbaikan Tab Unlocking
+            const allTabs = form.querySelectorAll('.tab-link');
+            allTabs.forEach((btn, index) => {
+                btn.disabled = false;
+            });
+            formLogic.unlockAndShowTab(0); // Kembali ke Tab 1 (Data Lembaga)
 
+            // Menampilkan link file lama
             const fileLinkContainer = document.getElementById('existingFileLink');
-            if (rowData['Dokumen']) {
-                 fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`;
-            } else {
-                 fileLinkContainer.innerHTML = 'Tidak ada file.';
+            if (rowData.Dokumen) { 
+                fileLinkContainer.innerHTML = `<a href="${rowData.Dokumen}" target="_blank">Lihat File Saat Ini</a>`; 
+            } else { 
+                fileLinkContainer.innerHTML = 'Tidak ada file.'; 
             }
 
-            loadingDiv.style.display = 'none';
-            formContainer.style.display = 'block';
         })
         .withFailureHandler(err => {
-            loadingDiv.innerHTML = `<p style="color:red;">Gagal memuat data baris: ${err.message}</p>`;
+            loadingDiv.innerHTML = `<p style="color:red;">Gagal menghubungi server: ${err.message}</p>`;
         })
         .getLapbulDataByRow(params.rowIndex, params.source);
 
+    // SUBMIT HANDLER (tetap sama)
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = true;
-        App.showAppModal('loading', 'Menyimpan perubahan...');
+        App.showAppModal('loading', 'Menyimpan perubahan laporan...');
 
         const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
+        const payload = {};
         
-        // Ambil nilai dari field yang terkunci secara manual
-        payload.laporanBulan = form.querySelector('[name="Bulan"]').value;
-        payload.tahun = form.querySelector('[name="Tahun"]').value;
-        payload.jenjang = form.querySelector('[name="Jenjang"]').value;
-        payload.namaSekolah = form.querySelector('[name="Nama Sekolah"]').value;
-
-        const file = form.querySelector('input[type="file"]').files[0];
-
+        // Memastikan input number kosong menjadi 0 saat submit
+        for (const [key, value] of formData.entries()) {
+            const field = form.querySelector(`[name="${key}"]`);
+            if (field?.type === 'number' && !value) {
+                payload[key] = "0"; 
+            } else {
+                payload[key] = value;
+            }
+        }
+        
         const sendData = (data) => {
             google.script.run
                 .withSuccessHandler(res => {
-                    if (res && res.error) {
-                         App.showAppModal('error', res.error);
-                         if (submitButton) submitButton.disabled = false;
-                    } else {
-                         App.showAppModal('success', res, 'lapbul_kelola');
-                    }
+                    App.showAppModal('success', res, 'lapbul_kelola');
                 })
                 .withFailureHandler(err => {
                     App.showAppModal('error', err.message);
-                    if (submitButton) submitButton.disabled = false;
+                    submitButton.disabled = false;
                 })
                 .updateLapbulData(data);
         };
 
+        const file = form.querySelector('input[type="file"]').files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
-                payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
+                payload.fileData = { 
+                    fileName: file.name, 
+                    mimeType: file.type, 
+                    data: event.target.result.split(',')[1] 
+                };
                 sendData(payload);
             };
             reader.readAsDataURL(file);
@@ -2418,23 +2469,20 @@ function initPtkKeadaanSdPage() {
 }
 
 function initPtkJumlahBulananPaudPage() {
-    App.initializeGenericTablePage({
+    initializeGenericTablePage({
         tableId: 'ptkJumlahBulananPaudTable',
         serverFunction: 'getPtkJumlahBulananPaudData',
-        filterConfig: [
-            { id: 'filterTahun', dataColumn: '_filterTahun', sortReverse: true },
-            { id: 'filterBulan', dataColumn: '_filterBulan', specialSort: 'bulan' },
-            { id: 'filterJenjang', dataColumn: '_filterJenjang' },
+        filters: [
+            { id: 'filterTahun', dataColumn: '_filterTahun', type: 'dropdown', sortReverse: true },
+            { id: 'filterBulan', dataColumn: '_filterBulan', type: 'dropdown', specialSort: 'bulan' },
+            { id: 'filterJenjang', dataColumn: '_filterJenjang', type: 'dropdown' },
             { 
               id: 'filterNamaLembaga', 
               dataColumn: 'Nama Lembaga', 
-              dependsOn: 'filterJenjang',
-              dependencyColumn: '_filterJenjang'
+              type: 'cascading-local', 
+              parent: 'filterJenjang',
+              parentKey: '_filterJenjang'
             }
-        ],
-        defaultFilters: [
-            { id: 'filterTahun', value: () => new Date().getFullYear().toString() },
-            { id: 'filterBulan', value: () => { /* ... logika bulan kemarin ... */ } }
         ],
         footerConfig: {
             enabled: true,
