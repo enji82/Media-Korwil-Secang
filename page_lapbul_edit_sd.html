@@ -1,5 +1,5 @@
 <header>
-  <h2 id="main-form-title">FORMULIR EDIT LAPORAN BULAN SD</h2>
+  <h2>FORMULIR EDIT LAPORAN BULAN SD</h2>
 </header>
 
 <div id="loading-data" class="loading-container">
@@ -9,13 +9,13 @@
     <p>Memuat data dan form untuk diedit...</p>
 </div>
 
-<main class="manual-form" id="edit-form-container" style="display: none;">
+<main class="manual-form" id="edit-lapbul-sd-container" style="display: none;">
   <form id="lapbulEditFormSd">
     <input type="hidden" name="rowIndex">
     <input type="hidden" name="source" value="SD">
     
     <div class="form-layout-grid">
-      <div class="form-column" id="form-col-1">
+      <div class="form-column" id="edit-form-col-1">
         <fieldset class="ptk-fieldset">
           <legend>Data Sekolah</legend>
           <div class="form-grid-1">
@@ -29,24 +29,24 @@
         </fieldset>
       </div>
 
-      <div class="form-column" id="form-col-2">
+      <div class="form-column" id="edit-form-col-2">
         <fieldset class="ptk-fieldset">
           <legend>Data Jumlah Murid</legend>
-          <div id="kelas-tabs" class="tabs-container"></div>
-          <div id="kelas-content-container"></div>
+          <div id="edit-kelas-tabs" class="tabs-container"></div>
+          <div id="edit-kelas-content-container"></div>
         </fieldset>
       </div>
 
-      <div class="form-column" id="form-col-3">
-        <div id="ptk-section-container"></div>
+      <div class="form-column" id="edit-form-col-3">
+        <div id="edit-ptk-section-container"></div>
         <fieldset class="ptk-fieldset">
             <legend>Unggah Berkas</legend>
             <div class="form-group">
-                <label for="fileLapbul">Lewati bagian ini apabila tidak mengganti file. (PDF, Max 300KB)</label>
-                <input type="file" id="fileLapbul" name="fileData" accept=".pdf">
+                <label for="edit-fileLapbul">Lewati apabila tidak mengganti file. (PDF, Max 300KB)</label>
+                <input type="file" id="edit-fileLapbul" name="fileData" accept=".pdf">
                 <p id="existingFileLink" class="input-hint" style="margin-top: 10px;"></p>
             </div>
-            <button type="submit" class="submit-btn" style="margin-top: 10px;">Simpan Perubahan</button>
+            <button type="submit" class="submit-btn" id="edit-lapbul-sd-submit" style="margin-top: 10px;">Simpan Perubahan</button>
         </fieldset>
       </div>
     </div>

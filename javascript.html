@@ -2058,62 +2058,210 @@ function initLapbulKelolaPage() {
 }
 
 function initLapbulEditPaudPage(params) {
-    const form = document.getElementById('lapbulEditFormPaud');
+    const form = document.getElementById('lapbulEditFormPaud'); 
     const loadingDiv = document.getElementById('loading-data');
-    const formContainer = document.getElementById('edit-form-container');
+    const formContainer = document.getElementById('edit-lapbul-form-container'); 
+    
+    // Menggunakan ID baru untuk elemen navigasi dan konten
+    const tabs = [
+        document.getElementById('edit-dataSekolah'),
+        document.getElementById('edit-dataMurid'),
+        document.getElementById('edit-dataPtk'),
+        document.getElementById('edit-dataDokumen')
+    ].filter(el => el); 
     
     if (!form || !params || !params.rowIndex || !params.source) {
-        document.getElementById('main-content').innerHTML = `<p style="color:red; text-align:center;">Error: Parameter edit tidak lengkap.</p>`;
+        document.getElementById('main-content').innerHTML = `<p style="color:red; text-align:center;">Error: Parameter untuk edit tidak lengkap atau tidak ditemukan.</p>`;
         return;
     }
 
-    // Set nilai rowIndex dan source
-    form.querySelector('#rowIndex').value = params.rowIndex;
-    form.querySelector('input[name="source"]').value = params.source;
+    form.querySelector('[name="rowIndex"]').value = params.rowIndex;
+    form.querySelector('[name="source"]').value = params.source;
+
+    let currentActiveTab = 'edit-dataSekolah';
+
+    // --- FUNGSI UTILITY ---
+    function showTab(tabId) {
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+            targetTab.classList.add('active');
+            targetTab.style.display = 'block';
+            currentActiveTab = tabId;
+        }
+        document.querySelectorAll('.tabs-container button').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // --- LOGIKA PERHITUNGAN DAN VALIDASI (Tab 2: Murid) ---
+    const totalUsiaEl = document.getElementById('edit-totalUsia');
+    const totalRombelEl = document.getElementById('edit-totalRombel');
+    const statusEl = document.getElementById('edit-murid-validation-status');
+    const muridInputs = form.querySelectorAll('#edit-dataMurid input[type="number"]');
+
+    function showTab(tabId) {
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+            targetTab.classList.add('active');
+            targetTab.style.display = 'block';
+            currentActiveTab = tabId;
+        }
+        document.querySelectorAll('.tabs-container button').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function updateMuridTotals() {
+        let totalUsia = 0;
+        form.querySelectorAll('#edit-dataMurid [name^="murid_"]').forEach(input => {
+            totalUsia += parseInt(input.value, 10) || 0;
+        });
+
+        const rombelA = (parseInt(form.querySelector('[name="kelompok_A_L"]')?.value) || 0) + (parseInt(form.querySelector('[name="kelompok_A_P"]')?.value) || 0);
+        const rombelB = (parseInt(form.querySelector('[name="kelompok_B_L"]')?.value) || 0) + (parseInt(form.querySelector('[name="kelompok_B_P"]')?.value) || 0);
+        const totalRombel = rombelA + rombelB;
+        
+        if (totalUsiaEl) totalUsiaEl.textContent = totalUsia;
+        if (totalRombelEl) totalRombelEl.textContent = totalRombel;
+        
+        if (statusEl) {
+             statusEl.classList.remove('status-ok', 'status-error');
+             if (totalUsia !== totalRombel) {
+                 statusEl.textContent = "Jumlah TIDAK SAMA! Harap Koreksi.";
+                 statusEl.classList.add('status-error');
+             } else if (totalUsia > 0) {
+                 statusEl.textContent = "Jumlah SAMA!";
+                 statusEl.classList.add('status-ok');
+             } else {
+                 statusEl.textContent = "Isikan jumlah murid.";
+                 statusEl.classList.add('status-ok');
+             }
+        }
+        return { totalUsia, totalRombel };
+    }
     
-    // Inisialisasi logika Tab Form
-    const formLogic = App.setupTabForm('lapbulEditFormPaud'); 
+    function validateTab3Ptk(e) {
+        e.preventDefault();
+        
+        const kepsekASN = parseInt(form.querySelector('#edit-dataPtk [name="kepsek_ASN"]')?.value) || 0;
+        const kepsekNonASN = parseInt(form.querySelector('#edit-dataPtk [name="kepsek_Non_ASN"]')?.value) || 0;
+        const totalKepsek = kepsekASN + kepsekNonASN;
+        
+        if (totalKepsek > 1) {
+            App.showAppModal('error', 'Validasi PTK: Jumlah Kepala Sekolah maksimal 1.');
+            return;
+        }
+
+        const ptkInputs = form.querySelectorAll('#edit-dataPtk input[type="number"]');
+        const totalPtk = Array.from(ptkInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
+        
+        if (totalPtk === 0) {
+             const confirmModal = document.getElementById('deleteModal');
+             confirmModal.querySelector('#deleteModalTitle').textContent = 'Konfirmasi Data PTK';
+             confirmModal.querySelector('#deleteModalBody').innerHTML = '<p>Anda belum mengisikan data jumlah PTK (Total: 0). Tetap lanjut ke dokumen?</p>';
+             
+             const confirmBtn = confirmModal.querySelector('#confirmDeleteBtn');
+             const cancelBtn = confirmModal.querySelector('#cancelDeleteBtn');
+
+             confirmBtn.textContent = 'Lanjut';
+             cancelBtn.textContent = 'Kembali';
+
+             const newConfirmBtn = confirmBtn.cloneNode(true);
+             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+             newConfirmBtn.onclick = () => {
+                  confirmModal.classList.remove('show');
+                  showTab('edit-dataDokumen');
+             };
+             cancelBtn.onclick = () => confirmModal.classList.remove('show');
+
+             confirmModal.classList.add('show');
+             return;
+        }
+        
+        showTab('edit-dataDokumen');
+    }
+
+    function validateTab2Murid(e) {
+        e.preventDefault();
+        const { totalUsia, totalRombel } = updateMuridTotals();
+        
+        if (totalUsia !== totalRombel) {
+            App.showAppModal('error', 'Kesalahan Validasi: Total Murid Menurut Usia harus SAMA dengan Total Murid Menurut Rombel.');
+            return; 
+        } 
+        
+        if (totalUsia === 0) {
+             const confirmModal = document.getElementById('deleteModal');
+             confirmModal.querySelector('#deleteModalTitle').textContent = 'Konfirmasi Data Siswa';
+             confirmModal.querySelector('#deleteModalBody').innerHTML = '<p>Anda belum mengisikan data jumlah siswa (Total: 0). Tetap lanjut?</p>';
+             
+             const confirmBtn = confirmModal.querySelector('#confirmDeleteBtn');
+             const cancelBtn = confirmModal.querySelector('#cancelDeleteBtn');
+
+             confirmBtn.textContent = 'Lanjut';
+             cancelBtn.textContent = 'Kembali';
+
+             const newConfirmBtn = confirmBtn.cloneNode(true);
+             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+             newConfirmBtn.onclick = () => {
+                  confirmModal.classList.remove('show');
+                  showTab('edit-dataPtk'); 
+             };
+             cancelBtn.onclick = () => confirmModal.classList.remove('show');
+
+             confirmModal.classList.add('show');
+             return;
+        }
+
+        showTab('edit-dataPtk');
+    }
     
-    // Panggil server untuk mengambil data baris
+    // --- LOGIKA UTAMA MEMUAT DATA ---
+    
+    App.showAppModal('loading', 'Memuat data Lapbul...');
+
     google.script.run
         .withSuccessHandler(rowData => {
-            loadingDiv.style.display = 'none';
-            formContainer.style.display = 'block';
-
+            document.getElementById('appModal').classList.remove('show');
+            
             if (rowData.error) {
-                App.showAppModal('error', `Gagal memuat data baris: ${rowData.error}`);
+                loadingDiv.innerHTML = `<p style="color:red; font-weight:bold;">Error Memuat Data: ${rowData.error}</p>`;
+                loadingDiv.style.display = 'block';
+                formContainer.style.display = 'none';
                 return;
             }
             
-            // KUNCI PERBAIKAN: Mengisi semua field form dengan data yang diterima
+            // 1. Isi semua field form
             for (const key in rowData) {
                 const field = form.querySelector(`[name="${key}"]`);
                 if (field) {
-                    if (field.type === 'file') continue;
-                    
-                    // Khusus untuk input number yang kosong, set ke 0
-                    if (field.type === 'number') {
-                         field.value = rowData[key] ? Number(rowData[key]) : 0;
-                    } 
-                    // Mengisi select dan input readonly
-                    else if (field.tagName === 'SELECT' || field.readOnly) {
-                        field.value = rowData[key];
-                    } 
-                    // Input teks biasa
-                    else {
-                        field.value = rowData[key];
+                    let value = rowData[key];
+                    if (field.type === 'number' && (value === '' || value === null || value === undefined)) {
+                        value = 0;
                     }
+                    field.value = value;
                 }
             }
-            
-            // Perbaikan Tab Unlocking
-            const allTabs = form.querySelectorAll('.tab-link');
-            allTabs.forEach((btn, index) => {
-                btn.disabled = false;
-            });
-            formLogic.unlockAndShowTab(0); // Kembali ke Tab 1 (Data Lembaga)
 
-            // Menampilkan link file lama
+            // 2. Update link dokumen
             const fileLinkContainer = document.getElementById('existingFileLink');
             if (rowData.Dokumen) { 
                 fileLinkContainer.innerHTML = `<a href="${rowData.Dokumen}" target="_blank">Lihat File Saat Ini</a>`; 
@@ -2121,48 +2269,108 @@ function initLapbulEditPaudPage(params) {
                 fileLinkContainer.innerHTML = 'Tidak ada file.'; 
             }
 
+            // 3. Tampilkan form dan tab pertama
+            loadingDiv.style.display = 'none';
+            formContainer.style.display = 'flex';
+            showTab(currentActiveTab); 
+            
+            // 4. Inisialisasi perhitungan setelah data dimuat
+            updateMuridTotals(); 
+
         })
         .withFailureHandler(err => {
-            loadingDiv.innerHTML = `<p style="color:red;">Gagal menghubungi server: ${err.message}</p>`;
+            loadingDiv.innerHTML = `<p style="color:red; font-weight:bold;">Gagal Menghubungi Server: ${err.message}</p>`;
+            loadingDiv.style.display = 'flex';
         })
         .getLapbulDataByRow(params.rowIndex, params.source);
 
-    // SUBMIT HANDLER (tetap sama)
+    // --- SETUP EVENT LISTENERS TAB & VALIDASI KHUSUS ---
+    
+    // Event listeners untuk tombol tab di atas
+    form.querySelectorAll('.tabs-container button').forEach(button => {
+        button.addEventListener('click', function() {
+            showTab(this.getAttribute('data-tab'));
+        });
+    });
+
+    // Event listener untuk tombol NEXT Tab 1 (Sekolah -> Murid)
+    const nextSekolahBtn = document.querySelector('#edit-dataSekolah .next-tab-btn');
+    if (nextSekolahBtn) {
+        nextSekolahBtn.addEventListener('click', (e) => {
+            if (form.reportValidity()) {
+                showTab('edit-dataMurid');
+            } else {
+                 App.showAppModal('error', 'Harap lengkapi semua field yang wajib diisi di tab ini.');
+            }
+        });
+    }
+
+    // Event listener untuk tombol NEXT Tab 2 (Murid -> PTK)
+    const nextMuridToPtkBtn = document.querySelector('#edit-dataMurid .next-tab-btn');
+    if (nextMuridToPtkBtn) {
+        nextMuridToPtkBtn.addEventListener('click', validateTab2Murid);
+    }
+
+    // Event listener untuk tombol NEXT Tab 3 (PTK -> Dokumen)
+    const nextPtkToDokumenBtn = document.querySelector('#edit-dataPtk .next-tab-btn');
+    if (nextPtkToDokumenBtn) {
+        nextPtkToDokumenBtn.addEventListener('click', validateTab3Ptk);
+    }
+    
+    // Event listeners untuk tombol PREVIOUS
+    form.querySelectorAll('.tab-form-footer button[data-target]').forEach(button => {
+        if (button.classList.contains('prev-tab-btn')) {
+             button.addEventListener('click', function(e) {
+                 e.preventDefault();
+                 showTab(this.getAttribute('data-target'));
+             });
+        }
+    });
+
+    // Event listener untuk perhitungan input number
+    form.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', updateMuridTotals);
+    });
+    
+    // --- LOGIKA FORM SUBMISSION (KRITIS) ---
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
+        const submitButton = form.querySelector('#edit-lapbul-submit-btn');
         submitButton.disabled = true;
-        App.showAppModal('loading', 'Menyimpan perubahan laporan...');
+        App.showAppModal('loading', 'Menyimpan perubahan...');
 
-        const formData = new FormData(form);
-        const payload = {};
+        // 1. Ambil semua data sebagai payload
+        const payload = Object.fromEntries(new FormData(form)); 
         
-        // Memastikan input number kosong menjadi 0 saat submit
-        for (const [key, value] of formData.entries()) {
-            const field = form.querySelector(`[name="${key}"]`);
-            if (field?.type === 'number' && !value) {
-                payload[key] = "0"; 
-            } else {
-                payload[key] = value;
-            }
-        }
+        const fileInput = form.querySelector('input[type="file"]');
+        const file = fileInput.files[0];
+        
+        // 2. KRITIS: Hapus properti fileData dari payload jika tidak ada file yang dipilih
+        // Ini mencegah pengiriman objek File yang tidak valid ke server.
+        delete payload.fileData; 
         
         const sendData = (data) => {
             google.script.run
-                .withSuccessHandler(res => {
-                    App.showAppModal('success', res, 'lapbul_kelola');
+                .withSuccessHandler(response => {
+                    App.showAppModal('success', response, 'lapbul_kelola');
                 })
-                .withFailureHandler(err => {
-                    App.showAppModal('error', err.message);
+                .withFailureHandler(error => {
+                    App.showAppModal('error', `Gagal menyimpan: ${error.message}`);
                     submitButton.disabled = false;
                 })
-                .updateLapbulData(data);
+                .updateLapbulData(data); 
         };
-
-        const file = form.querySelector('input[type="file"]').files[0];
+        
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
+                if (file.size > 300 * 1024) {
+                    App.showAppModal('error', 'Ukuran file tidak boleh lebih dari 300 KB.');
+                    submitButton.disabled = false;
+                    return;
+                }
+                
+                // 3. Jika ada file, tambahkan fileData yang sudah di-encode ke payload
                 payload.fileData = { 
                     fileName: file.name, 
                     mimeType: file.type, 
@@ -2172,10 +2380,13 @@ function initLapbulEditPaudPage(params) {
             };
             reader.readAsDataURL(file);
         } else {
+            // 4. Jika tidak ada file, kirim payload tanpa properti fileData
             sendData(payload);
         }
     });
 }
+
+const BULAN_OPTIONS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 function initLapbulEditSdPage(params) {
     if (!params || !params.rowIndex) {

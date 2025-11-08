@@ -919,52 +919,100 @@ function updateLapbulData(formData) {
         const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
         if (!sheet) throw new Error(`Sheet target tidak ditemukan: ${config.sheet}`);
 
-        // 1. Ambil headers
-        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
+        const lastCol = sheet.getLastColumn();
         
-        // 2. Ambil nilai lama
-        const range = sheet.getRange(rowIndex, 1, 1, headers.length);
-        const existingValues = range.getValues()[0];
+        // 1. Ambil data mentah (RAW) dan header dari sheet
+        const range = sheet.getRange(1, 1, rowIndex, lastCol);
+        const allValues = range.getValues();
+        const fullHeaders = allValues[0].map(h => h.trim()); // Header Baris 1
+        const existingValues = allValues[rowIndex - 1]; // Nilai RAW dari baris target (termasuk Date Object)
 
-        // 3. LOGIKA UPLOAD FILE BARU (Jika ada)
-        let fileUrl = existingValues[headers.indexOf('Dokumen')]; // Pertahankan URL lama secara default
+        // Tentukan peta kunci/nama form untuk PAUD
+        const PAUD_MAP_LENGTH = PAUD_FORM_INDEX_MAP.length;
+        
+        // 2. LOGIKA UPLOAD FILE BARU & SETUP METADATA
+        const docIndex = fullHeaders.indexOf('Dokumen');
+        // Ambil URL Dokumen dari nilai tampilan (lebih aman)
+        let fileUrl = docIndex !== -1 ? sheet.getRange(rowIndex, docIndex + 1).getDisplayValue() : ''; 
+        
         if (formData.fileData && formData.fileData.data) {
-            const FOLDER_ID_LAPBUL = FOLDER_CONFIG[source === 'PAUD' ? 'LAPBUL_KB' : 'LAPBUL_SD']; // Asumsi FOLDER_CONFIG sudah ada
-            const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
-            const tahunFolder = getOrCreateFolder(mainFolder, formData.Tahun);
-            const bulanFolder = getOrCreateFolder(tahunFolder, formData.Bulan);
+             const FOLDER_ID_LAPBUL = FOLDER_CONFIG[source === 'PAUD' ? 'LAPBUL_KB' : 'LAPBUL_SD']; 
+             const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
+             
+             const tahunFolderName = formData.Tahun || sheet.getRange(rowIndex, fullHeaders.indexOf('Tahun') + 1).getDisplayValue();
+             const bulanFolderName = formData.Bulan || sheet.getRange(rowIndex, fullHeaders.indexOf('Bulan') + 1).getDisplayValue();
+             
+             const tahunFolder = getOrCreateFolder(mainFolder, tahunFolderName);
+             const bulanFolder = getOrCreateFolder(tahunFolder, bulanFolderName);
+             
+             // Hapus file lama (Opsional)
+             const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
+             if (oldFileIdMatch) {
+                 try { DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true); } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
+             }
+             
+             const newFileName = `${formData['Nama Sekolah']} - Lapbul ${bulanFolderName} ${tahunFolderName}.pdf`;
+             const decodedData = Utilities.base64Decode(formData.fileData.data);
+             const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
+             const newFile = bulanFolder.createFile(blob);
+             fileUrl = newFile.getUrl();
+        }
+
+        formData.Update = new Date(); // Timestamp Update Baru
+        formData.Dokumen = fileUrl; // URL dokumen
+
+        // 3. SUSUN BARIS DATA BARU (Iterasi berdasarkan lebar sheet actual)
+        const newRowValues = [];
+        const DATE_COLUMNS = ['Tanggal Unggah', 'Update'];
+        
+        // Loop sampai lastCol (lebar sheet sebenarnya)
+        for (let i = 0; i < lastCol; i++) {
+            const header = fullHeaders[i];
+            let value = existingValues[i]; // Default: Nilai RAW lama (penting untuk Date)
             
-            // Hapus file lama (Opsional, tergantung kebijakan Anda)
-            const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
-            if (oldFileIdMatch) {
-                try {
-                    DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true);
-                } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
+            let formKey = header;
+            
+            // Jika PAUD dan kolom ini termasuk yang dimodifikasi, gunakan nama pendek dari map
+            if (source === 'PAUD' && i < PAUD_MAP_LENGTH && PAUD_FORM_INDEX_MAP[i]) {
+                formKey = PAUD_FORM_INDEX_MAP[i];
+            }
+
+            // Cek apakah data baru ada di formData dengan formKey yang ditentukan
+            if (formData.hasOwnProperty(formKey)) {
+                value = formData[formKey];
+                
+                // Konversi khusus untuk input number yang kosong (kirim 0)
+                if (typeof value === 'string' && value.trim() === '') {
+                     // Asumsi kolom yang kosong adalah kolom angka (murid/ptk), kirim 0
+                     if (!DATE_COLUMNS.includes(header) && header !== 'Dokumen' && header !== 'Tanggal Unggah') {
+                        value = 0;
+                     } else {
+                        value = ''; // Biarkan empty string jika itu bukan kolom angka
+                     }
+                }
+            } 
+            
+            // Kolom metadata yang selalu diperbarui, mengesampingkan nilai form
+            if (header === 'Update') {
+                 value = formData.Update;
+            } else if (header === 'Dokumen') {
+                 value = formData.Dokumen;
+            } else if (header === 'Tanggal Unggah' && (existingValues[i] === '' || existingValues[i] === null)) {
+                // Jika Tanggal Unggah memang kosong dari awal, biarkan kosong
+                value = '';
             }
             
-            // Unggah file baru
-            const newFileName = `${formData['Nama Sekolah']} - Lapbul ${formData.Bulan} ${formData.Tahun}.pdf`;
-            const decodedData = Utilities.base64Decode(formData.fileData.data);
-            const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
-            const newFile = bulanFolder.createFile(blob);
-            fileUrl = newFile.getUrl();
+            newRowValues.push(value);
         }
-        
-        // 4. SUSUN BARIS DATA BARU
-        formData.Update = new Date(); // Tambahkan Timestamp Update
-        formData.Dokumen = fileUrl; // Update URL dokumen
 
-        const newRowValues = headers.map((header, index) => {
-            // Ambil nilai dari formData jika ada, jika tidak, gunakan nilai lama
-            return formData.hasOwnProperty(header) ? formData[header] : existingValues[index];
-        });
-
-        // 5. SET NILAI
-        range.setValues([newRowValues]);
+        // 4. SET NILAI
+        sheet.getRange(rowIndex, 1, 1, lastCol).setValues([newRowValues]);
         
         return "Data Laporan Bulan berhasil diperbarui.";
     } catch (e) {
-        return { error: `Gagal memperbarui data di server: ${e.message}` };
+        Logger.log(`FATAL ERROR in updateLapbulData: ${e.message} Stack: ${e.stack}`);
+        // Kirim error ke client untuk menghentikan spinner
+        return { error: `Gagal memperbarui data di server: ${e.message}. Cek Log Server untuk detail.` };
     }
 }
 
