@@ -77,10 +77,15 @@ App.loadPage = (event, pageName, params = {}) => {
         .withSuccessHandler(html => {
             try {
                 contentArea.innerHTML = html;
-                if (typeof App.pageInitializers !== 'undefined' && typeof App.pageInitializers[pageName] === 'function') {
-                    App.pageInitializers[pageName](params);
-                }
-                App.updateActiveMenu(pageName);
+                
+                // KEMBALIKAN KE 0
+                setTimeout(() => {
+                    if (typeof App.pageInitializers !== 'undefined' && typeof App.pageInitializers[pageName] === 'function') {
+                        App.pageInitializers[pageName](params);
+                    }
+                    App.updateActiveMenu(pageName);
+                }, 0); // <-- KEMBALIKAN KE 0
+
             } catch (e) {
                 console.error("Client-side error after loading page:", e);
                 contentArea.innerHTML = `<div class="error-box" style="padding: 20px; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; border-radius: 8px; color: white;"><h3>Error JavaScript di Browser!</h3><p><strong>Pesan:</strong> ${e.message}</p><p><strong>Stack:</strong> ${e.stack}</p></div>`;
@@ -214,28 +219,26 @@ const applySorting = (sortConfig) => {
 // ===============================================================
 
 App.initializeGenericTablePage = (config) => {
-    // VARIABEL LOKAL: Dideklarasikan di awal untuk diakses oleh semua fungsi di bawah
+    // VARIABEL LOKAL
     let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
-    let isDoubleHeader = false; // Dihapus karena tidak digunakan dalam lapbul
-    let headerRow1 = [], headerRow2 = []; // Dihapus karena tidak digunakan dalam lapbul
     let filterData = null;
-    
+
     config.filters = config.filters || [];
-    
-    // --- FUNGSI HELPER LOKAL (Dipindahkan ke dalam scope untuk stabilitas) ---
+
+    // --- FUNGSI HELPER LOKAL ---
     const getRowValue = (row, key) => {
+        // Cek apakah data di-nest (seperti di halaman Kelola)
         const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
         return isDataNested ? (row.data ? row.data[key] : row[key]) : row[key];
     };
-    
-    // FUNGSI PARSER UNTUK SORTING TANGGAL (Mengatasi masalah pengurutan)
+
+    // FUNGSI PARSER UNTUK SORTING TANGGAL
     const parseCustomDateTime = (dateStr) => {
         const cleanedStr = String(dateStr).trim();
         if (!cleanedStr || cleanedStr === '-') return 0;
         // Format: dd/MM/yyyy HH:mm:ss
         const parts = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})/);
         if (parts && parts.length === 7) {
-            // new Date(tahun, bulan(0-11), tanggal, jam, menit, detik)
             return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
         }
         const dateOnly = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
@@ -244,7 +247,7 @@ App.initializeGenericTablePage = (config) => {
         }
         return 0;
     };
-    
+
     // FUNGSI SORTING
     const applySorting = (dataArray, sortConfig) => {
         if (!sortConfig || dataArray.length === 0) return dataArray;
@@ -253,7 +256,7 @@ App.initializeGenericTablePage = (config) => {
             for (let i = 0; i < sortConfig.length; i++) {
                 const conf = sortConfig[i];
                 const parser = conf.parser || ((val) => val); 
-                
+
                 const valA = parser(a[conf.column]) || 0; 
                 const valB = parser(b[conf.column]) || 0; 
 
@@ -267,8 +270,8 @@ App.initializeGenericTablePage = (config) => {
         });
         return dataArray; 
     };
-    
-    // FUNGSI UTAMA RENDERING (buildTable)
+
+    // FUNGSI PAGINATION
     const calculateRowsPerPage = () => {
         const tableContainer = document.getElementById(config.tableId)?.closest('.table-container');
         if (!tableContainer) return 15;
@@ -284,17 +287,17 @@ App.initializeGenericTablePage = (config) => {
         if (!paginationContainer) return;
 
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
-        
+
         if (pageCount <= 1) {
             paginationContainer.style.display = 'none';
             return;
         }
-        
+
         paginationContainer.style.display = 'flex';
         const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
         const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="App.changePage(-1)">«</button>`;
         const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="App.changePage(1)">»</button>`;
-        
+
         paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
     };
 
@@ -303,19 +306,22 @@ App.initializeGenericTablePage = (config) => {
         buildTable();
     };
 
+    // ========================================================
+    // ===== PERBAIKAN UTAMA DI FUNGSI buildTable =====
+    // ========================================================
     const buildTable = () => {
         const table = document.getElementById(config.tableId);
         if (!table) return;
         const tableBody = document.getElementById(config.tableId + 'Body') || table.querySelector('tbody');
         const tableFoot = table.querySelector('tfoot');
         if (!tableBody) return;
-        
+
         tableBody.innerHTML = '';
         if (tableFoot) tableFoot.innerHTML = '';
 
         const usePagination = !!document.getElementById('pagination-container');
         let paginatedRows = currentFilteredRows;
-        
+
         if (usePagination) {
             rowsPerPage = calculateRowsPerPage();
             const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage) || 1;
@@ -329,51 +335,84 @@ App.initializeGenericTablePage = (config) => {
             const colspan = headerCols.length + 1;
             tableBody.innerHTML = `<tr><td colspan="${colspan}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
-            const AppLoadPage = typeof App.loadPage === 'function' ? App.loadPage : console.error;
-            const AppShowDelete = typeof App.showDeleteConfirmation === 'function' ? App.showDeleteConfirmation : console.error;
-            
+            // Ambil referensi fungsi di awal
+            const AppLoadPage = App.loadPage;
+            const AppShowDelete = App.showDeleteConfirmation;
+
             paginatedRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
+
+                // 1. Tambahkan Kolom Nomor
                 const rowNumber = usePagination ? (currentPage - 1) * rowsPerPage + index + 1 : index + 1;
-                let rowCells = [`<td>${rowNumber}</td>`];
-                
+                const tdNum = document.createElement('td');
+                tdNum.textContent = rowNumber;
+                tr.appendChild(tdNum);
+
+                // 2. Loop melalui header data (GANTI DARI .innerHTML KE DOM)
                 headerCols.forEach(header => {
                     const cellData = row[header] ?? '';
-                    
+                    const td = document.createElement('td');
+
                     if (header === 'Dokumen' && String(cellData).startsWith('http')) {
-                        rowCells.push(`<td class="view-btn-container"><a href="${cellData}" target="_blank" class="action-btn view-btn"><i class="fas fa-eye"></i> Lihat</a></td>`);
+                        td.className = 'view-btn-container';
+                        const link = document.createElement('a');
+                        link.href = cellData;
+                        link.target = '_blank';
+                        link.className = 'action-btn view-btn';
+                        link.innerHTML = '<i class="fas fa-eye"></i> Lihat';
+                        td.appendChild(link);
+
                     } else if (header === 'Aksi') {
                         const rowIndex = row._rowIndex;
                         const source = row._source;
-                        const rowInfoString = JSON.stringify(row).replace(/'/g, "\\'");
-                        
-                        let dynamicEditPage = config.editPage || 'lapbul_edit_sd'; 
-                        if (config.tableId === 'lapbulKelolaTable') {
-                            dynamicEditPage = (source === 'PAUD') ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
-                        }
 
+                        // PERBAIKAN: Pastikan AppShowDelete ada sebelum memanggilnya
                         if (rowIndex !== undefined && typeof AppLoadPage === 'function' && typeof AppShowDelete === 'function') {
-                            rowCells.push(
-                                `<td class="action-buttons">` +
-                                `<button class="action-btn edit-btn" onclick="App.loadPage(event, '${dynamicEditPage}', { rowIndex: ${rowIndex}, source: '${source}' })"><i class="fas fa-pencil-alt"></i> Edit</button>` +
-                                `<button class="action-btn delete-btn" onclick='App.showDeleteConfirmation(this)' data-row-info='${rowInfoString}'><i class="fas fa-trash"></i> Hapus</button>` +
-                                `</td>`
-                            );
+                            td.className = 'action-buttons';
+
+                            // Tentukan halaman edit dinamis
+                            let dynamicEditPage = config.editPage || 'lapbul_edit_sd'; 
+                            if (config.tableId === 'lapbulKelolaTable') {
+                                dynamicEditPage = (source === 'PAUD') ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
+                            }
+
+                            // Tombol Edit
+                            const editButton = document.createElement('button');
+                            editButton.className = 'action-btn edit-btn';
+                            editButton.innerHTML = '<i class="fas fa-pencil-alt"></i> Edit';
+                            editButton.addEventListener('click', (e) => {
+                                App.loadPage(e, dynamicEditPage, { rowIndex: rowIndex, source: source });
+                            });
+
+                            // Tombol Hapus
+                            const deleteButton = document.createElement('button');
+                            deleteButton.className = 'action-btn delete-btn';
+                            deleteButton.innerHTML = '<i class="fas fa-trash"></i> Hapus';
+                            deleteButton.dataset.rowInfo = JSON.stringify(row); // Simpan data di dataset
+
+                            // ===== INI PERBAIKANNYA =====
+                            deleteButton.addEventListener('click', function() {
+                                App.showDeleteConfirmation(this); // 'this' adalah tombol itu sendiri
+                            });
+                            // ==============================
+
+                            td.appendChild(editButton);
+                            td.appendChild(deleteButton);
                         } else {
-                            rowCells.push('<td>-</td>');
+                            td.textContent = '-';
                         }
                     } else {
-                        let displayCell = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData;
-                        rowCells.push(`<td>${displayCell}</td>`);
+                        // Sel data biasa
+                        td.textContent = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData;
                     }
+                    tr.appendChild(td);
                 });
-                tr.innerHTML = rowCells.join('');
                 tableBody.appendChild(tr);
             });
         }
-    }; // END buildTable
+    }; // END buildTable (Baru)
 
-    // ... (Logika filter dan setup listeners) ...
+    // --- FILTER & EVENT LISTENERS (Tetap sama) ---
     const handleFilterChange = () => {
         applyFilters();
     };
@@ -386,7 +425,7 @@ App.initializeGenericTablePage = (config) => {
             searchInput.removeEventListener('input', debouncedFilterChange);
             searchInput.addEventListener('input', debouncedFilterChange);
         }
-        
+
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown) {
@@ -395,37 +434,34 @@ App.initializeGenericTablePage = (config) => {
             }
         });
     };
-    
+
     const applyFilters = () => {
         let filtered = allDataRows;
-        
-        // 1. Amankan Sorting Awal
+
         if (config.initialSort && filtered.length > 0) {
             filtered = applySorting(filtered, config.initialSort); 
         }
 
-        // 2. Filter Search Input
         const searchInput = document.getElementById('searchFilter');
         const searchTerm = searchInput ? String(searchInput.value).toLowerCase() : '';
 
         if (searchTerm) {
             filtered = filtered.filter(row => {
+                const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
                 const targetRow = isDataNested ? row.data : row;
-
                 return Object.keys(targetRow).some(key => {
                     const cellValue = String(targetRow[key] ?? '').toLowerCase();
                     return cellValue.includes(searchTerm);
                 });
             });
         }
-        
-        // 3. Filter Dropdown Inputs
+
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown && dropdown.value) {
                 const filterValue = dropdown.value;
                 const filterKey = filterConf.dataColumn;
-                
+
                 filtered = filtered.filter(row => {
                     const rowValue = getRowValue(row, filterKey);
                     return String(rowValue).trim() === filterValue;
@@ -440,16 +476,15 @@ App.initializeGenericTablePage = (config) => {
 
     const populateCascadingFilters = (data) => {
         filterData = data;
-        
-        // Populate non-cascading
+
         config.filters.forEach(filterConf => {
             if (filterConf.type !== 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
                 const filterKey = filterConf.dataColumn || filterConf.key;
-                
+
                 if (dropdown && dropdown.tagName === 'SELECT' && filterKey) {
                     const uniqueValues = [...new Set(allDataRows.map(row => String(getRowValue(row, filterKey))))].filter(Boolean).sort();
-                    
+
                     const defaultText = filterConf.defaultText || 'Semua';
                     dropdown.innerHTML = `<option value="">${defaultText}</option>`;
                     uniqueValues.forEach(value => {
@@ -459,20 +494,19 @@ App.initializeGenericTablePage = (config) => {
             }
         });
 
-        // Logika Casading (Local Filtering)
         config.filters.forEach(filterConf => {
             if (filterConf.type === 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
                 const parentDropdown = document.getElementById(filterConf.parent);
-                
+
                 if (dropdown && parentDropdown) {
                     const updateDropdown = () => {
                         const selectedParentValue = parentDropdown.value;
                         const keyChild = filterConf.dataColumn || filterConf.key;
                         const keyParent = filterConf.parentKey;
-                        
+
                         dropdown.innerHTML = '<option value="">Semua Sekolah</option>';
-                        
+
                         if (selectedParentValue) {
                             const uniqueChildValues = [...new Set(allDataRows
                                 .filter(row => String(getRowValue(row, keyParent)).trim() === selectedParentValue)
@@ -482,49 +516,38 @@ App.initializeGenericTablePage = (config) => {
                                 dropdown.innerHTML += `<option value="${value}">${value}</option>`;
                             });
                         }
-                        
                         handleFilterChange();
                     };
-
                     parentDropdown.removeEventListener('change', updateDropdown);
                     parentDropdown.addEventListener('change', updateDropdown);
-                    
                     dropdown.removeEventListener('change', handleFilterChange);
                     dropdown.addEventListener('change', handleFilterChange);
-                    
                     updateDropdown();
                 }
             }
         });
     };
 
-    // KUNCI PERBAIKAN STUCK SPINNER: Mengamankan akses elemen
     const finalizeSetup = (hasError = false) => {
         const loadingEl = document.getElementById('loadingStatus');
         if (loadingEl) {
             loadingEl.style.display = 'none';
         }
-        
         if (!hasError) {
             const wrapperEl = document.getElementById('tableWrapper');
             if (wrapperEl) {
                 wrapperEl.style.display = 'block';
             }
-            
             setupEventListeners();
-            
-            // Panggil applyFilters yang sudah termasuk initialSort
             applyFilters();
         }
     };
 
     const serverFunction = config.serverFunction;
     const filterFunction = config.filterFunction;
-    
-    // Server Call
+
     google.script.run
         .withSuccessHandler(data => {
-            
             if (data.error) { 
                 document.getElementById('loadingStatus').innerHTML = `<p style="color:red;">Error dari Server: ${data.error}</p>`;
                 finalizeSetup(true);
@@ -534,13 +557,11 @@ App.initializeGenericTablePage = (config) => {
             allDataRows = data.rows || data; 
             headerCols = data.headers;
 
-            // Membangun header tabel awal
             const tableHead = document.querySelector(`#${config.tableId} thead`);
             if (tableHead) {
                 tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
             }
-            
-            // --- LOGIKA FILTERING ---
+
             if (filterFunction) {
                 google.script.run
                     .withSuccessHandler(filterResult => {
@@ -657,9 +678,162 @@ App.setupTabForm = (formId) => {
                 maxUnlockedTabIndex = tabIndex;
             }
             showTab(tabIndex);
-        }
+        },
+        // ===========================================
+        // ===== TAMBAHKAN DUA BARIS DI BAWAH INI =====
+        // ===========================================
+        validateTab: validateTab,
+        showTab: showTab
     };
 };
+
+// ========================================================
+// ===== SEMUA FUNGSI HAPUS SEKARANG ADA DI SINI =====
+// ========================================================
+App.showDeleteConfirmation = (button) => {
+    const rowInfo = JSON.parse(button.dataset.rowInfo);
+    const modal = document.getElementById('deleteModal');
+    if (!modal) return;
+
+    const modalTitle = modal.querySelector('#deleteModalTitle');
+    const modalBody = modal.querySelector('#deleteModalBody');
+    const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+    const cancelBtn = modal.querySelector('#cancelDeleteBtn');
+    
+    // Tentukan jenis data untuk pesan
+    const isSk = rowInfo._source === 'SK';
+    const isPaud = rowInfo._source === 'PAUD';
+    const isSd = rowInfo._source === 'SDN' || rowInfo._source === 'SDS';
+    // Modifikasi: Cek header 'Nama Sekolah' atau 'Nama Lembaga' untuk Lapbul
+    const isLapbul = rowInfo.hasOwnProperty('Nama Sekolah') && (rowInfo._source === 'PAUD' || rowInfo._source === 'SD');
+
+    let infoHtml = '';
+    let deleteFunction;
+    let reloadPage;
+    
+    if (isSk) {
+        infoHtml = `<p>Apakah Anda yakin ingin menghapus data SK ini?</p>
+                    <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
+                       Sekolah: ${rowInfo['Nama SD']}<br>
+                       Tahun Ajaran: ${rowInfo['Tahun Ajaran']}
+                    </div>`;
+        deleteFunction = App.processDeletionSK;
+        reloadPage = 'sk_kelola';
+    } else if (isPaud && !isLapbul) { // PTK PAUD
+        infoHtml = `<p>Apakah Anda yakin ingin menghapus data PTK ini?</p>
+                    <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
+                       Nama: ${rowInfo['Nama']}<br>
+                       Lembaga: ${rowInfo['Nama Lembaga']}
+                    </div>`;
+        deleteFunction = App.processDeletionPtkPaud;
+        reloadPage = 'ptk_kelola_paud';
+    } else if (isSd) { // PTK SD
+        infoHtml = `<p>Yakin ingin menghapus PTK ini?</p>
+                    <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
+                       Nama: ${rowInfo['Nama']}<br>
+                       Unit Kerja: ${rowInfo['Unit Kerja']}
+                    </div>`;
+        deleteFunction = App.processDeletionPtkSd;
+        reloadPage = 'ptk_kelola_sd';
+    } else if (isLapbul) { // Laporan Bulan (PAUD/SD)
+        infoHtml = `<p>Apakah Anda yakin ingin menghapus Laporan Bulan ini?</p>
+                    <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
+                       Sekolah: ${rowInfo['Nama Sekolah']}<br>
+                       Bulan/Tahun: ${rowInfo['Bulan']} ${rowInfo['Tahun']}
+                    </div>`;
+        deleteFunction = App.processDeletionLapbul;
+        reloadPage = 'lapbul_kelola';
+    } else {
+        App.showAppModal('error', 'Gagal: Jenis data untuk dihapus tidak teridentifikasi.');
+        return;
+    }
+
+    modalTitle.textContent = 'Konfirmasi Hapus';
+    modalBody.innerHTML = infoHtml;
+
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.textContent = 'Ya, Hapus';
+    newConfirmBtn.onclick = () => App.showDeletePrompt(rowInfo, deleteFunction, reloadPage);
+
+    cancelBtn.onclick = () => modal.classList.remove('show');
+    modal.classList.add('show');
+};
+
+App.showDeletePrompt = (rowInfo, deleteFunction, reloadPage) => {
+    const modal = document.getElementById('deleteModal');
+    const modalTitle = modal.querySelector('#deleteModalTitle');
+    const modalBody = modal.querySelector('#deleteModalBody');
+    const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+
+    modalTitle.textContent = 'Masukkan Kode Hapus';
+    modalBody.innerHTML = `<p>Kode hapus dapat ditanyakan ke admin Korwil.</p>
+                             <input type="password" id="kodeHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Masukkan Kode Hapus">`;
+    
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.textContent = 'Konfirmasi & Hapus';
+    newConfirmBtn.onclick = () => deleteFunction(rowInfo, reloadPage);
+
+    modal.querySelector('#cancelDeleteBtn').onclick = () => modal.classList.remove('show');
+
+    setTimeout(() => document.getElementById('kodeHapusInput').focus(), 100);
+};
+
+App.processDeletionSK = (rowInfo, reloadPage) => {
+    const deleteCode = document.getElementById('kodeHapusInput').value;
+    if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
+    App.showAppModal('loading', 'Menghapus data dan file terkait...');
+    google.script.run
+        .withSuccessHandler(response => {
+            document.getElementById('deleteModal').classList.remove('show');
+            App.showAppModal('success', response, reloadPage);
+        })
+        .withFailureHandler(error => App.showAppModal('error', error.message))
+        .deleteSKData(rowInfo._rowIndex, deleteCode);
+};
+
+App.processDeletionPtkPaud = (rowInfo, reloadPage) => {
+    const deleteCode = document.getElementById('kodeHapusInput').value;
+    if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
+    App.showAppModal('loading', 'Menghapus data...');
+    google.script.run
+        .withSuccessHandler(response => {
+            document.getElementById('deleteModal').classList.remove('show');
+            App.showAppModal('success', response, reloadPage);
+        })
+        .withFailureHandler(error => App.showAppModal('error', error.message))
+        .deletePtkPaudData(rowInfo._rowIndex, deleteCode);
+};
+
+App.processDeletionPtkSd = (rowInfo, reloadPage) => {
+    const deleteCode = document.getElementById('kodeHapusInput').value;
+    if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
+    App.showAppModal('loading', 'Menghapus data...');
+    google.script.run
+        .withSuccessHandler(response => {
+            document.getElementById('deleteModal').classList.remove('show');
+            App.showAppModal('success', response, reloadPage);
+        })
+        .withFailureHandler(error => App.showAppModal('error', error.message))
+        .deletePtkSdData(rowInfo._rowIndex, rowInfo._source, deleteCode);
+};
+
+App.processDeletionLapbul = (rowInfo, reloadPage) => {
+    const deleteCode = document.getElementById('kodeHapusInput').value;
+    if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
+    App.showAppModal('loading', 'Menghapus data dan file terkait...');
+    google.script.run
+        .withSuccessHandler(response => {
+            document.getElementById('deleteModal').classList.remove('show');
+            App.showAppModal('success', response, reloadPage);
+        })
+        .withFailureHandler(error => App.showAppModal('error', error.message))
+        .deleteLapbulData(rowInfo._rowIndex, rowInfo._source, deleteCode);
+};
+// ========================================================
+// ===== AKHIR DARI BLOK FUNGSI HAPUS =====
+// ========================================================
 
 /**
  * ===================================================================
@@ -796,155 +970,6 @@ function initSkKelolaPage() {
             }
         ]
     });
-
-    // **AWAL BLOK KODE PERBAIKAN UNTUK FUNGSI HAPUS**
-
-    // Fungsi untuk menampilkan konfirmasi hapus (langkah 1)
-    App.showDeleteConfirmation = (button) => {
-        const rowInfo = JSON.parse(button.dataset.rowInfo);
-        const modal = document.getElementById('deleteModal');
-        if (!modal) return;
-
-        const modalTitle = modal.querySelector('#deleteModalTitle');
-        const modalBody = modal.querySelector('#deleteModalBody');
-        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
-        const cancelBtn = modal.querySelector('#cancelDeleteBtn');
-        
-        // Tentukan jenis data untuk pesan
-        const isSk = rowInfo._source === 'SK';
-        const isPaud = rowInfo._source === 'PAUD';
-        const isSd = rowInfo._source === 'SDN' || rowInfo._source === 'SDS';
-        const isLapbul = rowInfo._source === 'PAUD_LAPBUL' || rowInfo._source === 'SD_LAPBUL' || (!isSk && !isPaud && !isSd);
-
-        let infoHtml = '';
-        let deleteFunction;
-        let reloadPage;
-        
-        // Asumsi Lapbul menggunakan _source yang berbeda, jika tidak ada _source, anggap Lapbul juga
-        if (rowInfo._source === 'SK') {
-            infoHtml = `<p>Apakah Anda yakin ingin menghapus data SK ini?</p>
-                        <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                           Sekolah: ${rowInfo['Nama SD']}<br>
-                           Tahun Ajaran: ${rowInfo['Tahun Ajaran']}
-                        </div>`;
-            deleteFunction = App.processDeletionSK;
-            reloadPage = 'sk_kelola';
-        } else if (isPaud) { // PTK PAUD
-            infoHtml = `<p>Apakah Anda yakin ingin menghapus data PTK ini?</p>
-                        <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                           Nama: ${rowInfo['Nama']}<br>
-                           Lembaga: ${rowInfo['Nama Lembaga']}
-                        </div>`;
-            deleteFunction = App.processDeletionPtkPaud;
-            reloadPage = 'ptk_kelola_paud';
-        } else if (isSd) { // PTK SD
-            infoHtml = `<p>Yakin ingin menghapus PTK ini?</p>
-                        <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                           Nama: ${rowInfo['Nama']}<br>
-                           Unit Kerja: ${rowInfo['Unit Kerja']}
-                        </div>`;
-            deleteFunction = App.processDeletionPtkSd;
-            reloadPage = 'ptk_kelola_sd';
-        } else if (isLapbul) { // Laporan Bulan (PAUD/SD)
-            infoHtml = `<p>Apakah Anda yakin ingin menghapus Laporan Bulan ini?</p>
-                        <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                           Sekolah: ${rowInfo['Nama Sekolah']}<br>
-                           Bulan/Tahun: ${rowInfo['Bulan']} ${rowInfo['Tahun']}
-                        </div>`;
-            deleteFunction = App.processDeletionLapbul;
-            reloadPage = 'lapbul_kelola';
-        } else {
-            // Fallback for any unknown object, prevent deletion
-            App.showAppModal('error', 'Gagal: Jenis data untuk dihapus tidak teridentifikasi.');
-            return;
-        }
-
-        modalTitle.textContent = 'Konfirmasi Hapus';
-        modalBody.innerHTML = infoHtml;
-
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.textContent = 'Ya, Hapus';
-        newConfirmBtn.onclick = () => App.showDeletePrompt(rowInfo, deleteFunction, reloadPage);
-
-        cancelBtn.onclick = () => modal.classList.remove('show');
-        modal.classList.add('show');
-    };
-
-    App.showDeletePrompt = (rowInfo, deleteFunction, reloadPage) => {
-        const modal = document.getElementById('deleteModal');
-        const modalTitle = modal.querySelector('#deleteModalTitle');
-        const modalBody = modal.querySelector('#deleteModalBody');
-        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
-
-        modalTitle.textContent = 'Masukkan Kode Hapus';
-        modalBody.innerHTML = `<p>Kode hapus dapat ditanyakan ke admin Korwil.</p>
-                                 <input type="password" id="kodeHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Masukkan Kode Hapus">`;
-        
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.textContent = 'Konfirmasi & Hapus';
-        newConfirmBtn.onclick = () => deleteFunction(rowInfo, reloadPage);
-
-        modal.querySelector('#cancelDeleteBtn').onclick = () => modal.classList.remove('show');
-
-        setTimeout(() => document.getElementById('kodeHapusInput').focus(), 100);
-    };
-
-    App.processDeletionSK = (rowInfo, reloadPage) => {
-        const deleteCode = document.getElementById('kodeHapusInput').value;
-        if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
-        App.showAppModal('loading', 'Menghapus data dan file terkait...');
-        google.script.run
-            .withSuccessHandler(response => {
-                document.getElementById('deleteModal').classList.remove('show');
-                App.showAppModal('success', response, reloadPage);
-            })
-            .withFailureHandler(error => App.showAppModal('error', error.message))
-            .deleteSKData(rowInfo._rowIndex, deleteCode);
-    };
-
-    // Fungsi lain untuk delete PTK PAUD, PTK SD, dan LAPBUL (dibiarkan tetap ada)
-    App.processDeletionPtkPaud = (rowInfo, reloadPage) => {
-        const deleteCode = document.getElementById('kodeHapusInput').value;
-        if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
-        App.showAppModal('loading', 'Menghapus data...');
-        google.script.run
-            .withSuccessHandler(response => {
-                document.getElementById('deleteModal').classList.remove('show');
-                App.showAppModal('success', response, reloadPage);
-            })
-            .withFailureHandler(error => App.showAppModal('error', error.message))
-            .deletePtkPaudData(rowInfo._rowIndex, deleteCode);
-    };
-
-    App.processDeletionPtkSd = (rowInfo, reloadPage) => {
-        const deleteCode = document.getElementById('kodeHapusInput').value;
-        if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
-        App.showAppModal('loading', 'Menghapus data...');
-        google.script.run
-            .withSuccessHandler(response => {
-                document.getElementById('deleteModal').classList.remove('show');
-                App.showAppModal('success', response, reloadPage);
-            })
-            .withFailureHandler(error => App.showAppModal('error', error.message))
-            .deletePtkSdData(rowInfo._rowIndex, rowInfo._source, deleteCode);
-    };
-
-    App.processDeletionLapbul = (rowInfo, reloadPage) => {
-        const deleteCode = document.getElementById('kodeHapusInput').value;
-        if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
-        App.showAppModal('loading', 'Menghapus data dan file terkait...');
-        google.script.run
-            .withSuccessHandler(response => {
-                document.getElementById('deleteModal').classList.remove('show');
-                App.showAppModal('success', response, reloadPage);
-            })
-            .withFailureHandler(error => App.showAppModal('error', error.message))
-            .deleteLapbulData(rowInfo._rowIndex, rowInfo._source, deleteCode);
-    };
-    
-    // **AKHIR BLOK KODE PERBAIKAN**
 }
 
 function initSkEditPage(params) {
@@ -2038,6 +2063,13 @@ function initLapbulKelolaPage() {
         serverFunction: 'getLapbulKelolaData',
         filters: [ 
             { id: 'filterTahun', dataColumn: 'Tahun', type: 'dropdown', sortReverse: true, defaultText: 'Semua Tahun' },
+            { 
+                id: 'filterBulan', 
+                dataColumn: 'Bulan', 
+                type: 'dropdown', 
+                specialSort: 'bulan', // <-- Ini penting agar urut Januari, Februari...
+                defaultText: 'Semua Bulan' 
+            },
             { id: 'filterJenjang', dataColumn: 'Jenjang', type: 'dropdown', defaultText: 'Semua Jenjang' },
             { 
                 id: 'filterNamaSekolah', 
@@ -2386,132 +2418,288 @@ function initLapbulEditPaudPage(params) {
     });
 }
 
-const BULAN_OPTIONS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 function initLapbulEditSdPage(params) {
+
+    // --- AMBIL ELEMEN DARI HALAMAN EDIT ---
+    const form = document.getElementById('lapbulEditFormSd');
+    const loadingDiv = document.getElementById('loading-data');
+    const formContainer = document.getElementById('edit-lapbul-sd-container');
+
+    if (!form || !loadingDiv || !formContainer) {
+         console.error("Elemen dasar form edit SD (form, loading, container) tidak ditemukan.");
+         document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Elemen dasar (form, loading) tidak ditemukan. Halaman HTML mungkin rusak.</p></div>`;
+         return;
+    }
+
     if (!params || !params.rowIndex) {
-        document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Parameter untuk edit data tidak ditemukan.</p></div>`;
+        document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Error</h3><p>Parameter (rowIndex) untuk edit data tidak ditemukan.</p></div>`;
         return;
     }
 
-    const form = document.getElementById('lapbulEditFormSd');
-    const loadingDiv = document.getElementById('loading-data');
-    const formContainer = document.getElementById('edit-form-container');
+    // --- SALINAN LOGIKA DARI initLapbulFormSdPage ---
 
-    // --- SEMUA FUNGSI BANTU SEKARANG ADA DI DALAM SATU FUNGSI INI ---
-    function generateKelasHTML(kelas) {
-        const rombels = ['A', 'B', 'C'];
-        const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
-        let rombelInputsHTML = `<div class="rombel-input-group" id="rombel-${kelas}-Tunggal" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas} P" value="0" min="0" required></div></div></div>`;
-        for (const rombel of rombels) {
-            rombelInputsHTML += `<div class="rombel-input-group" id="rombel-${kelas}-${rombel}" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}${rombel}</label><div class="murid-input-pair"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas}${rombel} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas}${rombel} P" value="0" min="0" required></div></div></div>`;
-        }
-        let agamaInputsHTML = '';
-        for (const ag of agama) {
-            const agId = ag;
-            agamaInputsHTML += `<div class="form-grid agama-row"><div class="form-group"><label>${ag}</label><select class="agama-toggle" data-kelas="${kelas}" data-agama="${agId}"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select></div><div class="agama-input-pair" id="agama-input-${kelas}-${agId}" style="display: none;"><div class="form-group"><label>Laki-laki</label><input type="number" name="K${kelas} ${agId} L" value="0" min="0" required></div><div class="form-group"><label>Perempuan</label><input type="number" name="K${kelas} ${agId} P" value="0" min="0" required></div></div></div>`;
-        }
-        return `<div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas ${kelas}</label><select class="rombel-toggle" name="Rombel ${kelas}" data-kelas="${kelas}"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div><h4 class="sub-section-title">Jumlah Murid per Rombel</h4><div class="rombel-container" id="rombel-container-${kelas}">${rombelInputsHTML}</div><h4 class="sub-section-title">Jumlah Murid per Agama</h4><div class="agama-container">${agamaInputsHTML}</div>`;
+    // 1. Panggil App.setupTabForm untuk tab utama (Tab 1-4)
+    const formLogic = App.setupTabForm('lapbulEditFormSd'); 
+
+    // 2. Fungsi Bantuan untuk dropdown Bulan/Tahun
+    function setupInitialDropdowns() {
+        const bulanSelect = form.querySelector('[name="Bulan"]');
+        const tahunSelect = form.querySelector('[name="Tahun"]');
+        const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const d = new Date();
+        const currentYear = d.getFullYear();
+
+        bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
+        tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
     }
-    function generatePtkNegeriHTML() {
-    return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Negeri)</legend>
-      <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-2"><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_ks_pns" value="0" min="0" max="1"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_ks_pppk" value="0" min="0" max="1"></div></div></fieldset>
-      <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
-        <div class="ptk-row has-label"><label>Guru Kelas</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kelas_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kelas_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kelas_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kelas_gtt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pai_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pai_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pai_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pai_gtt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pjok_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pjok_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pjok_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pjok_gtt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kristen_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kristen_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kristen_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kristen_gtt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_inggris_gtt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru Mapel Lainnya</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_lainnya_gtt" value="0" min="0"></div></div></div>
-      </fieldset>
-      <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
-        <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_pengelola_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_pengelola_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pengelola_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_operator_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_operator_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_operator_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Pengelola Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_plo_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_plo_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_plo_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Penata Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_penata_lo_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_penata_lo_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_penata_lo_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Administrasi Perkantoran</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_adm_perkantoran_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_adm_perkantoran_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_adm_perkantoran_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_penjaga_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Tenaga Adm.</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_tas_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pustakawan_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Tendik Lain</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_lainnya_ptt" value="0" min="0"></div></div></div>
-      </fieldset>
-    </fieldset>`;
-}
-    function generatePtkSwastaHTML() {
-    return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Swasta)</legend>
-      <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-4">
-        <div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_ks_gty" value="0" min="0" max="1"></div>
-        <div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_ks_gtt" value="0" min="0" max="1"></div>
-        <div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_ks_pns" value="0" min="0"></div>
-        <div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_ks_pppk" value="0" min="0"></div>
-      </div></fieldset>
-      <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
-        <div class="ptk-row has-label"><label>Guru Kelas</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kelas_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kelas_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kelas_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kelas_pppk" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pai_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pai_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pai_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pai_pppk" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pjok_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pjok_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pjok_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pjok_pppk" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kristen_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kristen_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kristen_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kristen_pppk" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_inggris_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_inggris_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_inggris_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_inggris_pppk" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Guru Mapel Lain</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_lainnya_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_lainnya_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_lainnya_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_lainnya_pppk" value="0" min="0"></div></div></div>
-      </fieldset>
-      <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
-        <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_penjaga_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_penjaga_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Tenaga Administrasi</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_tas_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_tas_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pustakawan_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pustakawan_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_operator_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_operator_ptt" value="0" min="0"></div></div></div>
-        <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pengelola_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pengelola_ptt" value="0" min="0"></div></div></div>
-      </fieldset>
-    </fieldset>`;
-}
-    function setupFormUI() {
-        const tabsContainer = document.getElementById('kelas-tabs');
-        const contentContainer = document.getElementById('kelas-content-container');
-        tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
-        for (let i = 1; i <= 6; i++) {
-            tabsContainer.innerHTML += `<button type="button" class="tab-link ${i === 1 ? 'active' : ''}" data-kelas="${i}">Kelas ${i}</button>`;
-            const content = document.createElement('div');
-            content.id = `kelas-content-${i}`; content.className = 'tab-content';
-            content.style.display = i === 1 ? 'block' : 'none';
-            content.innerHTML = generateKelasHTML(i);
-            contentContainer.appendChild(content);
+
+    // 3. Fungsi Bantuan untuk Validasi Total Murid (disalin)
+    function checkKelasTotals(kelas) {
+        const kelasContent = document.getElementById(`kelas-content-${kelas}`);
+        if (!kelasContent) return true;
+
+        const rombelInputs = kelasContent.querySelectorAll('.rombel-container input[type="number"]');
+        const agamaInputs = kelasContent.querySelectorAll('.agama-container-grid input[type="number"]');
+
+        const totalRombel = Array.from(rombelInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
+        const totalAgama = Array.from(agamaInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
+
+        const statusEl = document.getElementById(`murid-validation-status-${kelas}`);
+        const rombelEl = document.getElementById(`totalRombel-${kelas}`);
+        const agamaEl = document.getElementById(`totalAgama-${kelas}`);
+
+        if (rombelEl) rombelEl.textContent = totalRombel;
+        if (agamaEl) agamaEl.textContent = totalAgama;
+
+        if (statusEl) {
+            if (totalRombel !== totalAgama) {
+                statusEl.textContent = "Jumlah TIDAK SAMA!";
+                statusEl.className = 'status-error';
+                return false;
+            } else {
+                statusEl.textContent = "Jumlah Sesuai";
+                statusEl.className = 'status-ok';
+                return true;
+            }
         }
-        tabsContainer.addEventListener('click', function(e) { if (e.target.classList.contains('tab-link')) { document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none'); e.target.classList.add('active'); document.getElementById(`kelas-content-${e.target.dataset.kelas}`).style.display = 'block'; } });
-        contentContainer.addEventListener('change', function(e) { 
-            const t = e.target; 
-            if (t.classList.contains('rombel-toggle')) { 
-                const k = t.dataset.kelas, c = parseInt(t.value, 10); 
-                document.querySelectorAll(`#rombel-container-${k} .rombel-input-group`).forEach(el => el.style.display = 'none'); 
-                if (c === 1) { 
-                    document.getElementById(`rombel-${k}-Tunggal`).style.display = 'block'; 
-                } else if (c > 1) { 
-                    ['A', 'B', 'C'].slice(0, c).forEach(r => {
-                        const rombelEl = document.getElementById(`rombel-${k}-${r}`);
-                        if (rombelEl) rombelEl.style.display = 'block';
-                    });
-                } 
-            } 
-            if (t.classList.contains('agama-toggle')) { 
-                document.getElementById(`agama-input-${t.dataset.kelas}-${t.dataset.agama}`).style.display = t.value === 'Ada' ? 'grid' : 'none'; 
-            } 
+        return totalRombel === totalAgama;
+    }
+
+    // 4. Fungsi Bantuan untuk Setup Logika Tab 2 (Murid)
+    function setupDataMurid() {
+        const tabsContainer = document.getElementById('edit-kelas-tabs');
+        const contentContainer = document.getElementById('edit-kelas-content-container');
+
+        if (!tabsContainer || !contentContainer) {
+            console.error("Elemen sub-tab (edit-kelas-tabs) tidak ditemukan!");
+            return;
+        }
+
+        tabsContainer.addEventListener('click', function(e) { 
+            const clickedTab = e.target.closest('.sub-tab-link'); 
+            if (clickedTab) {
+                e.stopPropagation(); 
+                tabsContainer.querySelectorAll('.sub-tab-link').forEach(tab => tab.classList.remove('active')); 
+                contentContainer.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+
+                clickedTab.classList.add('active');
+                document.getElementById(`kelas-content-${clickedTab.dataset.kelas}`).style.display = 'block';
+            }
         });
-        document.getElementById('ptk-section-container').innerHTML = `<div id="ptk-negeri" style="display:none;">${generatePtkNegeriHTML()}</div><div id="ptk-swasta" style="display:none;">${generatePtkSwastaHTML()}</div>`;
+
+        contentContainer.addEventListener('input', function(e) {
+            if (e.target.type === 'number') {
+                const kelasContent = e.target.closest('.tab-content');
+                if (kelasContent) {
+                     const kelas = kelasContent.id.split('-')[2];
+                     checkKelasTotals(kelas);
+                }
+            }
+        });
+
+        contentContainer.addEventListener('change', function(e) {
+            const target = e.target; 
+            if (!target) return;
+
+            const kelasContent = target.closest('.tab-content');
+            const kelas = target.dataset.kelas || (kelasContent ? kelasContent.id.split('-')[2] : null);
+            if (!kelas) return;
+
+            // LOGIKA ROMBEL YANG DIPERBAIKI (Tidak pakai cache)
+            if (target.classList.contains('rombel-toggle')) { 
+                const k = target.dataset.kelas;
+                const c = parseInt(target.value, 10);
+
+                const groupTunggal = document.getElementById(`rombel-${k}-Tunggal`);
+                const groupA = document.getElementById(`rombel-${k}-A`);
+                const groupB = document.getElementById(`rombel-${k}-B`);
+                const groupC = document.getElementById(`rombel-${k}-C`);
+
+                // Logika 1: Grup Tunggal
+                if (c === 1) {
+                    if (groupTunggal) groupTunggal.style.display = 'block';
+                } else {
+                    if (groupTunggal) {
+                        groupTunggal.style.display = 'none';
+                        // HANYA NOL-KAN JIKA DISIMBUNYIKAN
+                        groupTunggal.querySelectorAll('input[type="number"]').forEach(input => input.value = 0); 
+                    }
+                }
+
+                // Logika 2: Grup A
+                if (c === 2 || c === 3) {
+                    if (groupA) groupA.style.display = 'block';
+                } else {
+                    if (groupA) {
+                        groupA.style.display = 'none';
+                        groupA.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                    }
+                }
+
+                // Logika 3: Grup B
+                if (c === 2 || c === 3) {
+                    if (groupB) groupB.style.display = 'block';
+                } else {
+                    if (groupB) {
+                        groupB.style.display = 'none';
+                        groupB.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                    }
+                }
+
+                // Logika 4: Grup C
+                if (c === 3) {
+                    if (groupC) groupC.style.display = 'block';
+                } else {
+                    if (groupC) {
+                        groupC.style.display = 'none';
+                        groupC.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                    }
+                }
+
+                checkKelasTotals(k); 
+            } 
+
+            // LOGIKA AGAMA YANG DIPERBAIKI (Cek "Ada")
+            if (target.classList.contains('agama-toggle')) { 
+                const agId = target.dataset.agama.toLowerCase().replace(/\s/g, '_');
+                const inputPairContainer = document.getElementById(`agama-input-${kelas}-${agId}`);
+
+                if (inputPairContainer) {
+                    if (target.value === 'Ada') { // Cek "Ada"
+                        inputPairContainer.style.display = 'flex';
+                    } else {
+                        inputPairContainer.style.display = 'none';
+                        inputPairContainer.querySelectorAll('input[type="number"]').forEach(input => {
+                            input.value = 0;
+                        });
+                    }
+                }
+                checkKelasTotals(kelas);
+            }
+        });
+
+        // LOGIKA NAVIGASI KUSTOM (Sesuai permintaan Anda)
+        const prevBtnKelas1 = document.querySelector('#kelas-content-1 .prev-tab-btn');
+        if(prevBtnKelas1) {
+            prevBtnKelas1.addEventListener('click', function() {
+                formLogic.showTab(0); // Pindah ke Tab 1 (Data Sekolah)
+            });
+        }
+
+        const nextBtnKelas6 = document.querySelector('#kelas-content-6 .next-tab-btn');
+        if (nextBtnKelas6) {
+            nextBtnKelas6.addEventListener('click', function() {
+                // Validasi Tab 2
+                if (formLogic.validateTab(1)) {
+                    formLogic.showTab(2); // Pindah ke Tab 3 (Data PTK)
+                }
+            });
+        }
     }
+
+    // 5. Fungsi Bantuan untuk Setup Logika Tab 3 (PTK)
+    function setupDataSekolah() {
+        const statusSekolah = form.querySelector('#statusSekolah');
+        const ptkContainer = document.getElementById('ptk-section-container');
+        const ptkNegeri = document.getElementById('ptk-negeri');
+        const ptkSwasta = document.getElementById('ptk-swasta');
+
+        statusSekolah.addEventListener('change', function() {
+            const status = this.value;
+            if (status === 'Negeri') {
+                ptkNegeri.style.display = 'block';
+                ptkSwasta.style.display = 'none';
+            } else if (status === 'Swasta') {
+                ptkNegeri.style.display = 'none';
+                ptkSwasta.style.display = 'block';
+            }
+        });
+    }
+
+    // 6. Fungsi Bantuan untuk Mengunci Field
     function lockField(fieldName) {
         const field = form.querySelector(`[name="${fieldName}"]`);
         if (field) { field.disabled = true; field.style.cssText = 'background-color: rgba(0,0,0,0.3); cursor: not-allowed;'; if (field.tagName === 'INPUT') field.readOnly = true; }
     }
 
-    // --- PROSES UTAMA ---
-    setupFormUI();
+    // --- AKHIR DARI SALINAN LOGIKA ---
 
+
+    // --- PROSES UTAMA (MODIFIKASI UNTUK EDIT) ---
+
+    setupInitialDropdowns();
+    setupDataSekolah();
+    setupDataMurid(); 
+
+    // Validasi Tab 2 (Murid)
+    formLogic.setTabValidation(1, () => { 
+        let allValid = true;
+        let firstInvalidKelas = -1;
+        for (let i = 1; i <= 6; i++) {
+            if (!checkKelasTotals(i)) {
+                allValid = false;
+                if(firstInvalidKelas === -1) firstInvalidKelas = i;
+            }
+        }
+        if (!allValid) {
+             document.querySelector(`#edit-kelas-tabs .sub-tab-link[data-kelas="${firstInvalidKelas}"]`).click(); 
+             App.showAppModal('error', `Data Murid di Kelas ${firstInvalidKelas} tidak valid. Total Rombel tidak sama dengan Total Agama.`);
+        }
+        return allValid;
+    });
+
+    // Validasi Tab 3 (PTK)
+    formLogic.setTabValidation(2, () => { 
+        const dataPtkContainer = document.getElementById('dataPtk');
+        const isSwasta = form.querySelector('[name="Status"]').value === 'Swasta';
+        let totalKepsek = 0;
+        if (isSwasta) {
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gty"]').value, 10) || 0;
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gtt"]').value, 10) || 0;
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pns"]').value, 10) || 0;
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pppk"]').value, 10) || 0;
+        } else {
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pns"]').value, 10) || 0;
+            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pppk"]').value, 10) || 0;
+        }
+        if (totalKepsek > 1) {
+            App.showAppModal('error', 'Jumlah Kepala Sekolah maksimal adalah 1.');
+            return false;
+        }
+        return true; 
+    });
+
+    // Panggil data dari server
     google.script.run
         .withSuccessHandler(rowData => {
-            if (!rowData || Object.keys(rowData).length === 0) {
-                loadingDiv.innerHTML = `<p style="color:red;">Gagal: Data untuk baris ${params.rowIndex} tidak ditemukan.</p>`;
+            if (rowData.error || !rowData || Object.keys(rowData).length === 0) {
+                loadingDiv.innerHTML = `<p style="color:red;">Gagal: ${rowData.error || `Data untuk baris ${params.rowIndex} tidak ditemukan.`}</p>`;
                 return;
             }
 
             form.querySelector('[name="rowIndex"]').value = params.rowIndex;
-            
+
             for (const header in rowData) {
                 const fieldName = header.trim();
                 const field = form.querySelector(`[name="${fieldName}"]`);
@@ -2523,12 +2711,25 @@ function initLapbulEditSdPage(params) {
                     field.value = value;
                 }
             }
-            
-            const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+
+            form.querySelector('[name="Bulan"]').value = rowData['Bulan'];
+            form.querySelector('[name="Tahun"]').value = rowData['Tahun'];
+            form.querySelector('[name="Status"]').value = rowData['Status'];
+            form.querySelector('[name="Nama Sekolah"]').value = rowData['Nama Sekolah'];
+            form.querySelector('[name="NPSN"]').value = rowData['NPSN'];
+            form.querySelector('[name="Rombel"]').value = rowData['Rombel']; 
+
+            const agama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'];
             for (let i = 1; i <= 6; i++) {
+                const rombelSelect = form.querySelector(`[name="k${i}_jumlah_rombel"]`);
+                const rombelKey = `k${i}_jumlah_rombel`; 
+                if (rombelSelect && rowData[rombelKey] !== undefined) {
+                    rombelSelect.value = rowData[rombelKey];
+                }
+
                 agama.forEach(ag => {
-                    const L = parseInt(rowData[`K${i} ${ag} L`] || 0, 10);
-                    const P = parseInt(rowData[`K${i} ${ag} P`] || 0, 10);
+                    const L = parseInt(rowData[`k${i}_agama_${ag}_L`] || 0, 10);
+                    const P = parseInt(rowData[`k${i}_agama_${ag}_P`] || 0, 10);
                     const selectAgama = form.querySelector(`.agama-toggle[data-kelas="${i}"][data-agama="${ag}"]`);
                     if (selectAgama) {
                         selectAgama.value = (L + P > 0) ? 'Ada' : 'Tidak Ada';
@@ -2540,51 +2741,92 @@ function initLapbulEditSdPage(params) {
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             });
 
-            const bulanSelect = form.querySelector('[name="Bulan"]');
-            const tahunSelect = form.querySelector('[name="Tahun"]');
-            const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
-            const currentYear = new Date().getFullYear();
-            tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
-            bulanSelect.value = rowData['Bulan'];
-            tahunSelect.value = rowData['Tahun'];
-
-            if (rowData['Status'] === 'Negeri') {
-                document.getElementById('ptk-negeri').style.display = 'block';
-            } else if (rowData['Status'] === 'Swasta') {
-                document.getElementById('ptk-swasta').style.display = 'block';
+            for (let i = 1; i <= 6; i++) {
+                checkKelasTotals(i);
             }
 
-            lockField('Bulan'); lockField('Tahun'); lockField('Status'); lockField('Nama Sekolah');
-            
             const fileLinkContainer = document.getElementById('existingFileLink');
             if (rowData['Dokumen']) { fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`; } else { fileLinkContainer.innerHTML = 'Tidak ada file.'; }
 
+            lockField('Bulan'); lockField('Tahun'); lockField('Status'); lockField('Nama Sekolah');
+
+            formLogic.unlockAndShowTab(1);
+            formLogic.unlockAndShowTab(2);
+            formLogic.unlockAndShowTab(3);
+            formLogic.unlockAndShowTab(0); 
+
             loadingDiv.style.display = 'none';
-            formContainer.style.display = 'block';
+            formContainer.style.display = 'flex';
         })
-        .withFailureHandler(err => { loadingDiv.innerHTML = `<p style="color:red;">Gagal memuat data baris: ${err.message}</p>`; })
+        .withFailureHandler(err => { 
+            loadingDiv.style.display = 'none'; 
+            formContainer.style.display = 'none'; 
+            document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Gagal Memuat Data</h3><p>Gagal memuat data baris: ${err.message}. Coba muat ulang halaman.</p></div>`;
+        })
         .getLapbulDataByRow(params.rowIndex, params.source);
 
+    // ===========================================
+    // ===== PERBAIKAN LOGIKA SUBMIT =====
+    // ===========================================
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        // 1. Validasi Tab 1 (Data Sekolah)
+        if (!formLogic.validateTab(0)) {
+             App.showAppModal('error', 'Data Sekolah (Tab 1) belum lengkap.');
+             formLogic.showTab(0); // Pindahkan ke tab yang error
+             return; // Hentikan submit
+        }
+
+        // 2. Validasi Tab 2 (Data Murid - checkKelasTotals)
+        if (!formLogic.validateTab(1)) { 
+             // Pesan error sudah di-handle di dalam fungsi validasi
+             formLogic.showTab(1); // Pindahkan ke tab yang error
+             return; // Hentikan submit
+        }
+
+        // 3. Validasi Tab 3 (Data PTK - Cek Kepsek)
+        if (!formLogic.validateTab(2)) { 
+             // Pesan error sudah di-handle di dalam validasi
+             formLogic.showTab(2); // Pindahkan ke tab yang error
+             return; // Hentikan submit
+        }
+
+        // 4. Validasi File (Hanya jika file BARU di-upload)
+        const fileInput = form.querySelector('input[type="file"]');
+        const file = fileInput.files[0];
+        if (file && file.size > 300 * 1024) { // 300 KB
+            App.showAppModal('error', 'Ukuran file tidak boleh lebih dari 300 KB.');
+            formLogic.showTab(3); // Pindahkan ke tab 4
+            return;
+        }
+
+        // --- JIKA SEMUA LOLOS, LANJUTKAN ---
+
         const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         App.showAppModal('loading', 'Menyimpan perubahan...');
-        
+
         const payload = {};
-        const allFields = form.querySelectorAll('input, select, textarea');
+        const allFields = form.querySelectorAll('input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
         allFields.forEach(field => {
             if (field.name) {
-                payload[field.name] = field.value;
+                if (field.type === 'number' && field.value === '') {
+                    payload[field.name] = 0;
+                } else {
+                    payload[field.name] = field.value;
+                }
             }
         });
-        
-        payload.laporanBulan = form.querySelector('[name="Bulan"]').value;
-        payload.tahun = form.querySelector('[name="Tahun"]').value;
-        payload.namaSekolah = form.querySelector('[name="Nama Sekolah"]').value;
 
-        const file = form.querySelector('input[type="file"]').files[0];
+        // Tambahkan field yang 'disabled' (kunci) secara manual
+        payload.rowIndex = form.querySelector('[name="rowIndex"]').value;
+        payload.source = form.querySelector('[name="source"]').value;
+        payload.Bulan = form.querySelector('[name="Bulan"]').value;
+        payload.Tahun = form.querySelector('[name="Tahun"]').value;
+        payload['Nama Sekolah'] = form.querySelector('[name="Nama Sekolah"]').value;
+        payload['Status'] = form.querySelector('[name="Status"]').value;
+        payload['NPSN'] = form.querySelector('[name="NPSN"]').value;
 
         const sendData = (data) => {
             google.script.run
@@ -2600,10 +2842,11 @@ function initLapbulEditSdPage(params) {
                     App.showAppModal('error', err.message);
                     if (submitButton) submitButton.disabled = false;
                 })
-                .updateLapbulData(data);
+                .updateLapbulData(data); // Panggil fungsi UPDATE
         };
 
         if (file) {
+            // (Validasi ukuran sudah dilakukan di atas)
             const reader = new FileReader();
             reader.onload = function(event) {
                 payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
@@ -2614,6 +2857,9 @@ function initLapbulEditSdPage(params) {
             sendData(payload);
         }
       });
+      // ===========================================
+      // ===== AKHIR PERBAIKAN SUBMIT =====
+      // ===========================================
   }
 
 function initLapbulUnduhFormatPage() {

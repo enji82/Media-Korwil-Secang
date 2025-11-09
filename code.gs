@@ -126,8 +126,8 @@ const COLUMNS_MAP = {
         "Status": 3,          // Kolom D
         "Nama Sekolah": 4,    // Kolom E
         "Dokumen": 7,         // Kolom H
-        "Jenjang": 213,       // Kolom GI (Index 190)
-        "Update": 191,        // Kolom GJ (Index 191)
+        "Jenjang": 213,       // Kolom GI (Index 213)
+        "Update": 214,        // Kolom GJ (Index 1214)
         "Jumlah Rombel": 6,   // Kolom G (Asumsi)
     }
 };
@@ -854,9 +854,85 @@ const PAUD_FORM_INDEX_MAP = [
     // Catatan: Asumsi mapping ini sesuai dengan kolom Spreadsheet PAUD Anda.
 ];
 
+const SD_FORM_INDEX_MAP = [
+  // 0-7: Data Sekolah (A-H)
+  'Tanggal Unggah', 'Bulan', 'Tahun', 'Status', 'Nama Sekolah', 'NPSN', 'Rombel', 'Dokumen',
+  
+  // 8-29: Kelas 1 (I-AC)
+  'k1_jumlah_rombel', 'k1_rombel_tunggal_L', 'k1_rombel_tunggal_P',
+  'k1_rombel_a_L', 'k1_rombel_a_P', 'k1_rombel_b_L', 'k1_rombel_b_P', 'k1_rombel_c_L', 'k1_rombel_c_P',
+  'k1_agama_islam_L', 'k1_agama_islam_P', 'k1_agama_kristen_L', 'k1_agama_kristen_P', 'k1_agama_katolik_L', 'k1_agama_katolik_P', 
+  'k1_agama_hindu_L', 'k1_agama_hindu_P', 'k1_agama_buddha_L', 'k1_agama_buddha_P', 'k1_agama_konghucu_L', 'k1_agama_konghucu_P',
+  
+  // 30-51: Kelas 2 (AD-AX)
+  'k2_jumlah_rombel', 'k2_rombel_tunggal_L', 'k2_rombel_tunggal_P',
+  'k2_rombel_a_L', 'k2_rombel_a_P', 'k2_rombel_b_L', 'k2_rombel_b_P', 'k2_rombel_c_L', 'k2_rombel_c_P',
+  'k2_agama_islam_L', 'k2_agama_islam_P', 'k2_agama_kristen_L', 'k2_agama_kristen_P', 'k2_agama_katolik_L', 'k2_agama_katolik_P', 
+  'k2_agama_hindu_L', 'k2_agama_hindu_P', 'k2_agama_buddha_L', 'k2_agama_buddha_P', 'k2_agama_konghucu_L', 'k2_agama_konghucu_P',
+
+  // 52-73: Kelas 3 (AY-BS)
+  'k3_jumlah_rombel', 'k3_rombel_tunggal_L', 'k3_rombel_tunggal_P',
+  'k3_rombel_a_L', 'k3_rombel_a_P', 'k3_rombel_b_L', 'k3_rombel_b_P', 'k3_rombel_c_L', 'k3_rombel_c_P',
+  'k3_agama_islam_L', 'k3_agama_islam_P', 'k3_agama_kristen_L', 'k3_agama_kristen_P', 'k3_agama_katolik_L', 'k3_agama_katolik_P', 
+  'k3_agama_hindu_L', 'k3_agama_hindu_P', 'k3_agama_buddha_L', 'k3_agama_buddha_P', 'k3_agama_konghucu_L', 'k3_agama_konghucu_P',
+  
+  // 74-95: Kelas 4 (BT-CN)
+  'k4_jumlah_rombel', 'k4_rombel_tunggal_L', 'k4_rombel_tunggal_P',
+  'k4_rombel_a_L', 'k4_rombel_a_P', 'k4_rombel_b_L', 'k4_rombel_b_P', 'k4_rombel_c_L', 'k4_rombel_c_P',
+  'k4_agama_islam_L', 'k4_agama_islam_P', 'k4_agama_kristen_L', 'k4_agama_kristen_P', 'k4_agama_katolik_L', 'k4_agama_katolik_P', 
+  'k4_agama_hindu_L', 'k4_agama_hindu_P', 'k4_agama_buddha_L', 'k4_agama_buddha_P', 'k4_agama_konghucu_L', 'k4_agama_konghucu_P',
+
+  // 96-117: Kelas 5 (CO-DI)
+  'k5_jumlah_rombel', 'k5_rombel_tunggal_L', 'k5_rombel_tunggal_P',
+  'k5_rombel_a_L', 'k5_rombel_a_P', 'k5_rombel_b_L', 'k5_rombel_b_P', 'k5_rombel_c_L', 'k5_rombel_c_P',
+  'k5_agama_islam_L', 'k5_agama_islam_P', 'k5_agama_kristen_L', 'k5_agama_kristen_P', 'k5_agama_katolik_L', 'k5_agama_katolik_P', 
+  'k5_agama_hindu_L', 'k5_agama_hindu_P', 'k5_agama_buddha_L', 'k5_agama_buddha_P', 'k5_agama_konghucu_L', 'k5_agama_konghucu_P',
+
+  // 118-139: Kelas 6 (DJ-ED)
+  'k6_jumlah_rombel', 'k6_rombel_tunggal_L', 'k6_rombel_tunggal_P',
+  'k6_rombel_a_L', 'k6_rombel_a_P', 'k6_rombel_b_L', 'k6_rombel_b_P', 'k6_rombel_c_L', 'k6_rombel_c_P',
+  'k6_agama_islam_L', 'k6_agama_islam_P', 'k6_agama_kristen_L', 'k6_agama_kristen_P', 'k6_agama_katolik_L', 'k6_agama_katolik_P', 
+  'k6_agama_hindu_L', 'k6_agama_hindu_P', 'k6_agama_buddha_L', 'k6_agama_buddha_P', 'k6_agama_konghucu_L', 'k6_agama_konghucu_P',
+
+  // 140-178: PTK Negeri (EE-FQ)
+  'ptk_negeri_ks_pns', 'ptk_negeri_ks_pppk',
+  'ptk_negeri_guru_kelas_pns', 'ptk_negeri_guru_kelas_pppk', 'ptk_negeri_guru_kelas_pppkpw', 'ptk_negeri_guru_kelas_gtt',
+  'ptk_negeri_guru_pai_pns', 'ptk_negeri_guru_pai_pppk', 'ptk_negeri_guru_pai_pppkpw', 'ptk_negeri_guru_pai_gtt',
+  'ptk_negeri_guru_pjok_pns', 'ptk_negeri_guru_pjok_pppk', 'ptk_negeri_guru_pjok_pppkpw', 'ptk_negeri_guru_pjok_gtt',
+  'ptk_negeri_guru_kristen_pns', 'ptk_negeri_guru_kristen_pppk', 'ptk_negeri_guru_kristen_pppkpw', 'ptk_negeri_guru_kristen_gtt',
+  'ptk_negeri_guru_inggris_gtt', 'ptk_negeri_guru_lainnya_gtt',
+  'ptk_negeri_tendik_pengelola_pppk', 'ptk_negeri_tendik_pengelola_pppkpw', 'ptk_negeri_tendik_pengelola_ptt',
+  'ptk_negeri_tendik_operator_pppk', 'ptk_negeri_tendik_operator_pppkpw', 'ptk_negeri_tendik_operator_ptt',
+  'ptk_negeri_plo_pppk', 'ptk_negeri_plo_pppkpw', 'ptk_negeri_plo_ptt', 
+  'ptk_negeri_penata_lo_pppk', 'ptk_negeri_penata_lo_pppkpw', 'ptk_negeri_penata_lo_ptt', 
+  'ptk_negeri_adm_perkantoran_pppk', 'ptk_negeri_adm_perkantoran_pppkpw', 'ptk_negeri_adm_perkantoran_ptt', 
+  'ptk_negeri_tendik_penjaga_ptt', 'ptk_negeri_tendik_tas_ptt', 'ptk_negeri_tendik_pustakawan_ptt', 'ptk_negeri_tendik_lainnya_ptt',
+  
+  // 179-212: PTK Swasta (FR-HE)
+  'ptk_swasta_ks_gty', 'ptk_swasta_ks_gtt', 'ptk_swasta_ks_pns', 'ptk_swasta_ks_pppk', 
+  'ptk_swasta_guru_kelas_gty', 'ptk_swasta_guru_kelas_gtt', 'ptk_swasta_guru_kelas_pns', 'ptk_swasta_guru_kelas_pppk', 
+  'ptk_swasta_guru_pai_gty', 'ptk_swasta_guru_pai_gtt', 'ptk_swasta_guru_pai_pns', 'ptk_swasta_guru_pai_pppk', 
+  'ptk_swasta_guru_pjok_gty', 'ptk_swasta_guru_pjok_gtt', 'ptk_swasta_guru_pjok_pns', 'ptk_swasta_guru_pjok_pppk', 
+  'ptk_swasta_guru_kristen_gty', 'ptk_swasta_guru_kristen_gtt', 'ptk_swasta_guru_kristen_pns', 'ptk_swasta_guru_kristen_pppk', 
+  'ptk_swasta_guru_inggris_gty', 'ptk_swasta_guru_inggris_gtt', 'ptk_swasta_guru_inggris_pns', 'ptk_swasta_guru_inggris_pppk', 
+  'ptk_swasta_guru_lainnya_gty', 'ptk_swasta_guru_lainnya_gtt', 'ptk_swasta_guru_lainnya_pns', 'ptk_swasta_guru_lainnya_pppk', 
+  'ptk_swasta_tendik_penjaga_pty', 'ptk_swasta_tendik_penjaga_ptt',
+  'ptk_swasta_tendik_tas_pty', 'ptk_swasta_tendik_tas_ptt',
+  'ptk_swasta_tendik_pustakawan_pty', 'ptk_swasta_tendik_pustakawan_ptt',
+  'ptk_swasta_tendik_lain_pty', 'ptk_swasta_tendik_lain_ptt',
+  'ptk_swasta_tendik_operator_pty', 'ptk_swasta_tendik_operator_ptt',
+  'ptk_swasta_tendik_pengelola_pty', 'ptk_swasta_tendik_pengelola_ptt',
+  
+  // 213: Jenjang (HF)
+  'Jenjang',
+  //214: Update
+  'Update'
+];
+
 function getLapbulDataByRow(rowIndex, source) {
     try {
-        let configKey = source === 'PAUD' ? 'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
+        let configKey = source === 'PAUD' ?
+            'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
         const config = SPREADSHEET_CONFIG[configKey];
 
         if (!config) throw new Error("Konfigurasi sumber data tidak ditemukan.");
@@ -864,43 +940,68 @@ function getLapbulDataByRow(rowIndex, source) {
         const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
         if (!sheet) throw new Error(`Sheet '${config.sheet}' tidak ditemukan.`);
         
-        // Ambil nilai tampilan (display values) dari seluruh baris
         const lastCol = sheet.getLastColumn();
+        // Ambil nilai tampilan (display values) dari seluruh baris
         const values = sheet.getRange(rowIndex, 1, 1, lastCol).getDisplayValues()[0];
         
         const rowData = {};
         
-        // KUNCI PERBAIKAN: Menggunakan Index Mapping untuk PAUD
         if (source === 'PAUD') {
             const paudMap = PAUD_FORM_INDEX_MAP;
-            
-            // Perluas array values jika kurang dari map (pencegahan crash)
             while (values.length < paudMap.length) {
                 values.push('');
             }
-
-            // Map data berdasarkan index ke nama input HTML yang benar
             paudMap.forEach((inputName, index) => {
-                // Gunakan index untuk mengambil data dari values
                 rowData[inputName] = values[index];
             });
             
+            rowData.rowIndex = rowIndex;
+            rowData.source = source;
+            return rowData;
+
+        // ===============================================
+        // ===== PERBAIKAN UTAMA: BLOK "else if" UNTUK SD =====
+        // ===============================================
+        } else if (source === 'SD') {
+            const sdMap = SD_FORM_INDEX_MAP;
+            // Perluas array values jika kurang dari map
+            while (values.length < sdMap.length) {
+                values.push('');
+            }
+            
+            // Map data berdasarkan index ke nama input HTML yang benar
+            sdMap.forEach((inputName, index) => {
+                // Pastikan inputName tidak kosong (untuk keamanan)
+                if(inputName) {
+                  rowData[inputName] = values[index];
+                }
+            });
+
+            // Ambil kolom 'Update' secara terpisah jika ada
+            // (Berdasarkan config, 'Update' ada di index 191)
+            const updateIndex = 214; // Sesuaikan jika perlu
+            if(values.length > updateIndex) {
+               // Cek nama header 'Update' di map (jika ada)
+               const updateHeaderName = sdMap[updateIndex];
+               if(updateHeaderName) {
+                 rowData[updateHeaderName] = values[updateIndex];
+               }
+            }
+
             // Tambahkan metadata
             rowData.rowIndex = rowIndex;
             rowData.source = source;
-            
             return rowData;
-
+            
         } else {
-            // Logika lama (berdasarkan header) dipertahankan untuk SD
-            const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => h.trim());
-            
-            headers.forEach((header, i) => {
+             // Fallback jika source tidak dikenal (logika lama Anda)
+             const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => h.trim());
+             headers.forEach((header, i) => {
                 rowData[header] = values[i];
-            });
-            rowData.rowIndex = rowIndex;
-            rowData.source = source;
-            return rowData;
+             });
+             rowData.rowIndex = rowIndex;
+             rowData.source = source;
+             return rowData;
         }
 
     } catch (e) {
@@ -920,23 +1021,21 @@ function updateLapbulData(formData) {
         if (!sheet) throw new Error(`Sheet target tidak ditemukan: ${config.sheet}`);
 
         const lastCol = sheet.getLastColumn();
-        
         // 1. Ambil data mentah (RAW) dan header dari sheet
         const range = sheet.getRange(1, 1, rowIndex, lastCol);
         const allValues = range.getValues();
         const fullHeaders = allValues[0].map(h => h.trim()); // Header Baris 1
         const existingValues = allValues[rowIndex - 1]; // Nilai RAW dari baris target (termasuk Date Object)
 
-        // Tentukan peta kunci/nama form untuk PAUD
         const PAUD_MAP_LENGTH = PAUD_FORM_INDEX_MAP.length;
         
         // 2. LOGIKA UPLOAD FILE BARU & SETUP METADATA
         const docIndex = fullHeaders.indexOf('Dokumen');
-        // Ambil URL Dokumen dari nilai tampilan (lebih aman)
-        let fileUrl = docIndex !== -1 ? sheet.getRange(rowIndex, docIndex + 1).getDisplayValue() : ''; 
+        let fileUrl = docIndex !== -1 ?
+            sheet.getRange(rowIndex, docIndex + 1).getDisplayValue() : ''; 
         
         if (formData.fileData && formData.fileData.data) {
-             const FOLDER_ID_LAPBUL = FOLDER_CONFIG[source === 'PAUD' ? 'LAPBUL_KB' : 'LAPBUL_SD']; 
+             const FOLDER_ID_LAPBUL = source === 'PAUD' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_SD;
              const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
              
              const tahunFolderName = formData.Tahun || sheet.getRange(rowIndex, fullHeaders.indexOf('Tahun') + 1).getDisplayValue();
@@ -944,8 +1043,7 @@ function updateLapbulData(formData) {
              
              const tahunFolder = getOrCreateFolder(mainFolder, tahunFolderName);
              const bulanFolder = getOrCreateFolder(tahunFolder, bulanFolderName);
-             
-             // Hapus file lama (Opsional)
+
              const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
              if (oldFileIdMatch) {
                  try { DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true); } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
@@ -958,7 +1056,13 @@ function updateLapbulData(formData) {
              fileUrl = newFile.getUrl();
         }
 
-        formData.Update = new Date(); // Timestamp Update Baru
+        // ======================================================
+        // ===== PERBAIKAN: Format timestamp 'Update' =====
+        // ======================================================
+        const timeZone = Session.getScriptTimeZone();
+        formData.Update = Utilities.formatDate(new Date(), timeZone, "dd/MM/yyyy HH:mm:ss");
+        // ======================================================
+        
         formData.Dokumen = fileUrl; // URL dokumen
 
         // 3. SUSUN BARIS DATA BARU (Iterasi berdasarkan lebar sheet actual)
@@ -971,34 +1075,32 @@ function updateLapbulData(formData) {
             let value = existingValues[i]; // Default: Nilai RAW lama (penting untuk Date)
             
             let formKey = header;
-            
             // Jika PAUD dan kolom ini termasuk yang dimodifikasi, gunakan nama pendek dari map
             if (source === 'PAUD' && i < PAUD_MAP_LENGTH && PAUD_FORM_INDEX_MAP[i]) {
                 formKey = PAUD_FORM_INDEX_MAP[i];
             }
+            // PERBAIKAN: Jika SD, gunakan juga PETA
+            else if (source === 'SD' && i < SD_FORM_INDEX_MAP.length && SD_FORM_INDEX_MAP[i]) {
+                 formKey = SD_FORM_INDEX_MAP[i];
+            }
 
             // Cek apakah data baru ada di formData dengan formKey yang ditentukan
             if (formData.hasOwnProperty(formKey)) {
-                value = formData[formKey];
-                
-                // Konversi khusus untuk input number yang kosong (kirim 0)
+                value = formData[formKey]; 
                 if (typeof value === 'string' && value.trim() === '') {
-                     // Asumsi kolom yang kosong adalah kolom angka (murid/ptk), kirim 0
                      if (!DATE_COLUMNS.includes(header) && header !== 'Dokumen' && header !== 'Tanggal Unggah') {
-                        value = 0;
+                         value = 0;
                      } else {
-                        value = ''; // Biarkan empty string jika itu bukan kolom angka
+                        value = '';
                      }
                 }
             } 
             
-            // Kolom metadata yang selalu diperbarui, mengesampingkan nilai form
             if (header === 'Update') {
                  value = formData.Update;
             } else if (header === 'Dokumen') {
                  value = formData.Dokumen;
             } else if (header === 'Tanggal Unggah' && (existingValues[i] === '' || existingValues[i] === null)) {
-                // Jika Tanggal Unggah memang kosong dari awal, biarkan kosong
                 value = '';
             }
             
@@ -1011,7 +1113,6 @@ function updateLapbulData(formData) {
         return "Data Laporan Bulan berhasil diperbarui.";
     } catch (e) {
         Logger.log(`FATAL ERROR in updateLapbulData: ${e.message} Stack: ${e.stack}`);
-        // Kirim error ke client untuk menghentikan spinner
         return { error: `Gagal memperbarui data di server: ${e.message}. Cek Log Server untuk detail.` };
     }
 }

@@ -151,7 +151,7 @@ padding-top: 15px;
 }
 
 /* === Gaya untuk Form Bertahap === */
-.tab-link:disabled {
+.tab-link:disabled, .sub-tab-link:disabled {
   color: #777;
   cursor: not-allowed;
   border-bottom-color: transparent !important;
@@ -589,7 +589,7 @@ main.manual-form.form-tab-container > form {
 .tab-content-form {
     width: 100%;
 }
-.tab-link { 
+.tab-link, .sub-tab-link {
   padding: 10px 15px; 
   cursor: pointer; 
   background: none; 
@@ -622,7 +622,7 @@ main.manual-form.form-tab-container > form {
 
   .tabs-container { display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 20px; flex-wrap: wrap; }
 
-  .tab-link.active, .tab-link:hover { color: #00c3ff; border-bottom-color: #00c3ff; }
+  .tab-link.active, .tab-link:hover, .sub-tab-link.active, .sub-tab-link:hover { color: #00c3ff; border-bottom-color: #00c3ff; }
   .sub-section-title { font-size: 1em; color: #e0e0e0; margin-top: 20px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
   .rombel-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
   .rombel-input-group {

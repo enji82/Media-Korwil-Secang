@@ -1,5 +1,5 @@
 <header>
-  <h2>FORMULIR EDIT LAPORAN BULAN SD</h2>
+  <h2 id="main-form-title">FORMULIR EDIT LAPORAN BULAN SD</h2>
 </header>
 
 <div id="loading-data" class="loading-container">
@@ -9,46 +9,255 @@
     <p>Memuat data dan form untuk diedit...</p>
 </div>
 
-<main class="manual-form" id="edit-lapbul-sd-container" style="display: none;">
+<main class="manual-form form-tab-container" id="edit-lapbul-sd-container" style="display: none;">
+  
   <form id="lapbulEditFormSd">
     <input type="hidden" name="rowIndex">
     <input type="hidden" name="source" value="SD">
     
-    <div class="form-layout-grid">
-      <div class="form-column" id="edit-form-col-1">
-        <fieldset class="ptk-fieldset">
-          <legend>Data Sekolah</legend>
-          <div class="form-grid-1">
-            <div class="form-group"><label>Laporan Bulan</label><select name="Bulan" required></select></div>
-            <div class="form-group"><label>Tahun</label><select name="Tahun" required></select></div>
-            <div class="form-group"><label>Status Sekolah</label><select name="Status" required><option value="Negeri">Negeri</option><option value="Swasta">Swasta</option></select></div>
-            <div class="form-group"><label>Nama Sekolah</label><input type="text" name="Nama Sekolah" required></div>
-            <div class="form-group"><label>NPSN</label><input type="text" name="NPSN" pattern="[0-9]{8}" required></div>
-            <div class="form-group"><label>Jumlah Rombel (Total)</label><input type="number" name="Rombel" value="0" min="3" max="24" required></div>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="form-column" id="edit-form-col-2">
-        <fieldset class="ptk-fieldset">
-          <legend>Data Jumlah Murid</legend>
-          <div id="edit-kelas-tabs" class="tabs-container"></div>
-          <div id="edit-kelas-content-container"></div>
-        </fieldset>
-      </div>
-
-      <div class="form-column" id="edit-form-col-3">
-        <div id="edit-ptk-section-container"></div>
-        <fieldset class="ptk-fieldset">
-            <legend>Unggah Berkas</legend>
-            <div class="form-group">
-                <label for="edit-fileLapbul">Lewati apabila tidak mengganti file. (PDF, Max 300KB)</label>
-                <input type="file" id="edit-fileLapbul" name="fileData" accept=".pdf">
-                <p id="existingFileLink" class="input-hint" style="margin-top: 10px;"></p>
-            </div>
-            <button type="submit" class="submit-btn" id="edit-lapbul-sd-submit" style="margin-top: 10px;">Simpan Perubahan</button>
-        </fieldset>
-      </div>
+    <div id="tab-nav" class="tabs-container">
+      <button type="button" class="tab-link active" data-tab="dataSekolah">1. Data Sekolah</button>
+      <button type="button" class="tab-link" data-tab="dataMurid">2. Data Murid</button>
+      <button type="button" class="tab-link" data-tab="dataPtk">3. Data PTK</button>
+      <button type="button" class="tab-link" data-tab="dataUnggah">4. Dokumen</button>
     </div>
-  </form>
+
+    <div id="tab-content-wrapper" class="tab-content-wrapper">
+
+      <div id="dataSekolah" class="tab-content-form active">
+        <h3 class="sub-section-title">Data Sekolah</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Laporan Bulan</label><select name="Bulan" required></select></div>
+          <div class="form-group"><label>Tahun</label><select name="Tahun" required></select></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Status Sekolah</label><select id="statusSekolah" name="Status" required><option value="" disabled selected>-- Pilih Status --</option><option value="Negeri">Negeri</option><option value="Swasta">Swasta</option></select></div>
+          <div class="form-group"><label>Nama SD</label><input type="text" name="Nama Sekolah" required></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>NPSN</label><input type="text" name="NPSN" pattern="[0-9]{8}" title="NPSN harus 8 digit angka" required></div>
+          <div class="form-group"><label>Jumlah Rombel (Total)</label><input type="number" name="Rombel" min="0" required></div>
+        </div>
+        <div class="tab-form-footer">
+          <button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button>
+        </div>
+      </div>
+
+      <div id="dataMurid" class="tab-content-form">
+        <div id="edit-kelas-tabs" class="tabs-container">
+            <button type="button" class="sub-tab-link active" data-kelas="1">Kelas 1</button>
+            <button type="button" class="sub-tab-link" data-kelas="2">Kelas 2</button>
+            <button type="button" class="sub-tab-link" data-kelas="3">Kelas 3</button>
+            <button type="button" class="sub-tab-link" data-kelas="4">Kelas 4</button>
+            <button type="button" class="sub-tab-link" data-kelas="5">Kelas 5</button>
+            <button type="button" class="sub-tab-link" data-kelas="6">Kelas 6</button>
+        </div>
+        <div id="edit-kelas-content-container">
+            
+            <div id="kelas-content-1" class="tab-content" style="display: block;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 1</label><select class="rombel-toggle" name="k1_jumlah_rombel" data-kelas="1"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-1">
+                <div class="rombel-input-group" id="rombel-1-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 1</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k1_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-1-A" style="display: none;"><label class="rombel-group-label">Kelas 1A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k1_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-1-B" style="display: none;"><label class="rombel-group-label">Kelas 1B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k1_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-1-C" style="display: none;"><label class="rombel-group-label">Kelas 1C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k1_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="1" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="1" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="1" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="1" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="1" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="1" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-1-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k1_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k1_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-1" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-1">0</span></p><p>Total per Agama: <span id="totalAgama-1">0</span></p><p id="murid-validation-status-1" class="status-ok">Isikan data...</p></div>
+              <div class="tab-form-footer"><button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button></div>
+            </div>
+            
+            <div id="kelas-content-2" class="tab-content" style="display: none;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 2</label><select class="rombel-toggle" name="k2_jumlah_rombel" data-kelas="2"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-2">
+                <div class="rombel-input-group" id="rombel-2-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 2</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k2_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-2-A" style="display: none;"><label class="rombel-group-label">Kelas 2A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k2_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-2-B" style="display: none;"><label class="rombel-group-label">Kelas 2B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k2_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-2-C" style="display: none;"><label class="rombel-group-label">Kelas 2C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k2_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="2" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="2" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="2" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="2" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="2" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="2" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-2-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k2_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k2_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-2" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-2">0</span></p><p>Total per Agama: <span id="totalAgama-2">0</span></p><p id="murid-validation-status-2" class="status-ok">Isikan data...</p></div>
+              </div>
+            <div id="kelas-content-3" class="tab-content" style="display: none;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 3</label><select class="rombel-toggle" name="k3_jumlah_rombel" data-kelas="3"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-3">
+                <div class="rombel-input-group" id="rombel-3-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 3</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k3_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-3-A" style="display: none;"><label class="rombel-group-label">Kelas 3A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k3_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-3-B" style="display: none;"><label class="rombel-group-label">Kelas 3B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k3_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-3-C" style="display: none;"><label class="rombel-group-label">Kelas 3C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k3_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="3" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="3" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="3" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="3" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="3" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="3" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-3-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k3_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k3_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-3" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-3">0</span></p><p>Total per Agama: <span id="totalAgama-3">0</span></p><p id="murid-validation-status-3" class="status-ok">Isikan data...</p></div>
+              </div>
+            <div id="kelas-content-4" class="tab-content" style="display: none;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 4</label><select class="rombel-toggle" name="k4_jumlah_rombel" data-kelas="4"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-4">
+                <div class="rombel-input-group" id="rombel-4-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 4</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k4_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-4-A" style="display: none;"><label class="rombel-group-label">Kelas 4A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k4_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-4-B" style="display: none;"><label class="rombel-group-label">Kelas 4B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k4_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-4-C" style="display: none;"><label class="rombel-group-label">Kelas 4C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k4_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="4" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="4" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="4" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="4" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="4" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="4" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-4-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k4_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k4_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-4" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-4">0</span></p><p>Total per Agama: <span id="totalAgama-4">0</span></p><p id="murid-validation-status-4" class="status-ok">Isikan data...</p></div>
+              </div>
+            <div id="kelas-content-5" class="tab-content" style="display: none;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 5</label><select class="rombel-toggle" name="k5_jumlah_rombel" data-kelas="5"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-5">
+                <div class="rombel-input-group" id="rombel-5-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 5</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k5_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-5-A" style="display: none;"><label class="rombel-group-label">Kelas 5A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k5_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-5-B" style="display: none;"><label class="rombel-group-label">Kelas 5B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k5_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-5-C" style="display: none;"><label class="rombel-group-label">Kelas 5C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k5_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="5" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="5" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="5" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="5" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="5" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="5" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-5-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k5_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k5_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-5" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-5">0</span></p><p>Total per Agama: <span id="totalAgama-5">0</span></p><p id="murid-validation-status-5" class="status-ok">Isikan data...</p></div>
+              </div>
+            <div id="kelas-content-6" class="tab-content" style="display: none;">
+              <div class="form-grid"><div class="form-group"><label>Jumlah Rombel Kelas 6</label><select class="rombel-toggle" name="k6_jumlah_rombel" data-kelas="6"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></div></div>
+              <h4 class="sub-section-title">Jumlah Murid per Rombel</h4>
+              <div class="rombel-container" id="rombel-container-6">
+                <div class="rombel-input-group" id="rombel-6-Tunggal" style="display: block;"><label class="rombel-group-label">Kelas 6</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k6_rombel_tunggal_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_rombel_tunggal_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-6-A" style="display: none;"><label class="rombel-group-label">Kelas 6A</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k6_rombel_a_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_rombel_a_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-6-B" style="display: none;"><label class="rombel-group-label">Kelas 6B</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k6_rombel_b_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_rombel_b_P" value="0" min="0" required></div></div></div>
+                <div class="rombel-input-group" id="rombel-6-C" style="display: none;"><label class="rombel-group-label">Kelas 6C</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k6_rombel_c_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_rombel_c_P" value="0" min="0" required></div></div></div>
+              </div>
+              <h4 class="sub-section-title">Jumlah Murid per Agama</h4>
+              <div class="agama-container-grid">
+                <div class="agama-input-group"><label class="agama-group-label">Islam</label><select class="agama-toggle" data-kelas="6" data-agama="islam"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-islam" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_islam_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_islam_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Kristen</label><select class="agama-toggle" data-kelas="6" data-agama="kristen"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-kristen" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_kristen_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_kristen_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Katolik</label><select class="agama-toggle" data-kelas="6" data-agama="katolik"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-katolik" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_katolik_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_katolik_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Hindu</label><select class="agama-toggle" data-kelas="6" data-agama="hindu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-hindu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_hindu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_hindu_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Buddha</label><select class="agama-toggle" data-kelas="6" data-agama="buddha"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-buddha" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_buddha_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_buddha_P" value="0" min="0" required></div></div></div>
+                <div class="agama-input-group"><label class="agama-group-label">Konghucu</label><select class="agama-toggle" data-kelas="6" data-agama="konghucu"><option value="Ada">Ada</option><option value="Tidak Ada" selected>Tidak Ada</option></select><div class="murid-input-pair" id="agama-input-6-konghucu" style="display: none; margin-top: 10px;"><div class="form-group"><label>L</label><input type="number" name="k6_agama_konghucu_L" value="0" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k6_agama_konghucu_P" value="0" min="0" required></div></div></div>
+              </div>
+              <div id="murid-validation-feedback-6" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-6">0</span></p><p>Total per Agama: <span id="totalAgama-6">0</span></p><p id="murid-validation-status-6" class="status-ok">Isikan data...</p></div>
+              <div class="tab-form-footer"><button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button></div>
+            </div>
+        </div>
+        
+        </div>
+
+      <div id="dataPtk" class="tab-content-form">
+        <div id="ptk-section-container">
+          <div id="ptk-negeri" style="display:none;">
+            <fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Negeri)</legend>
+              <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-2"><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_ks_pns" value="0" min="0" max="1"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_ks_pppk" value="0" min="0" max="1"></div></div></fieldset>
+              <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
+                <div class="ptk-row has-label"><label>Guru Kelas</label><div>
+                  <div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kelas_pns" value="0" min="0"></div>
+                  <div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kelas_pppk" value="0" min="0"></div>
+                  <div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kelas_pppkpw" value="0" min="0"></div>
+                  <div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kelas_gtt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pai_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pai_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pai_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pai_gtt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pjok_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pjok_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pjok_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pjok_gtt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kristen_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kristen_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kristen_pppkpw" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kristen_gtt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_inggris_gtt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru Mapel Lainnya</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_lainnya_gtt" value="0" min="0"></div></div></div>
+              </fieldset>
+              <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
+                <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_pengelola_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_pengelola_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pengelola_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_operator_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_operator_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_operator_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Pengelola Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_plo_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_plo_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_plo_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Penata Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_penata_lo_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_penata_lo_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_penata_lo_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Administrasi Perkantoran</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_adm_perkantoran_pppk" value="0" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_adm_perkantoran_pppkpw" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_adm_perkantoran_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_penjaga_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Tenaga Adm.</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_tas_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pustakawan_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Tendik Lain</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_lainnya_ptt" value="0" min="0"></div></div></div>
+              </fieldset>
+            </fieldset>
+          </div>
+          <div id="ptk-swasta" style="display:none;">
+            <fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Swasta)</legend>
+              <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-4">
+                <div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_ks_gty" value="0" min="0" max="1"></div>
+                <div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_ks_gtt" value="0" min="0" max="1"></div>
+                <div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_ks_pns" value="0" min="0"></div>
+                <div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_ks_pppk" value="0" min="0"></div>
+              </div></fieldset>
+              <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
+                <div class="ptk-row has-label"><label>Guru Kelas</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kelas_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kelas_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kelas_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kelas_pppk" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pai_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pai_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pai_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pai_pppk" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pjok_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pjok_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pjok_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pjok_pppk" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kristen_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kristen_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kristen_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kristen_pppk" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_inggris_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_inggris_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_inggris_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_inggris_pppk" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Guru Mapel Lain</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_lainnya_gty" value="0" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_lainnya_gtt" value="0" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_lainnya_pns" value="0" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_lainnya_pppk" value="0" min="0"></div></div></div>
+              </fieldset>
+              <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
+                <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_penjaga_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_penjaga_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Tenaga Administrasi</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_tas_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_tas_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pustakawan_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pustakawan_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_operator_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_operator_ptt" value="0" min="0"></div></div></div>
+                <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pengelola_pty" value="0" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pengelola_ptt" value="0" min="0"></div></div></div>
+              </fieldset>
+            </fieldset>
+          </div>
+        </div>
+        <div class="tab-form-footer">
+          <button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button>
+          <button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button>
+        </div>
+      </div>
+
+      <div id="dataUnggah" class="tab-content-form">
+        <h3 class="sub-section-title">Perbarui Dokumen (Opsional)</h3>
+        <div class="form-group">
+            <label>File Saat Ini</label>
+            <p id="existingFileLink" class="input-hint" style="margin-top: 10px; font-size: 1em;">Memuat...</p>
+        </div>
+        <div class="form-group">
+            <label for="fileLapbul">Ganti Scan PDF Laporan (Maks. 300 KB)</label>
+            <input type="file" id="fileLapbul" name="fileData" accept=".pdf">
+        </div>
+        <div class="tab-form-footer">
+            <button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button>
+            <button type="submit" class="submit-btn" id="edit-lapbul-sd-submit" style="width: auto; margin-left: auto;">Simpan Perubahan</button>
+        </div>
+      </div>
+      
+    </div> </form>
 </main>
