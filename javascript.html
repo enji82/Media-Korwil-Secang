@@ -222,21 +222,19 @@ App.initializeGenericTablePage = (config) => {
     // VARIABEL LOKAL
     let allDataRows = [], headerCols = [], currentFilteredRows = [], currentPage = 1, rowsPerPage = 15;
     let filterData = null;
-
+    
     config.filters = config.filters || [];
-
+    
     // --- FUNGSI HELPER LOKAL ---
     const getRowValue = (row, key) => {
-        // Cek apakah data di-nest (seperti di halaman Kelola)
         const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
         return isDataNested ? (row.data ? row.data[key] : row[key]) : row[key];
     };
-
+    
     // FUNGSI PARSER UNTUK SORTING TANGGAL
     const parseCustomDateTime = (dateStr) => {
         const cleanedStr = String(dateStr).trim();
         if (!cleanedStr || cleanedStr === '-') return 0;
-        // Format: dd/MM/yyyy HH:mm:ss
         const parts = cleanedStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s(\d{1,2}):(\d{1,2}):(\d{1,2})/);
         if (parts && parts.length === 7) {
             return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]).getTime();
@@ -247,21 +245,17 @@ App.initializeGenericTablePage = (config) => {
         }
         return 0;
     };
-
+    
     // FUNGSI SORTING
     const applySorting = (dataArray, sortConfig) => {
         if (!sortConfig || dataArray.length === 0) return dataArray;
-
         dataArray.sort((a, b) => {
             for (let i = 0; i < sortConfig.length; i++) {
                 const conf = sortConfig[i];
                 const parser = conf.parser || ((val) => val); 
-
                 const valA = parser(a[conf.column]) || 0; 
                 const valB = parser(b[conf.column]) || 0; 
-
                 const comparison = (valA > valB) ? 1 : (valA < valB) ? -1 : 0;
-
                 if (comparison !== 0) {
                     return conf.order === 'DESC' ? -comparison : comparison;
                 }
@@ -270,7 +264,7 @@ App.initializeGenericTablePage = (config) => {
         });
         return dataArray; 
     };
-
+    
     // FUNGSI PAGINATION
     const calculateRowsPerPage = () => {
         const tableContainer = document.getElementById(config.tableId)?.closest('.table-container');
@@ -285,19 +279,17 @@ App.initializeGenericTablePage = (config) => {
     const setupPagination = () => {
         const paginationContainer = document.getElementById('pagination-container');
         if (!paginationContainer) return;
-
         const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage);
-
+        
         if (pageCount <= 1) {
             paginationContainer.style.display = 'none';
             return;
         }
-
+        
         paginationContainer.style.display = 'flex';
         const pageInfo = `<span class="page-info">Halaman ${currentPage} dari ${pageCount}</span>`;
         const prevBtn = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="App.changePage(-1)">«</button>`;
         const nextBtn = `<button class="page-btn" ${currentPage === pageCount ? 'disabled' : ''} onclick="App.changePage(1)">»</button>`;
-
         paginationContainer.innerHTML = prevBtn + pageInfo + nextBtn;
     };
 
@@ -307,7 +299,7 @@ App.initializeGenericTablePage = (config) => {
     };
 
     // ========================================================
-    // ===== PERBAIKAN UTAMA DI FUNGSI buildTable =====
+    // ===== FUNGSI buildTable DENGAN LOGIKA FOOTER BARU =====
     // ========================================================
     const buildTable = () => {
         const table = document.getElementById(config.tableId);
@@ -315,13 +307,13 @@ App.initializeGenericTablePage = (config) => {
         const tableBody = document.getElementById(config.tableId + 'Body') || table.querySelector('tbody');
         const tableFoot = table.querySelector('tfoot');
         if (!tableBody) return;
-
+        
         tableBody.innerHTML = '';
         if (tableFoot) tableFoot.innerHTML = '';
 
         const usePagination = !!document.getElementById('pagination-container');
         let paginatedRows = currentFilteredRows;
-
+        
         if (usePagination) {
             rowsPerPage = calculateRowsPerPage();
             const pageCount = Math.ceil(currentFilteredRows.length / rowsPerPage) || 1;
@@ -335,24 +327,19 @@ App.initializeGenericTablePage = (config) => {
             const colspan = headerCols.length + 1;
             tableBody.innerHTML = `<tr><td colspan="${colspan}">Tidak ada data yang cocok dengan filter.</td></tr>`;
         } else {
-            // Ambil referensi fungsi di awal
             const AppLoadPage = App.loadPage;
             const AppShowDelete = App.showDeleteConfirmation;
-
+            
             paginatedRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
-
-                // 1. Tambahkan Kolom Nomor
                 const rowNumber = usePagination ? (currentPage - 1) * rowsPerPage + index + 1 : index + 1;
                 const tdNum = document.createElement('td');
                 tdNum.textContent = rowNumber;
                 tr.appendChild(tdNum);
 
-                // 2. Loop melalui header data (GANTI DARI .innerHTML KE DOM)
                 headerCols.forEach(header => {
                     const cellData = row[header] ?? '';
                     const td = document.createElement('td');
-
                     if (header === 'Dokumen' && String(cellData).startsWith('http')) {
                         td.className = 'view-btn-container';
                         const link = document.createElement('a');
@@ -361,48 +348,34 @@ App.initializeGenericTablePage = (config) => {
                         link.className = 'action-btn view-btn';
                         link.innerHTML = '<i class="fas fa-eye"></i> Lihat';
                         td.appendChild(link);
-
                     } else if (header === 'Aksi') {
                         const rowIndex = row._rowIndex;
                         const source = row._source;
-
-                        // PERBAIKAN: Pastikan AppShowDelete ada sebelum memanggilnya
                         if (rowIndex !== undefined && typeof AppLoadPage === 'function' && typeof AppShowDelete === 'function') {
                             td.className = 'action-buttons';
-
-                            // Tentukan halaman edit dinamis
                             let dynamicEditPage = config.editPage || 'lapbul_edit_sd'; 
                             if (config.tableId === 'lapbulKelolaTable') {
                                 dynamicEditPage = (source === 'PAUD') ? 'lapbul_edit_paud' : 'lapbul_edit_sd';
                             }
-
-                            // Tombol Edit
                             const editButton = document.createElement('button');
                             editButton.className = 'action-btn edit-btn';
                             editButton.innerHTML = '<i class="fas fa-pencil-alt"></i> Edit';
                             editButton.addEventListener('click', (e) => {
                                 App.loadPage(e, dynamicEditPage, { rowIndex: rowIndex, source: source });
                             });
-
-                            // Tombol Hapus
                             const deleteButton = document.createElement('button');
                             deleteButton.className = 'action-btn delete-btn';
                             deleteButton.innerHTML = '<i class="fas fa-trash"></i> Hapus';
-                            deleteButton.dataset.rowInfo = JSON.stringify(row); // Simpan data di dataset
-
-                            // ===== INI PERBAIKANNYA =====
+                            deleteButton.dataset.rowInfo = JSON.stringify(row);
                             deleteButton.addEventListener('click', function() {
-                                App.showDeleteConfirmation(this); // 'this' adalah tombol itu sendiri
+                                App.showDeleteConfirmation(this);
                             });
-                            // ==============================
-
                             td.appendChild(editButton);
                             td.appendChild(deleteButton);
                         } else {
                             td.textContent = '-';
                         }
                     } else {
-                        // Sel data biasa
                         td.textContent = (cellData === '' || cellData === null || cellData == 0) ? '-' : cellData;
                     }
                     tr.appendChild(td);
@@ -410,6 +383,59 @@ App.initializeGenericTablePage = (config) => {
                 tableBody.appendChild(tr);
             });
         }
+        
+        // ===========================================
+        // ===== LOGIKA BARU UNTUK FOOTER (NO-COLSPAN) =====
+        // ===========================================
+        if (tableFoot && config.footerConfig && config.footerConfig.enabled && currentFilteredRows.length > 0) {
+            const totals = {};
+            headerCols.forEach(h => totals[h] = 0);
+            
+            const labelColName = config.footerConfig.labelColumn; // misal: "Nama Lembaga"
+            const sumStartColName = config.footerConfig.sumStartColumn; // misal: "Jumlah Rombel"
+            const labelColIndex = headerCols.indexOf(labelColName); // misal: 0
+            const sumStartIndex = headerCols.indexOf(sumStartColName); // misal: 3
+
+            if (labelColIndex !== -1 && sumStartIndex !== -1) {
+                // Hitung total dari SEMUA baris yang difilter (bukan hanya yang dipaginasi)
+                currentFilteredRows.forEach(row => {
+                    for (let i = sumStartIndex; i < headerCols.length; i++) {
+                        const header = headerCols[i];
+                        const val = getRowValue(row, header);
+                        totals[header] += (parseFloat(val) || 0);
+                    }
+                });
+
+                const tfootTr = document.createElement('tr');
+                let footerCells = [];
+                
+                // 1. Sel 'No.' (Kolom 0)
+                footerCells.push('<td>-</td>');
+                
+                // 2. Loop melalui headerCols (untuk Kolom 1 s/d ...)
+                for (let i = 0; i < headerCols.length; i++) {
+                    const header = headerCols[i];
+                    
+                    if (i === labelColIndex) {
+                        // Ini kolom Label (misal: "Nama Lembaga")
+                        footerCells.push(`<td style="text-align: left; font-weight: bold;">JUMLAH</td>`);
+                    } else if (i < sumStartIndex) {
+                        // Ini kolom non-data sebelum data dijumlahkan (misal: "Jenjang", "Status")
+                        footerCells.push('<td>-</td>');
+                    } else {
+                        // Ini kolom data yang dijumlahkan (misal: "Jumlah Rombel", dst.)
+                        footerCells.push(`<td>${totals[header]}</td>`);
+                    }
+                }
+                
+                tfootTr.innerHTML = footerCells.join('');
+                tableFoot.appendChild(tfootTr);
+            }
+        }
+        // ===========================================
+        // ===== AKHIR LOGIKA FOOTER =====
+        // ===========================================
+
     }; // END buildTable (Baru)
 
     // --- FILTER & EVENT LISTENERS (Tetap sama) ---
@@ -425,7 +451,7 @@ App.initializeGenericTablePage = (config) => {
             searchInput.removeEventListener('input', debouncedFilterChange);
             searchInput.addEventListener('input', debouncedFilterChange);
         }
-
+        
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown) {
@@ -434,10 +460,10 @@ App.initializeGenericTablePage = (config) => {
             }
         });
     };
-
+    
     const applyFilters = () => {
         let filtered = allDataRows;
-
+        
         if (config.initialSort && filtered.length > 0) {
             filtered = applySorting(filtered, config.initialSort); 
         }
@@ -455,13 +481,13 @@ App.initializeGenericTablePage = (config) => {
                 });
             });
         }
-
+        
         config.filters.forEach(filterConf => {
             const dropdown = document.getElementById(filterConf.id);
             if (dropdown && dropdown.value) {
                 const filterValue = dropdown.value;
                 const filterKey = filterConf.dataColumn;
-
+                
                 filtered = filtered.filter(row => {
                     const rowValue = getRowValue(row, filterKey);
                     return String(rowValue).trim() === filterValue;
@@ -476,14 +502,26 @@ App.initializeGenericTablePage = (config) => {
 
     const populateCascadingFilters = (data) => {
         filterData = data;
-
+        
         config.filters.forEach(filterConf => {
             if (filterConf.type !== 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
                 const filterKey = filterConf.dataColumn || filterConf.key;
-
+                
                 if (dropdown && dropdown.tagName === 'SELECT' && filterKey) {
-                    const uniqueValues = [...new Set(allDataRows.map(row => String(getRowValue(row, filterKey))))].filter(Boolean).sort();
+                    let uniqueValues;
+                    if (filterConf.specialSort === 'bulan') {
+                        const monthOrder = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                        uniqueValues = [...new Set(allDataRows.map(row => String(getRowValue(row, filterKey))))]
+                            .filter(Boolean)
+                            .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+                    } else {
+                         uniqueValues = [...new Set(allDataRows.map(row => String(getRowValue(row, filterKey))))].filter(Boolean).sort();
+                    }
+                    
+                    if (filterConf.sortReverse) {
+                        uniqueValues.reverse();
+                    }
 
                     const defaultText = filterConf.defaultText || 'Semua';
                     dropdown.innerHTML = `<option value="">${defaultText}</option>`;
@@ -498,15 +536,15 @@ App.initializeGenericTablePage = (config) => {
             if (filterConf.type === 'cascading-local') {
                 const dropdown = document.getElementById(filterConf.id);
                 const parentDropdown = document.getElementById(filterConf.parent);
-
+                
                 if (dropdown && parentDropdown) {
                     const updateDropdown = () => {
                         const selectedParentValue = parentDropdown.value;
                         const keyChild = filterConf.dataColumn || filterConf.key;
                         const keyParent = filterConf.parentKey;
-
-                        dropdown.innerHTML = '<option value="">Semua Sekolah</option>';
-
+                        
+                        dropdown.innerHTML = `<option value="">${filterConf.defaultText || 'Semua'}</option>`;
+                        
                         if (selectedParentValue) {
                             const uniqueChildValues = [...new Set(allDataRows
                                 .filter(row => String(getRowValue(row, keyParent)).trim() === selectedParentValue)
@@ -545,7 +583,7 @@ App.initializeGenericTablePage = (config) => {
 
     const serverFunction = config.serverFunction;
     const filterFunction = config.filterFunction;
-
+    
     google.script.run
         .withSuccessHandler(data => {
             if (data.error) { 
@@ -561,7 +599,7 @@ App.initializeGenericTablePage = (config) => {
             if (tableHead) {
                 tableHead.innerHTML = `<tr><th>No.</th>${headerCols.map(h => `<th>${h}</th>`).join('')}</tr>`;
             }
-
+            
             if (filterFunction) {
                 google.script.run
                     .withSuccessHandler(filterResult => {
@@ -2903,7 +2941,9 @@ function initPtkKeadaanPaudPage() {
     App.initializeGenericTablePage({
         tableId: 'keadaanPtkPaudTable',
         serverFunction: 'getPtkKeadaanPaudData',
-        filterConfig: [ { id: 'filterJenjang', dataColumn: '_filterJenjang' } ],
+        filters: [ 
+            { id: 'filterJenjang', dataColumn: '_filterJenjang', defaultText: 'Semua Jenjang' } 
+        ],
         footerConfig: {
             enabled: true,
             labelColumn: 'Nama Lembaga',
