@@ -77,6 +77,17 @@ App.loadPage = (event, pageName, params = {}) => {
         .withSuccessHandler(html => {
             try {
                 contentArea.innerHTML = html;
+
+                // ===== BLOK PERBAIKAN SCROLL (TAMBAHKAN INI) =====
+                const mainContent = document.getElementById('main-content');
+                const isTablePage = contentArea.querySelector('.table-view-container');
+                
+                if (isTablePage) {
+                    mainContent.style.overflowY = 'hidden'; // Matikan scroll luar untuk halaman tabel
+                } else {
+                    mainContent.style.overflowY = 'auto';   // Nyalakan scroll luar untuk halaman menu (Home)
+                }
+                // ===== AKHIR BLOK PERBAIKAN =====
                 
                 // KEMBALIKAN KE 0
                 setTimeout(() => {
@@ -84,7 +95,7 @@ App.loadPage = (event, pageName, params = {}) => {
                         App.pageInitializers[pageName](params);
                     }
                     App.updateActiveMenu(pageName);
-                }, 0); // <-- KEMBALIKAN KE 0
+                }, 0); 
 
             } catch (e) {
                 console.error("Client-side error after loading page:", e);

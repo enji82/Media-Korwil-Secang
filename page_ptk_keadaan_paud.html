@@ -9,7 +9,7 @@
   </div>
 </div>
 
-<main class="table-view-container">
+<div class="table-view-container">
   <div id="loadingStatus" class="loading-container">
       <div class="spinner-container">
         <div class="spinner-bar"></div>
@@ -33,34 +33,33 @@
     </div>
   </div>
 
-</main>
+</div>
+
 
 <style>
-  /* 1. Kunci Scroll Utama (Sudah Benar) */
-  #main-content {
-    overflow-y: hidden !important;
+  /* BAGIAN 1 & 2 (LAYOUT & FREEZE) */
+  #main-content { display: flex !important; flex-direction: column !important; overflow-y: hidden !important; }
+  
+  /* DIUBAH: Ditambahkan gaya visual agar sudutnya bulat */
+  div.table-view-container { 
+    flex-grow: 1 !important; 
+    min-height: 0 !important; 
+    overflow: auto !important;
+    
+    /* KUNCI: Menambahkan kembali gaya visual dari aturan global */
+    border-radius: 10px !important; /* Membuat sudut menjadi bulat */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(0, 0, 0, 0.15) !important;
   }
 
-  /* 2. Jadikan <main> sebagai Flex Container DAN HENTIKAN SCROLL */
-  main.table-view-container {
-    flex-grow: 1;
-    min-height: 0; 
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden; /* <-- INI DIA PERBAIKANNYA */
-  }
+  #tableWrapper, #tableWrapper .table-container { overflow: visible !important; }
+  .data-table thead th { position: sticky !important; top: 0 !important; z-index: 3 !important; }
+  .data-table tbody td:nth-child(1), .data-table tbody td:nth-child(2) { position: sticky !important; z-index: 2 !important; }
+  .data-table thead th:nth-child(1), .data-table thead th:nth-child(2) { top: 0 !important; z-index: 4 !important; }
 
-  /* 3. Jadikan #tableWrapper sebagai sub-container flexbox (Sudah Benar) */
-  #tableWrapper {
-    flex-grow: 1;
-    min-height: 0; 
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* 4. Terapkan SCROLL pada CONTAINER TABEL (KUNCI) */
-  #tableWrapper .table-container {
-    flex-grow: 1;
-    overflow: auto; 
-  }
+  /* BAGIAN 3: ATURAN SCROLLBAR */
+  div.table-view-container::-webkit-scrollbar { width: 0px !important; height: 0px !important; background: transparent !important; }
+  div.table-view-container::-webkit-scrollbar-track { background: transparent !important; border: none !important; border-radius: 0px !important; }
+  div.table-view-container::-webkit-scrollbar-thumb { background: transparent !important; border: none !important; border-radius: 0px !important; }
+  div.table-view-container { scrollbar-width: none !important; -ms-overflow-style: none !important; }
 </style>
