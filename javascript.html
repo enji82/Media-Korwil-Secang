@@ -78,16 +78,7 @@ App.loadPage = (event, pageName, params = {}) => {
             try {
                 contentArea.innerHTML = html;
 
-                // ===== BLOK PERBAIKAN SCROLL (TAMBAHKAN INI) =====
-                const mainContent = document.getElementById('main-content');
-                const isTablePage = contentArea.querySelector('.table-view-container');
                 
-                if (isTablePage) {
-                    mainContent.style.overflowY = 'hidden'; // Matikan scroll luar untuk halaman tabel
-                } else {
-                    mainContent.style.overflowY = 'auto';   // Nyalakan scroll luar untuk halaman menu (Home)
-                }
-                // ===== AKHIR BLOK PERBAIKAN =====
                 
                 // KEMBALIKAN KE 0
                 setTimeout(() => {

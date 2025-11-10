@@ -232,7 +232,17 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
   /* ======================= 5. GAYA TABEL UMUM ======================== */
   /* =================================================================== */
  
-  .table-container { overflow-x: auto; background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; margin: 0 auto; }
+  .table-container { 
+    
+    background: rgba(0, 0, 0, 0.15); 
+    backdrop-filter: blur(8px); 
+    -webkit-backdrop-filter: blur(8px); 
+    border-radius: 10px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+    width: 100%; 
+    box-sizing: border-box; 
+    margin: 0 auto; }
   .data-table { border-collapse: separate; border-spacing: 0; font-size: 13px; width: 100%; }
   .data-table th, .data-table td { border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 12px; vertical-align: middle; white-space: nowrap; height: 24px; }
   .data-table th:not(:last-child),
@@ -942,35 +952,17 @@ main.manual-form.form-tab-container > form {
     margin-bottom: 25px; /* Jarak antar fieldset di dalam tab */
 }
 
-/* === PERBAIKAN SCROLLBAR GLOBAL (FINAL V3 - DEFINITIF) === */
-.main-content {
-flex-grow: 1; /* PENTING: Mengisi ruang sisa */
-overflow-y: hidden; 
-padding: 25px;
-display: flex;
-flex-direction: column; /* Mengatur Header, Filter, dan Konten di bawahnya */
-}
-
-/* Selector diubah dari 'main.table-view-container' menjadi '.table-view-container' */
-.table-view-container {
-flex-grow: 1; /* Membuat container ini mengisi sisa ruang */
-min-height: 0; /* Trik penting agar flexbox berfungsi dengan overflow */
-display: flex;
-flex-direction: column;
-overflow-y: auto;
-}
-
-#tableWrapper {
-min-height: 0;
-display: flex;
-flex-direction: column;
-align-items: flex-start;
-width: 100%; /* Memastikan pembungkus tabel mengambil lebar penuh yang tersedia */
-overflow-x: auto; /* Penting untuk tabel yang lebar */
-}
-
 #tableWrapper .table-container {
 overflow: auto; /* Hapus 'flex-grow: 1;' */
+}
+
+/* css.html - Sekitar baris 43 */
+.main-content {
+  flex-grow: 1; 
+  overflow-y: auto; /* <-- PASTIKAN INI 'auto' (Default untuk Home) */
+  padding: 25px;
+  display: flex;
+  flex-direction: column; 
 }
 
 </style>

@@ -21,7 +21,7 @@
   </div>
   
   <div id="tableWrapper" style="display:none;">
-    <div class="table-container">
+    <div class="table-view-container">
         <table id="keadaanPtkPaudTable" class="data-table freeze-pane-table">
           <thead></thead>
           <tbody></tbody>
@@ -35,31 +35,43 @@
 
 </div>
 
-
 <style>
-  /* BAGIAN 1 & 2 (LAYOUT & FREEZE) */
-  #main-content { display: flex !important; flex-direction: column !important; overflow-y: hidden !important; }
-  
-  /* DIUBAH: Ditambahkan gaya visual agar sudutnya bulat */
+  /*
+    ATURAN LOKAL KHUSUS (Metode 2 Lapis yang Benar)
+    Hanya untuk halaman ini.
+  */
+
+  /* LAPIS 1: Kontainer Utama (dari index.html)
+   * Paksa 'hidden' agar scroll luar tidak aktif di halaman ini.
+   */
+  #main-content {
+    overflow: hidden !important; /* KUNCI #1: Matikan scroll luar */
+  }
+
+  /* LAPIS 2: Pembungkus Halaman Tabel (file ini)
+   * JADIKAN INI SCROLLER UTAMA
+   */
   div.table-view-container { 
     flex-grow: 1 !important; 
     min-height: 0 !important; 
-    overflow: auto !important;
+    overflow: auto !important; /* KUNCI #2: JADIKAN LAPIS 2 SEBAGAI SCROLLER */
     
-    /* KUNCI: Menambahkan kembali gaya visual dari aturan global */
-    border-radius: 10px !important; /* Membuat sudut menjadi bulat */
+    /* Gaya visual (penting) */
+    border-radius: 10px !important; 
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     background: rgba(0, 0, 0, 0.15) !important;
   }
 
-  #tableWrapper, #tableWrapper .table-container { overflow: visible !important; }
-  .data-table thead th { position: sticky !important; top: 0 !important; z-index: 3 !important; }
-  .data-table tbody td:nth-child(1), .data-table tbody td:nth-child(2) { position: sticky !important; z-index: 2 !important; }
-  .data-table thead th:nth-child(1), .data-table thead th:nth-child(2) { top: 0 !important; z-index: 4 !important; }
-
-  /* BAGIAN 3: ATURAN SCROLLBAR */
-  div.table-view-container::-webkit-scrollbar { width: 0px !important; height: 0px !important; background: transparent !important; }
-  div.table-view-container::-webkit-scrollbar-track { background: transparent !important; border: none !important; border-radius: 0px !important; }
-  div.table-view-container::-webkit-scrollbar-thumb { background: transparent !important; border: none !important; border-radius: 0px !important; }
-  div.table-view-container { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+  /* LAPIS 3 & 4: Pastikan tidak mengganggu sticky header */
+  #tableWrapper, #tableWrapper .table-container { 
+    overflow: visible !important; /* KUNCI #3: Bebaskan sticky header */
+  }
+  
+  /* KUNCI #4: Sembunyikan scrollbar di Lapis 2 */
+  div.table-view-container::-webkit-scrollbar {
+    width: 0px !important; height: 0px !important; background: transparent !important;
+  }
+  div.table-view-container {
+    scrollbar-width: none !important; -ms-overflow-style: none !important;
+  }
 </style>
