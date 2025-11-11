@@ -1,5 +1,5 @@
 <header>
-  <h2>DAFTAR TENAGA PENDIDIK DAN KEPENDIDIKAN (PTK) PAUD</h2>
+  <h2>DAFTAR PENDIDIK DAN TENAGA KEPENDIDIKAN (PTK) PAUD</h2>
 </header>
 
 <div class="filter-container">
@@ -14,6 +14,18 @@
     <div class="filter-group">
       <label for="filterStatus">Status:</label>
       <select id="filterStatus"></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterPendidikan">Pendidikan:</label>
+      <select id="filterPendidikan"></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterSerdik">Serdik:</label>
+      <select id="filterSerdik"></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterDapodik">Dapodik:</label>
+      <select id="filterDapodik"></select>
     </div>
 </div>
 
@@ -36,3 +48,66 @@
     <div id="pagination-container" class="pagination-container"></div>
   </div>
 </main>
+
+<style>
+  /* 1. Paksa halaman (#main-content) untuk TIDAK scroll */
+  #main-content {
+    overflow-y: hidden !important;
+  }
+
+  /* 2. Paksa <main> (pembungkus halaman) untuk mengisi sisa ruang */
+  main.table-view-container {
+    flex-grow: 1 !important;
+    min-height: 0 !important; 
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 3. Paksa #tableWrapper untuk mengisi sisa ruang di dalam <main> */
+  #tableWrapper {
+    flex-grow: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* 4. INTI: Perintahkan .table-container untuk mengisi sisa ruang DAN SCROLL */
+  #tableWrapper .table-container {
+    flex-grow: 1 !important;
+    overflow-y: auto !important; /* Aktifkan scrollbar vertikal HANYA di sini */
+  }
+
+  /* 5. PERBAIKAN Z-INDEX: (Menargetkan ID tabel halaman ini) */
+  #daftarPtkPaudTable thead th:nth-child(1),
+  #daftarPtkPaudTable thead th:nth-child(2) {
+    z-index: 7 !important;
+  }
+
+  /* 6. PERBAIKAN SCROLLBAR: Sembunyikan scrollbar */
+  #tableWrapper .table-container::-webkit-scrollbar {
+    display: none !important; 
+  }
+  #tableWrapper .table-container {
+    scrollbar-width: none !important; 
+    -ms-overflow-style: none !important; 
+  }
+
+  /* 7. PERINTAH RATA KIRI (Sesuai permintaan G18 Anda) */
+  #daftarPtkPaudTable td:nth-child(2),  /* Nama */
+  #daftarPtkPaudTable td:nth-child(3),  /* Nama Lembaga */
+  #daftarPtkPaudTable td:nth-child(7),  /* Pangkat */
+  #daftarPtkPaudTable td:nth-child(9),  /* Jabatan */
+  #daftarPtkPaudTable td:nth-child(12), /* Tempat, Tgl Lahir */
+  #daftarPtkPaudTable td:nth-child(14)  /* Jurusan */
+  {
+    text-align: left !important;
+  }
+
+  /* 8. PERBAIKAN BARU: 
+     Lawan aturan global dan paksa Kolom 4 (Jenjang) kembali ke tengah
+  */
+  #daftarPtkPaudTable td:nth-child(4)
+  {
+    text-align: center !important;
+  }
+</style>

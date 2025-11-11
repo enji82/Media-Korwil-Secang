@@ -502,7 +502,7 @@ App.initializeGenericTablePage = (config) => {
         buildTable();
     };
 
-    const populateCascadingFilters = (data) => {
+    const populateCascadingFilters = (data, defaultValues = {}) => {
         filterData = data;
         
         config.filters.forEach(filterConf => {
@@ -530,6 +530,13 @@ App.initializeGenericTablePage = (config) => {
                     uniqueValues.forEach(value => {
                         dropdown.innerHTML += `<option value="${value}">${value}</option>`;
                     });
+                    if (defaultValues && defaultValues[filterConf.id]) {
+                    const defaultValue = defaultValues[filterConf.id];
+                    // Cek apakah default value itu ADA di dalam <option>
+                    if (uniqueValues.includes(defaultValue)) {
+                        dropdown.value = defaultValue;
+                    }
+                }
                 }
             }
         });
@@ -541,22 +548,30 @@ App.initializeGenericTablePage = (config) => {
                 
                 if (dropdown && parentDropdown) {
                     const updateDropdown = () => {
-                        const selectedParentValue = parentDropdown.value;
-                        const keyChild = filterConf.dataColumn || filterConf.key;
-                        const keyParent = filterConf.parentKey;
-                        
-                        dropdown.innerHTML = `<option value="">${filterConf.defaultText || 'Semua'}</option>`;
-                        
-                        if (selectedParentValue) {
-                            const uniqueChildValues = [...new Set(allDataRows
-                                .filter(row => String(getRowValue(row, keyParent)).trim() === selectedParentValue)
-                                .map(row => String(getRowValue(row, keyChild))))].filter(Boolean).sort();
+                    const selectedParentValue = parentDropdown.value;
+                    const keyChild = filterConf.dataColumn || filterConf.key;
+                    const keyParent = filterConf.parentKey;
 
-                            uniqueChildValues.forEach(value => {
-                                dropdown.innerHTML += `<option value="${value}">${value}</option>`;
-                            });
-                        }
-                        handleFilterChange();
+                    dropdown.innerHTML = `<option value="">${filterConf.defaultText || 'Semua'}</option>`;
+
+                    let dataToProcess = allDataRows;
+
+                    // 1. Tentukan sumber data: SEMUA data, atau data yang SUDAH DIFILTER?
+                    if (selectedParentValue) {
+                    dataToProcess = allDataRows.filter(row => String(getRowValue(row, keyParent)).trim() === selectedParentValue);
+                    }
+                    // (Jika selectedParentValue kosong, dataToProcess tetap allDataRows)
+
+                    // 2. Ambil nilai unik dari sumber data yang sudah ditentukan
+                    const uniqueChildValues = [...new Set(dataToProcess
+                   .map(row => String(getRowValue(row, keyChild))))].filter(Boolean).sort();
+
+                    // 3. Isi dropdown
+                    uniqueChildValues.forEach(value => {
+                    dropdown.innerHTML += `<option value="${value}">${value}</option>`;
+                    });
+
+                    handleFilterChange();
                     };
                     parentDropdown.removeEventListener('change', updateDropdown);
                     parentDropdown.addEventListener('change', updateDropdown);
@@ -595,7 +610,7 @@ App.initializeGenericTablePage = (config) => {
             }
 
             allDataRows = data.rows || data; 
-            headerCols = data.headers;
+            headerCols = config.displayHeaders || data.headers;
 
             const tableHead = document.querySelector(`#${config.tableId} thead`);
             if (tableHead) {
@@ -609,7 +624,7 @@ App.initializeGenericTablePage = (config) => {
                             document.getElementById('loadingStatus').innerHTML = `<p style="color:orange;">Gagal memuat filter: ${filterResult.error}. Tabel ditampilkan tanpa filter.</p>`;
                             filterData = {};
                         } else {
-                            populateCascadingFilters(filterResult); 
+                            populateCascadingFilters(filterResult, config.defaultValues); 
                         }
                         finalizeSetup();
                     })
@@ -619,7 +634,7 @@ App.initializeGenericTablePage = (config) => {
                     })
                     [filterFunction](); 
             } else {
-                populateCascadingFilters(null); 
+                populateCascadingFilters(null, config.defaultValues); 
                 finalizeSetup(); 
             }
         })
@@ -2968,9 +2983,36 @@ function initPtkKeadaanSdPage() {
 }
 
 function initPtkJumlahBulananPaudPage() {
-    initializeGenericTablePage({
+    // --- KODE BARU: Hitung default dinamis ---
+    const d = new Date();
+    const currentYear = d.getFullYear().toString();
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    let lastMonthIndex = d.getMonth() - 1; // getMonth() itu 0-11
+    let yearOfLastMonth = currentYear;
+
+    // Jika sekarang Januari (0), bulan lalu adalah Desember (11) dari TAHUN LALU
+    if (lastMonthIndex < 0) { 
+        lastMonthIndex = 11; // Desember
+        yearOfLastMonth = (d.getFullYear() - 1).toString();
+    }
+    const lastMonthName = monthNames[lastMonthIndex];
+    
+    // Tentukan Tahun default. Jika bulan lalu adalah Desember, Tahun defaultnya adalah tahun lalu.
+    const defaultTahun = (lastMonthIndex === 11) ? yearOfLastMonth : currentYear;
+    // --- AKHIR KODE BARU ---
+
+    App.initializeGenericTablePage({
         tableId: 'ptkJumlahBulananPaudTable',
         serverFunction: 'getPtkJumlahBulananPaudData',
+        
+        // --- PERUBAHAN DI SINI: Tambahkan properti defaultValues ---
+        defaultValues: {
+            'filterTahun': defaultTahun,
+            'filterBulan': lastMonthName
+        },
+        // --- AKHIR PERUBAHAN ---
+
         filters: [
             { id: 'filterTahun', dataColumn: '_filterTahun', type: 'dropdown', sortReverse: true },
             { id: 'filterBulan', dataColumn: '_filterBulan', type: 'dropdown', specialSort: 'bulan' },
@@ -2992,19 +3034,39 @@ function initPtkJumlahBulananPaudPage() {
 }
 
 function initPtkDaftarPaudPage() {
+    
+    // (Ini adalah daftar urutan kolom kustom Anda dari misi sebelumnya)
+    const kustomHeaders = [
+        "Nama", "Nama Lembaga", "Jenjang", "Status", "NIP/NIY", 
+        "Pangkat, Gol./Ruang", "NUPTK", "Jabatan", "TMT", "L/P", 
+        "Tempat, Tanggal Lahir", "Pendidikan", "Jurusan", "Tahun Lulus", 
+        "Serdik", "Dapodik"
+    ];
+
     App.initializeGenericTablePage({
         tableId: 'daftarPtkPaudTable',
         serverFunction: 'getDaftarPtkPaudData',
-        filterConfig: [
-            { id: 'filterJenjang', dataColumn: '_filterJenjang' },
+        displayHeaders: kustomHeaders, 
+        
+        // ▼▼▼ PERBAIKAN DI SINI ▼▼▼
+        // 1. "filterConfig:" diubah menjadi "filters:"
+        // 2. Menambahkan 3 filter baru
+        filters: [
+            { id: 'filterJenjang', dataColumn: '_filterJenjang', defaultText: 'Semua Jenjang' },
             { 
               id: 'filterNamaLembaga', 
               dataColumn: '_filterNamaLembaga', 
-              dependsOn: 'filterJenjang',
-              dependencyColumn: '_filterJenjang'
+              type: 'cascading-local',
+              parent: 'filterJenjang',
+              parentKey: '_filterJenjang',
+              defaultText: 'Semua Lembaga'
             },
-            { id: 'filterStatus', dataColumn: '_filterStatus' }
+            { id: 'filterStatus', dataColumn: '_filterStatus', defaultText: 'Semua Status' },
+            { id: 'filterPendidikan', dataColumn: '_filterPendidikan', defaultText: 'Semua Pendidikan' },
+            { id: 'filterSerdik', dataColumn: '_filterSerdik', defaultText: 'Semua Serdik' },
+            { id: 'filterDapodik', dataColumn: '_filterDapodik', defaultText: 'Semua Dapodik' }
         ]
+        // ▲▲▲ AKHIR PERBAIKAN ▲▲▲
     });
 }
 

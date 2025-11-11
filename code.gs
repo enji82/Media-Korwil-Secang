@@ -53,7 +53,7 @@ const SPREADSHEET_CONFIG = {
 
   // --- Modul Data PTK ---
   PTK_PAUD_KEADAAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Keadaan PTK PAUD" },
-  PTK_PAUD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Data PAUD Bulanan" },
+  PTK_PAUD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Jumlah PTK Bulanan" },
   PTK_PAUD_DB: { id: SPREADSHEET_IDS.PTK_PAUD_DB, sheet: "PTK PAUD" },
   PTK_SD_KEADAAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Keadaan PTK SD" },
   PTK_SD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "PTK Bulanan SD"},
@@ -1375,31 +1375,52 @@ function getDaftarPtkPaudData() {
         return { headers: [], rows: [], filterConfigs: [] };
     }
     
-    const headers = allData[0];
+    // PERBAIKAN 1: Membersihkan spasi dari semua header
+    const headers = allData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
 
+    // PERBAIKAN 2: Menemukan indeks untuk SEMUA 6 filter
     const jenjangIndex = headers.indexOf('Jenjang');
     const lembagaIndex = headers.indexOf('Nama Lembaga');
     const statusIndex = headers.indexOf('Status');
+    const pendidikanIndex = headers.indexOf('Pendidikan');
+    const serdikIndex = headers.indexOf('Serdik');
+    const dapodikIndex = headers.indexOf('Dapodik');
     
     const processedRows = dataRows.map(row => {
         const rowObject = {};
-        headers.forEach((h, i) => rowObject[h] = row[i]);
+
+        // PERBAIKAN 3: Loop ini menyalin SEMUA data (termasuk "Dapodik")
+        headers.forEach((h, i) => {
+          rowObject[h] = row[i];
+        });
+        
+        // PERBAIKAN 4: Membuat data untuk SEMUA 6 filter
         rowObject['_filterJenjang'] = row[jenjangIndex];
         rowObject['_filterNamaLembaga'] = row[lembagaIndex];
         rowObject['_filterStatus'] = row[statusIndex];
+        rowObject['_filterPendidikan'] = row[pendidikanIndex];
+        rowObject['_filterSerdik'] = row[serdikIndex];
+        rowObject['_filterDapodik'] = row[dapodikIndex];
+        
         return rowObject;
     });
-    
+
+    // (Urutkan data)
     processedRows.sort((a,b) => (a['Nama'] || "").localeCompare(b['Nama'] || ""));
 
+    // (Kirim kembali header asli dari sheet, JANGAN kustom header)
     return {
         headers: headers,
         rows: processedRows,
+        // (filterConfig dikirim untuk kompatibilitas, tapi JS akan mengabaikannya)
         filterConfigs: [
             { id: 'filterJenjang', dataColumn: '_filterJenjang' },
             { id: 'filterNamaLembaga', dataColumn: '_filterNamaLembaga', dependsOn: 'filterJenjang', dependencyColumn: '_filterJenjang' },
-            { id: 'filterStatus', dataColumn: '_filterStatus' }
+            { id: 'filterStatus', dataColumn: '_filterStatus' },
+            { id: 'filterPendidikan', dataColumn: '_filterPendidikan' },
+            { id: 'filterSerdik', dataColumn: '_filterSerdik' },
+            { id: 'filterDapodik', dataColumn: '_filterDapodik' }
         ]
     };
 
@@ -1452,7 +1473,7 @@ function getKelolaPtkPaudData() {
       return rowDataObject;
     });
 
-    const displayHeaders = ["Nama", "Nama Lembaga", "Status", "NIP/NIY", "Jabatan", "Aksi"];
+     const displayHeaders = ["Nama", "Nama Lembaga", "Status", "NIP/NIY", "Jabatan", "Jurusan", "Tahun Lulus", "Dapodik", "Aksi"];
     return { headers: displayHeaders, rows: finalData };
   } catch (e) {
     return handleError('getKelolaPtkPaudData', e);
