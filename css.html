@@ -953,13 +953,14 @@ main.manual-form.form-tab-container > form {
 }
 
 #tableWrapper .table-container {
-overflow: auto; /* Hapus 'flex-grow: 1;' */
+overflow: auto;
+flex-grow: 1;
 }
 
 /* css.html - Sekitar baris 43 */
 .main-content {
   flex-grow: 1; 
-  overflow-y: auto; /* <-- PASTIKAN INI 'auto' (Default untuk Home) */
+  overflow-y: hidden;
   padding: 25px;
   display: flex;
   flex-direction: column; 
