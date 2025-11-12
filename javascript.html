@@ -229,7 +229,7 @@ App.initializeGenericTablePage = (config) => {
     
     // --- FUNGSI HELPER LOKAL ---
     const getRowValue = (row, key) => {
-        const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkSdTable';
+        const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'kelolaPtkSdTable';
         return isDataNested ? (row.data ? row.data[key] : row[key]) : row[key];
     };
     
@@ -475,7 +475,7 @@ App.initializeGenericTablePage = (config) => {
 
         if (searchTerm) {
             filtered = filtered.filter(row => {
-                const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkSdTable';
+                const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'kelolaPtkSdTable';
                 const targetRow = isDataNested ? row.data : row;
                 return Object.keys(targetRow).some(key => {
                     const cellValue = String(targetRow[key] ?? '').toLowerCase();
@@ -1646,9 +1646,10 @@ function initLapbulFormSdPage() {
     const form = document.getElementById('lapbulFormSd');
     if (!form) return;
 
+    // 1. Panggil App.setupTabForm untuk tab utama (Tab 1-4)
     const formLogic = App.setupTabForm('lapbulFormSd'); 
 
-    // Helper functions for internal use
+    // 2. Fungsi Bantuan untuk dropdown Bulan/Tahun
     function setupInitialDropdowns() {
         const bulanSelect = form.querySelector('[name="laporanBulan"]');
         const tahunSelect = form.querySelector('[name="tahun"]');
@@ -1660,6 +1661,33 @@ function initLapbulFormSdPage() {
         tahunSelect.innerHTML = [currentYear, currentYear - 1].map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
     }
 
+    // 3. Fungsi Bantuan untuk Validasi Total Murid
+    function checkKelasTotals(kelas) {
+        const kelasContent = document.getElementById(`kelas-content-${kelas}`);
+        if (!kelasContent) return true;
+
+        const rombelInputs = kelasContent.querySelectorAll('.rombel-container input[type="number"]');
+        const agamaInputs = kelasContent.querySelectorAll('.agama-container-grid input[type="number"]');
+
+        const totalRombel = Array.from(rombelInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
+        const totalAgama = Array.from(agamaInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
+
+        const statusEl = document.getElementById(`murid-validation-status-${kelas}`);
+        document.getElementById(`totalRombel-${kelas}`).textContent = totalRombel;
+        document.getElementById(`totalAgama-${kelas}`).textContent = totalAgama;
+
+        if (totalRombel !== totalAgama) {
+            statusEl.textContent = "Jumlah TIDAK SAMA!";
+            statusEl.className = 'status-error';
+            return false;
+        } else {
+            statusEl.textContent = "Jumlah Sesuai";
+            statusEl.className = 'status-ok';
+            return true;
+        }
+    }
+    
+    // 4. Fungsi Bantuan untuk Generate HTML (SAMA SEPERTI FUNGSI TAMBAH)
     function generateKelasHTML(kelas) {
         const rombels = ['A', 'B', 'C'];
         const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
@@ -1717,96 +1745,26 @@ function initLapbulFormSdPage() {
         `;
     }
 
-    function generatePtkNegeriHTML() {
-        return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Negeri)</legend>
-        <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-2">
-            <div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_ks_pns" min="0" max="1"></div>
-            <div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_ks_pppk" min="0" max="1"></div>
-        </div></fieldset>
-        <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
-            <div class="ptk-row has-label"><label>Guru Kelas</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kelas_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kelas_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kelas_pppkpw" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kelas_gtt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pai_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pai_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pai_pppkpw" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pai_gtt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_pjok_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_pjok_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_pjok_pppkpw" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_pjok_gtt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>PNS</label><input type="number" name="ptk_negeri_guru_kristen_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_guru_kristen_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_guru_kristen_pppkpw" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_kristen_gtt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_inggris_gtt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru Mapel Lainnya</label><div><div class="form-group"><label>GTT</label><input type="number" name="ptk_negeri_guru_lainnya_gtt" min="0"></div></div></div>
-        </fieldset>
-        <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
-            <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_pengelola_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_pengelola_pppkpw" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pengelola_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_tendik_operator_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_tendik_operator_pppkpw" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_operator_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Pengelola Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_plo_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_plo_pppkpw" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_plo_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Penata Layanan Operasional</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_penata_lo_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_penata_lo_pppkpw" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_penata_lo_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Administrasi Perkantoran</label><div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_negeri_adm_perkantoran_pppk" min="0"></div><div class="form-group"><label>PPPK PW</label><input type="number" name="ptk_negeri_adm_perkantoran_pppkpw" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_adm_perkantoran_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_penjaga_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Tenaga Adm.</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_tas_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_pustakawan_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Tendik Lain</label><div><div class="form-group"><label>PTT</label><input type="number" name="ptk_negeri_tendik_lainnya_ptt" min="0"></div></div></div>
-        </fieldset>
-        </fieldset>`;
-    }
-
-    function generatePtkSwastaHTML() {
-        return `<fieldset class="ptk-fieldset"><legend>Data Jumlah PTK (Swasta)</legend>
-        <fieldset class="ptk-sub-fieldset"><legend>Kepala Sekolah</legend><div class="ptk-row ptk-grid-4">
-            <div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_ks_gty" min="0" max="1"></div>
-            <div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_ks_gtt" min="0" max="1"></div>
-            <div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_ks_pns" min="0" max="1"></div>
-            <div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_ks_pppk" min="0" max="1"></div>
-        </div></fieldset>
-        <fieldset class="ptk-sub-fieldset"><legend>Guru</legend>
-            <div class="ptk-row has-label"><label>Guru Kelas</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kelas_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kelas_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kelas_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kelas_pppk" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PAI</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pai_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pai_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pai_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pai_pppk" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PJOK</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_pjok_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_pjok_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_pjok_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_pjok_pppk" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru PA Kristen</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_kristen_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_kristen_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_kristen_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_kristen_pppk" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru Bhs. Inggris</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_inggris_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_inggris_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_inggris_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_inggris_pppk" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Guru Mapel Lain</label><div><div class="form-group"><label>GTY</label><input type="number" name="ptk_swasta_guru_lainnya_gty" min="0"></div><div class="form-group"><label>GTT</label><input type="number" name="ptk_swasta_guru_lainnya_gtt" min="0"></div><div class="form-group"><label>PNS</label><input type="number" name="ptk_swasta_guru_lainnya_pns" min="0"></div><div class="form-group"><label>PPPK</label><input type="number" name="ptk_swasta_guru_lainnya_pppk" min="0"></div></div></div>
-        </fieldset>
-        <fieldset class="ptk-sub-fieldset"><legend>Tenaga Kependidikan</legend>
-            <div class="ptk-row has-label"><label>Penjaga</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_penjaga_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_penjaga_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Tenaga Administrasi</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_tas_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_tas_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Pustakawan</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pustakawan_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pustakawan_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Tendik Lainnya</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_lain_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_lain_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Operator Layanan Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_operator_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_operator_ptt" min="0"></div></div></div>
-            <div class="ptk-row has-label"><label>Pengelola Umum Operasional</label><div><div class="form-group"><label>PTY</label><input type="number" name="ptk_swasta_tendik_pengelola_pty" min="0"></div><div class="form-group"><label>PTT</label><input type="number" name="ptk_swasta_tendik_pengelola_ptt" min="0"></div></div></div>
-        </fieldset>
-        </fieldset>`;
-    }
-
-    function checkKelasTotals(kelas) {
-        const kelasContent = document.getElementById(`kelas-content-${kelas}`);
-        if (!kelasContent) return true;
-
-        const rombelInputs = kelasContent.querySelectorAll('.rombel-container input[type="number"]');
-        const agamaInputs = kelasContent.querySelectorAll('.agama-container-grid input[type="number"]');
-        
-        const totalRombel = Array.from(rombelInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
-        const totalAgama = Array.from(agamaInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
-
-        const statusEl = document.getElementById(`murid-validation-status-${kelas}`);
-        document.getElementById(`totalRombel-${kelas}`).textContent = totalRombel;
-        document.getElementById(`totalAgama-${kelas}`).textContent = totalAgama;
-
-        if (totalRombel !== totalAgama) {
-            statusEl.textContent = "Jumlah TIDAK SAMA!";
-            statusEl.className = 'status-error';
-            return false;
-        } else {
-            statusEl.textContent = "Jumlah Sesuai";
-            statusEl.className = 'status-ok';
-            return true;
-        }
-    }
-
+    // 5. Fungsi Bantuan untuk Setup Logika Tab 2 (Murid)
     function setupDataMurid() {
         const tabsContainer = document.getElementById('kelas-tabs');
         const contentContainer = document.getElementById('kelas-content-container');
+        
+        // KOSONGKAN SEBELUM MENGISI (PENTING)
+        tabsContainer.innerHTML = '';
+        contentContainer.innerHTML = '';
+
         for (let i = 1; i <= 6; i++) {
+            
+            // --- INI ADALAH SENJATA YANG HILANG (G61) ---
             tabsContainer.innerHTML += `<button type="button" class="tab-link ${i === 1 ? 'active' : ''}" data-kelas="${i}">Kelas ${i}</button>`;
+            // --- AKHIR SENJATA ---
+
             const content = document.createElement('div');
             content.id = `kelas-content-${i}`;
             content.className = 'tab-content';
             content.style.display = i === 1 ? 'block' : 'none';
-            content.innerHTML = generateKelasHTML(i);
+            content.innerHTML = generateKelasHTML(i); // Memanggil fungsi generateKelasHTML
             content.dataset.kelas = i;
             contentContainer.appendChild(content);
 
@@ -1817,69 +1775,70 @@ function initLapbulFormSdPage() {
             checkKelasTotals(i);
         }
 
-        tabsContainer.addEventListener('click', function(e) { 
-            const clickedTab = e.target.closest('.tab-link');
-            if (clickedTab) {
-                e.stopPropagation();
-                document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-                
-                clickedTab.classList.add('active');
-                document.getElementById(`kelas-content-${clickedTab.dataset.kelas}`).style.display = 'block';
-            }
-        });
+        // Pastikan event listener hanya dipasang sekali
+        if (!tabsContainer.dataset.listener) {
+            tabsContainer.addEventListener('click', function(e) { 
+                const clickedTab = e.target.closest('.tab-link');
+                if (clickedTab) {
+                    e.stopPropagation();
+                    tabsContainer.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+                    contentContainer.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+                    
+                    clickedTab.classList.add('active');
+                    document.getElementById(`kelas-content-${clickedTab.dataset.kelas}`).style.display = 'block';
+                }
+            });
+            tabsContainer.dataset.listener = 'true';
+        }
         
-        contentContainer.addEventListener('input', function(e) {
-            if (e.target.type === 'number') {
-                const kelas = e.target.closest('.tab-content').dataset.kelas;
-                checkKelasTotals(kelas);
-            }
-        });
+        if (!contentContainer.dataset.listener) {
+            contentContainer.addEventListener('input', function(e) {
+                if (e.target.type === 'number') {
+                    const kelasContent = e.target.closest('.tab-content');
+                    if (kelasContent) {
+                        const kelas = kelasContent.dataset.kelas;
+                        checkKelasTotals(kelas);
+                    }
+                }
+            });
 
-        contentContainer.addEventListener('change', function(e) {
-            const target = e.target;
-            const kelas = target.dataset.kelas || target.closest('.tab-content').dataset.kelas;
+            contentContainer.addEventListener('change', function(e) {
+                const target = e.target;
+                const kelasContent = e.target.closest('.tab-content');
+                const kelas = target.dataset.kelas || (kelasContent ? kelasContent.dataset.kelas : null);
+                if (!kelas) return;
 
-            if (target.classList.contains('rombel-toggle')) {
-                const count = parseInt(target.value, 10);
-                document.querySelectorAll(`#rombel-container-${kelas} .rombel-input-group`).forEach(el => el.style.display = 'none');
-                if (count === 1) { document.getElementById(`rombel-${kelas}-Tunggal`).style.display = 'block'; }
-                else if (count > 1) { ['A', 'B', 'C'].slice(0, count).forEach(r => document.getElementById(`rombel-${kelas}-${r}`).style.display = 'block'); }
-                checkKelasTotals(kelas);
-            }
-            if (target.classList.contains('agama-toggle')) {
-                document.getElementById(`agama-input-${target.dataset.kelas}-${target.dataset.agama}`).style.display = target.value === 'Ada' ? 'flex' : 'none';
-            }
-        });
+                if (target.classList.contains('rombel-toggle')) {
+                    const count = parseInt(target.value, 10);
+                    document.querySelectorAll(`#rombel-container-${kelas} .rombel-input-group`).forEach(el => el.style.display = 'none');
+                    if (count === 1) { document.getElementById(`rombel-${kelas}-Tunggal`).style.display = 'block'; }
+                    else if (count > 1) { ['A', 'B', 'C'].slice(0, count).forEach(r => document.getElementById(`rombel-${kelas}-${r}`).style.display = 'block'); }
+                    checkKelasTotals(kelas);
+                }
+                if (target.classList.contains('agama-toggle')) {
+                    document.getElementById(`agama-input-${target.dataset.kelas}-${target.dataset.agama}`).style.display = target.value === 'Ada' ? 'flex' : 'none';
+                }
+            });
+            contentContainer.dataset.listener = 'true';
+        }
     }
 
+    // 6. Fungsi Bantuan untuk Setup Logika Tab 1 (Sekolah)
     function setupDataSekolah(schoolLists) {
         const statusSekolah = form.querySelector('#statusSekolah');
         const namaSekolah = document.getElementById('namaSekolah');
-        const ptkContainer = document.getElementById('ptk-section-container');
         
-        ptkContainer.innerHTML = `<div id="ptk-negeri">${generatePtkNegeriHTML()}</div> <div id="ptk-swasta">${generatePtkSwastaHTML()}</div>`;
-        
-        const ptkNegeri = document.getElementById('ptk-negeri');
-        const ptkSwasta = document.getElementById('ptk-swasta');
-        ptkNegeri.style.display = 'none';
-        ptkSwasta.style.display = 'none';
-        
-        statusSekolah.addEventListener('change', function() {
+        // Hapus listener lama jika ada
+        const newStatusSekolah = statusSekolah.cloneNode(true);
+        statusSekolah.parentNode.replaceChild(newStatusSekolah, statusSekolah);
+
+        newStatusSekolah.addEventListener('change', function() {
             const status = this.value;
             const schoolList = status === 'Negeri' ? schoolLists.SDN : schoolLists.SDS;
             
             namaSekolah.innerHTML = '<option value="" disabled selected>-- Pilih Sekolah --</option>';
             if(schoolList) schoolList.forEach(school => namaSekolah.add(new Option(school, school)));
             namaSekolah.disabled = false;
-            
-            if (status === 'Negeri') {
-                ptkNegeri.style.display = 'block';
-                ptkSwasta.style.display = 'none';
-            } else if (status === 'Swasta') {
-                ptkNegeri.style.display = 'none';
-                ptkSwasta.style.display = 'block';
-            }
         });
     }
 
@@ -1887,7 +1846,6 @@ function initLapbulFormSdPage() {
     
     google.script.run
         .withSuccessHandler(schoolLists => {
-            const formLogic = App.setupTabForm('lapbulFormSd');
             
             setupInitialDropdowns();
             setupDataSekolah(schoolLists);
@@ -1910,61 +1868,17 @@ function initLapbulFormSdPage() {
                 return allValid;
             });
             
-            // --- VALIDASI CUSTOM UNTUK TAB 3 (PTK) ---
+            // --- VALIDASI CUSTOM UNTUK TAB 3 (PTK) - INI ADALAH PERBAIKANNYA ---
             formLogic.setTabValidation(2, () => {
-                const dataPtkContainer = document.getElementById('dataPtk');
-                const isSwasta = form.querySelector('[name="statusSekolah"]').value === 'Swasta';
-                
-                // 1. Hitung Total Kepala Sekolah (Wajib Maksimal 1)
-                let totalKepsek = 0;
-                
-                if (isSwasta) {
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gty"]').value, 10) || 0;
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gtt"]').value, 10) || 0;
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pns"]').value, 10) || 0;
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pppk"]').value, 10) || 0;
-                } else {
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pns"]').value, 10) || 0;
-                    totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pppk"]').value, 10) || 0;
-                }
+                const totalKepsek = (parseInt(form.querySelector('[name="ptk_kepsek_pns"]').value, 10) || 0) +
+                                  (parseInt(form.querySelector('[name="ptk_kepsek_pppk"]').value, 10) || 0) +
+                                  (parseInt(form.querySelector('[name="ptk_kepsek_nonasn"]').value, 10) || 0);
 
-                // A. Cek Aturan Kepala Sekolah Maksimal 1
                 if (totalKepsek > 1) {
                     App.showAppModal('error', 'Jumlah Kepala Sekolah maksimal adalah 1.');
-                    return false;
+                    return false; // <--- INI AKAN MENCEGAH PINDAH TAB
                 }
-                
-                // B. Hitung Total Semua PTK (Untuk Konfirmasi Lanjut)
-                const allPtkInputs = dataPtkContainer.querySelectorAll('input[type="number"]');
-                const totalPtk = Array.from(allPtkInputs)
-                                   .reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
-
-                if (totalPtk === 0) {
-                    const confirmModal = document.getElementById('deleteModal');
-                    confirmModal.querySelector('#deleteModalTitle').textContent = 'Konfirmasi Data PTK';
-                    confirmModal.querySelector('#deleteModalBody').innerHTML = '<p>Anda belum mengisikan data jumlah PTK (Total: 0). Tetap lanjut?</p>';
-                    
-                    const confirmBtn = confirmModal.querySelector('#confirmDeleteBtn');
-                    const cancelBtn = confirmModal.querySelector('#cancelDeleteBtn');
-                    
-                    confirmBtn.textContent = 'Lanjut';
-                    cancelBtn.textContent = 'Kembali';
-
-                    const newConfirmBtn = confirmBtn.cloneNode(true);
-                    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-                    newConfirmBtn.onclick = () => {
-                         confirmModal.classList.remove('show');
-                         formLogic.unlockAndShowTab(3);
-                    };
-                    cancelBtn.onclick = () => confirmModal.classList.remove('show');
-
-                    confirmModal.classList.add('show');
-
-                    return false;
-                }
-                
-                return true; 
+                return true; // Lolos
             });
             
             document.getElementById('appModal').classList.remove('show');
@@ -1972,9 +1886,7 @@ function initLapbulFormSdPage() {
         .withFailureHandler(err => App.showAppModal('error', `Gagal memuat daftar sekolah: ${err.message}`))
         .getSdSchoolLists();
         
-    // ** LOGIKA SUBMIT AKHIR (MENGGUNAKAN FUNGSI HELPER YANG DITAMBAHKAN) **
-    
-    // TIDAK ADA EVENT LISTENER SUBMIT DI SINI LAGI, KARENA DIKONTROL OLEH onclick="App.submitLapbulSd(this.form)"
+    // (Fungsi App.submitLapbulSd(this.form) di HTML akan menangani submit)
 }
 
 function initLapbulRiwayatPage() {
@@ -2533,8 +2445,6 @@ function initLapbulEditSdPage(params) {
         return;
     }
 
-    // --- SALINAN LOGIKA DARI initLapbulFormSdPage ---
-
     // 1. Panggil App.setupTabForm untuk tab utama (Tab 1-4)
     const formLogic = App.setupTabForm('lapbulEditFormSd'); 
 
@@ -2550,7 +2460,7 @@ function initLapbulEditSdPage(params) {
         tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
     }
 
-    // 3. Fungsi Bantuan untuk Validasi Total Murid (disalin)
+    // 3. Fungsi Bantuan untuk Validasi Total Murid (disalin dari form Tambah)
     function checkKelasTotals(kelas) {
         const kelasContent = document.getElementById(`kelas-content-${kelas}`);
         if (!kelasContent) return true;
@@ -2582,8 +2492,67 @@ function initLapbulEditSdPage(params) {
         return totalRombel === totalAgama;
     }
 
-    // 4. Fungsi Bantuan untuk Setup Logika Tab 2 (Murid)
-    function setupDataMurid() {
+    // 4. Fungsi Bantuan untuk Generate HTML (SAMA SEPERTI FUNGSI TAMBAH)
+    // Kita butuh ini agar bisa mengisi data yang di-load
+    function generateKelasHTML(kelas) {
+        const rombels = ['A', 'B', 'C'];
+        const agama = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+        const agamaDefault = { 'Islam': 'Ada', 'Kristen': 'Tidak Ada', 'Katolik': 'Tidak Ada', 'Hindu': 'Tidak Ada', 'Buddha': 'Tidak Ada', 'Konghucu': 'Tidak Ada' };
+
+        let rombelInputsHTML = `
+            <div class="rombel-input-group" id="rombel-${kelas}-Tunggal" style="display: none;">
+                <label class="rombel-group-label">Kelas ${kelas}</label>
+                <div class="murid-input-pair">
+                    <div class="form-group"><label>L</label><input type="number" name="k${kelas}_rombel_tunggal_L" min="0" required></div>
+                    <div class="form-group"><label>P</label><input type="number" name="k${kelas}_rombel_tunggal_P" min="0" required></div>
+                </div>
+            </div>
+        `;
+        for (const rombel of rombels) {
+            rombelInputsHTML += `<div class="rombel-input-group" id="rombel-${kelas}-${rombel}" style="display: none;"><label class="rombel-group-label">Kelas ${kelas}${rombel}</label><div class="murid-input-pair"><div class="form-group"><label>L</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_L" min="0" required></div><div class="form-group"><label>P</label><input type="number" name="k${kelas}_rombel_${rombel.toLowerCase()}_P" min="0" required></div></div></div>`;
+        }
+
+        let agamaInputsHTML = '<div class="agama-container-grid">';
+
+        for (const ag of agama) {
+            const agId = ag.toLowerCase().replace(/\s/g, '_');
+            const defaultValue = agamaDefault[ag] || 'Tidak Ada';
+            const isVisible = defaultValue === 'Ada';
+
+            agamaInputsHTML += `
+                <div class="agama-input-group">
+                    <label class="agama-group-label">${ag}</label>
+                    <select class="agama-toggle" data-kelas="${kelas}" data-agama="${agId}">
+                        <option value="Ada" ${defaultValue === 'Ada' ? 'selected' : ''}>Ada</option>
+                        <option value="Tidak Ada" ${defaultValue === 'Tidak Ada' ? 'selected' : ''}>Tidak Ada</option>
+                    </select>
+                    <div class="murid-input-pair" id="agama-input-${kelas}-${agId}" style="display: ${isVisible ? 'flex' : 'none'}; margin-top: 10px;">
+                        <div class="form-group"><label>L</label><input type="number" name="k${kelas}_agama_${agId}_L" min="0" required></div>
+                        <div class="form-group"><label>P</label><input type="number" name="k${kelas}_agama_${agId}_P" min="0" required></div>
+                    </div>
+                </div>
+            `;
+        }
+        agamaInputsHTML += '</div>';
+
+        const validationHTML = `<div id="murid-validation-feedback-${kelas}" class="murid-validation-container" style="margin-top: 20px;"><p>Total per Rombel: <span id="totalRombel-${kelas}">0</span></p><p>Total per Agama: <span id="totalAgama-${kelas}">0</span></p><p id="murid-validation-status-${kelas}" class="status-ok">Jumlah Sesuai</p></div>`;
+
+        let footerHTML = '';
+        if (kelas === 1) {
+            footerHTML = `<div class="tab-form-footer"><button type="button" class="submit-btn prev-tab-btn" style="width: auto;">Sebelumnya</button></div>`;
+        } else if (kelas === 6) {
+            footerHTML = `<div class="tab-form-footer"><button type="button" class="submit-btn next-tab-btn" style="width: auto; margin-left: auto;">Berikutnya</button></div>`;
+        }
+
+        return `
+            <fieldset class="ptk-fieldset"><legend>Menurut Rombel</legend><div class="form-group form-group-rombel-toggle" style="margin-bottom: 20px;"><label>Jumlah Rombel</label><select class="rombel-toggle" name="k${kelas}_jumlah_rombel" data-kelas="${kelas}"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="0">0</option></select></div><h4 class="sub-section-title">Jml Murid per Rombel</h4><div class="rombel-container" id="rombel-container-${kelas}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px;">${rombelInputsHTML}</div></fieldset>
+            <fieldset class="ptk-fieldset" style="margin-top: 20px;"><legend>Menurut Agama</legend>${agamaInputsHTML}</fieldset>
+            ${validationHTML}${footerHTML}
+        `;
+    }
+
+// 5. Fungsi Bantuan untuk Setup Logika Tab 2 (Murid)
+function setupDataMurid() {
         const tabsContainer = document.getElementById('edit-kelas-tabs');
         const contentContainer = document.getElementById('edit-kelas-content-container');
 
@@ -2592,110 +2561,120 @@ function initLapbulEditSdPage(params) {
             return;
         }
 
-        tabsContainer.addEventListener('click', function(e) { 
-            const clickedTab = e.target.closest('.sub-tab-link'); 
-            if (clickedTab) {
-                e.stopPropagation(); 
-                tabsContainer.querySelectorAll('.sub-tab-link').forEach(tab => tab.classList.remove('active')); 
-                contentContainer.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+        // KOSONGKAN KONTEN (TAPI JANGAN TOMBOL TAB)
+        contentContainer.innerHTML = ''; 
+        
+        for (let i = 1; i <= 6; i++) {
+            
+            // --- TIDAK ADA 'tabsContainer.innerHTML' DI SINI (INI SUDAH BENAR) ---
 
-                clickedTab.classList.add('active');
-                document.getElementById(`kelas-content-${clickedTab.dataset.kelas}`).style.display = 'block';
-            }
-        });
+            const content = document.createElement('div');
+            content.id = `kelas-content-${i}`;
+            content.className = 'tab-content';
+            content.style.display = i === 1 ? 'block' : 'none';
+            content.innerHTML = generateKelasHTML(i); // Memanggil generateKelasHTML
+            content.dataset.kelas = i;
+            contentContainer.appendChild(content);
 
-        contentContainer.addEventListener('input', function(e) {
-            if (e.target.type === 'number') {
-                const kelasContent = e.target.closest('.tab-content');
-                if (kelasContent) {
-                     const kelas = kelasContent.id.split('-')[2];
-                     checkKelasTotals(kelas);
+            // (Kode 'checkKelasTotals(i);' tidak diperlukan di sini, akan dipanggil saat load data)
+        }
+
+        // Pastikan event listener hanya dipasang sekali
+        if (!tabsContainer.dataset.listener) {
+            tabsContainer.addEventListener('click', function(e) { 
+                const clickedTab = e.target.closest('.sub-tab-link'); 
+                if (clickedTab) {
+                    e.stopPropagation(); 
+                    tabsContainer.querySelectorAll('.sub-tab-link').forEach(tab => tab.classList.remove('active')); 
+                    contentContainer.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+
+                    clickedTab.classList.add('active');
+                    document.getElementById(`kelas-content-${clickedTab.dataset.kelas}`).style.display = 'block';
                 }
-            }
-        });
+            });
+            tabsContainer.dataset.listener = 'true';
+        }
 
-        contentContainer.addEventListener('change', function(e) {
-            const target = e.target; 
-            if (!target) return;
-
-            const kelasContent = target.closest('.tab-content');
-            const kelas = target.dataset.kelas || (kelasContent ? kelasContent.id.split('-')[2] : null);
-            if (!kelas) return;
-
-            // LOGIKA ROMBEL YANG DIPERBAIKI (Tidak pakai cache)
-            if (target.classList.contains('rombel-toggle')) { 
-                const k = target.dataset.kelas;
-                const c = parseInt(target.value, 10);
-
-                const groupTunggal = document.getElementById(`rombel-${k}-Tunggal`);
-                const groupA = document.getElementById(`rombel-${k}-A`);
-                const groupB = document.getElementById(`rombel-${k}-B`);
-                const groupC = document.getElementById(`rombel-${k}-C`);
-
-                // Logika 1: Grup Tunggal
-                if (c === 1) {
-                    if (groupTunggal) groupTunggal.style.display = 'block';
-                } else {
-                    if (groupTunggal) {
-                        groupTunggal.style.display = 'none';
-                        // HANYA NOL-KAN JIKA DISIMBUNYIKAN
-                        groupTunggal.querySelectorAll('input[type="number"]').forEach(input => input.value = 0); 
+        if (!contentContainer.dataset.listener) {
+            contentContainer.addEventListener('input', function(e) {
+                if (e.target.type === 'number') {
+                    const kelasContent = e.target.closest('.tab-content');
+                    if (kelasContent) {
+                         const kelas = kelasContent.id.split('-')[2];
+                         checkKelasTotals(kelas);
                     }
                 }
+            });
 
-                // Logika 2: Grup A
-                if (c === 2 || c === 3) {
-                    if (groupA) groupA.style.display = 'block';
-                } else {
-                    if (groupA) {
-                        groupA.style.display = 'none';
-                        groupA.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
-                    }
-                }
+            contentContainer.addEventListener('change', function(e) {
+                const target = e.target; 
+                if (!target) return;
 
-                // Logika 3: Grup B
-                if (c === 2 || c === 3) {
-                    if (groupB) groupB.style.display = 'block';
-                } else {
-                    if (groupB) {
-                        groupB.style.display = 'none';
-                        groupB.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
-                    }
-                }
+                const kelasContent = target.closest('.tab-content');
+                const kelas = target.dataset.kelas || (kelasContent ? kelasContent.id.split('-')[2] : null);
+                if (!kelas) return;
 
-                // Logika 4: Grup C
-                if (c === 3) {
-                    if (groupC) groupC.style.display = 'block';
-                } else {
-                    if (groupC) {
-                        groupC.style.display = 'none';
-                        groupC.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
-                    }
-                }
+                if (target.classList.contains('rombel-toggle')) { 
+                    const k = target.dataset.kelas;
+                    const c = parseInt(target.value, 10);
+                    const groupTunggal = document.getElementById(`rombel-${k}-Tunggal`);
+                    const groupA = document.getElementById(`rombel-${k}-A`);
+                    const groupB = document.getElementById(`rombel-${k}-B`);
+                    const groupC = document.getElementById(`rombel-${k}-C`);
 
-                checkKelasTotals(k); 
-            } 
-
-            // LOGIKA AGAMA YANG DIPERBAIKI (Cek "Ada")
-            if (target.classList.contains('agama-toggle')) { 
-                const agId = target.dataset.agama.toLowerCase().replace(/\s/g, '_');
-                const inputPairContainer = document.getElementById(`agama-input-${kelas}-${agId}`);
-
-                if (inputPairContainer) {
-                    if (target.value === 'Ada') { // Cek "Ada"
-                        inputPairContainer.style.display = 'flex';
+                    if (c === 1) {
+                        if (groupTunggal) groupTunggal.style.display = 'block';
                     } else {
-                        inputPairContainer.style.display = 'none';
-                        inputPairContainer.querySelectorAll('input[type="number"]').forEach(input => {
-                            input.value = 0;
-                        });
+                        if (groupTunggal) {
+                            groupTunggal.style.display = 'none';
+                            groupTunggal.querySelectorAll('input[type="number"]').forEach(input => input.value = 0); 
+                        }
                     }
-                }
-                checkKelasTotals(kelas);
-            }
-        });
+                    if (c === 2 || c === 3) {
+                        if (groupA) groupA.style.display = 'block';
+                    } else {
+                        if (groupA) {
+                            groupA.style.display = 'none';
+                            groupA.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                        }
+                    }
+                    if (c === 2 || c === 3) {
+                        if (groupB) groupB.style.display = 'block';
+                    } else {
+                        if (groupB) {
+                            groupB.style.display = 'none';
+                            groupB.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                        }
+                    }
+                    if (c === 3) {
+                        if (groupC) groupC.style.display = 'block';
+                    } else {
+                        if (groupC) {
+                            groupC.style.display = 'none';
+                            groupC.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+                        }
+                    }
+                    checkKelasTotals(k); 
+                } 
 
-        // LOGIKA NAVIGASI KUSTOM (Sesuai permintaan Anda)
+                if (target.classList.contains('agama-toggle')) { 
+                    const agId = target.dataset.agama.toLowerCase().replace(/\s/g, '_');
+                    const inputPairContainer = document.getElementById(`agama-input-${kelas}-${agId}`);
+                    if (inputPairContainer) {
+                        if (target.value === 'Ada') { 
+                            inputPairContainer.style.display = 'flex';
+                        } else {
+                            inputPairContainer.style.display = 'none';
+                            inputPairContainer.querySelectorAll('input[type="number"]').forEach(input => { input.value = 0; });
+                        }
+                    }
+                    checkKelasTotals(kelas);
+                }
+            });
+            contentContainer.dataset.listener = 'true';
+        }
+
+        // Navigasi Kustom
         const prevBtnKelas1 = document.querySelector('#kelas-content-1 .prev-tab-btn');
         if(prevBtnKelas1) {
             prevBtnKelas1.addEventListener('click', function() {
@@ -2706,7 +2685,6 @@ function initLapbulEditSdPage(params) {
         const nextBtnKelas6 = document.querySelector('#kelas-content-6 .next-tab-btn');
         if (nextBtnKelas6) {
             nextBtnKelas6.addEventListener('click', function() {
-                // Validasi Tab 2
                 if (formLogic.validateTab(1)) {
                     formLogic.showTab(2); // Pindah ke Tab 3 (Data PTK)
                 }
@@ -2714,249 +2692,204 @@ function initLapbulEditSdPage(params) {
         }
     }
 
-    // 5. Fungsi Bantuan untuk Setup Logika Tab 3 (PTK)
-    function setupDataSekolah() {
-        const statusSekolah = form.querySelector('#statusSekolah');
-        const ptkContainer = document.getElementById('ptk-section-container');
-        const ptkNegeri = document.getElementById('ptk-negeri');
-        const ptkSwasta = document.getElementById('ptk-swasta');
+// 6. Fungsi Bantuan untuk Setup Logika Tab 1 (Sekolah)
+function setupDataSekolah(schoolLists) {
+    // Hapus logika lama (ptkContainer, ptkNegeri, ptkSwasta)
+    const statusSekolah = form.querySelector('#statusSekolah');
+    const namaSekolah = form.querySelector('[name="Nama Sekolah"]');
 
-        statusSekolah.addEventListener('change', function() {
-            const status = this.value;
-            if (status === 'Negeri') {
-                ptkNegeri.style.display = 'block';
-                ptkSwasta.style.display = 'none';
-            } else if (status === 'Swasta') {
-                ptkNegeri.style.display = 'none';
-                ptkSwasta.style.display = 'block';
-            }
-        });
+    // Buat agar Nama Sekolah BISA DIKETIK (input type text)
+    namaSekolah.disabled = false;
+
+    // Hapus event listener lama yang mengubah form PTK
+    statusSekolah.removeEventListener('change', null); 
+}
+
+// 7. Fungsi Bantuan untuk Mengunci Field
+function lockField(fieldName) {
+    const field = form.querySelector(`[name="${fieldName}"]`);
+    if (field) { field.disabled = true; field.style.cssText = 'background-color: rgba(0,0,0,0.3); cursor: not-allowed;'; if (field.tagName === 'INPUT') field.readOnly = true; }
+}
+
+// --- PROSES UTAMA (MODIFIKASI UNTUK EDIT) ---
+setupInitialDropdowns();
+setupDataMurid(); // Panggil ini dulu untuk membangun HTML kelas 1-6
+
+// Validasi Tab 2 (Murid)
+formLogic.setTabValidation(1, () => { 
+    let allValid = true;
+    let firstInvalidKelas = -1;
+    for (let i = 1; i <= 6; i++) {
+        if (!checkKelasTotals(i)) {
+            allValid = false;
+            if(firstInvalidKelas === -1) firstInvalidKelas = i;
+        }
     }
-
-    // 6. Fungsi Bantuan untuk Mengunci Field
-    function lockField(fieldName) {
-        const field = form.querySelector(`[name="${fieldName}"]`);
-        if (field) { field.disabled = true; field.style.cssText = 'background-color: rgba(0,0,0,0.3); cursor: not-allowed;'; if (field.tagName === 'INPUT') field.readOnly = true; }
+    if (!allValid) {
+         document.querySelector(`#edit-kelas-tabs .sub-tab-link[data-kelas="${firstInvalidKelas}"]`).click(); 
+         App.showAppModal('error', `Data Murid di Kelas ${firstInvalidKelas} tidak valid. Total Rombel tidak sama dengan Total Agama.`);
     }
+    return allValid;
+});
 
-    // --- AKHIR DARI SALINAN LOGIKA ---
+// Validasi Tab 3 (PTK) - Validasi Kepala Sekolah
+formLogic.setTabValidation(2, () => { 
+    const totalKepsek = (parseInt(form.querySelector('[name="ptk_kepsek_pns"]').value, 10) || 0) +
+                              (parseInt(form.querySelector('[name="ptk_kepsek_pppk"]').value, 10) || 0) +
+                              (parseInt(form.querySelector('[name="ptk_kepsek_nonasn"]').value, 10) || 0);
 
+    if (totalKepsek > 1) {
+        App.showAppModal('error', 'Jumlah Kepala Sekolah maksimal adalah 1.');
+        return false;
+    }
+    return true; 
+});
 
-    // --- PROSES UTAMA (MODIFIKASI UNTUK EDIT) ---
+// Panggil data dari server
+google.script.run
+    .withSuccessHandler(schoolLists => {
+        // Panggil setupDataSekolah setelah schoolLists (data sekolah) didapat
+        setupDataSekolah(schoolLists);
 
-    setupInitialDropdowns();
-    setupDataSekolah();
-    setupDataMurid(); 
-
-    // Validasi Tab 2 (Murid)
-    formLogic.setTabValidation(1, () => { 
-        let allValid = true;
-        let firstInvalidKelas = -1;
-        for (let i = 1; i <= 6; i++) {
-            if (!checkKelasTotals(i)) {
-                allValid = false;
-                if(firstInvalidKelas === -1) firstInvalidKelas = i;
-            }
-        }
-        if (!allValid) {
-             document.querySelector(`#edit-kelas-tabs .sub-tab-link[data-kelas="${firstInvalidKelas}"]`).click(); 
-             App.showAppModal('error', `Data Murid di Kelas ${firstInvalidKelas} tidak valid. Total Rombel tidak sama dengan Total Agama.`);
-        }
-        return allValid;
-    });
-
-    // Validasi Tab 3 (PTK)
-    formLogic.setTabValidation(2, () => { 
-        const dataPtkContainer = document.getElementById('dataPtk');
-        const isSwasta = form.querySelector('[name="Status"]').value === 'Swasta';
-        let totalKepsek = 0;
-        if (isSwasta) {
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gty"]').value, 10) || 0;
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_gtt"]').value, 10) || 0;
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pns"]').value, 10) || 0;
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_swasta_ks_pppk"]').value, 10) || 0;
-        } else {
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pns"]').value, 10) || 0;
-            totalKepsek += parseInt(dataPtkContainer.querySelector('[name="ptk_negeri_ks_pppk"]').value, 10) || 0;
-        }
-        if (totalKepsek > 1) {
-            App.showAppModal('error', 'Jumlah Kepala Sekolah maksimal adalah 1.');
-            return false;
-        }
-        return true; 
-    });
-
-    // Panggil data dari server
-    google.script.run
-        .withSuccessHandler(rowData => {
-            if (rowData.error || !rowData || Object.keys(rowData).length === 0) {
-                loadingDiv.innerHTML = `<p style="color:red;">Gagal: ${rowData.error || `Data untuk baris ${params.rowIndex} tidak ditemukan.`}</p>`;
-                return;
-            }
-
-            form.querySelector('[name="rowIndex"]').value = params.rowIndex;
-
-            for (const header in rowData) {
-                const fieldName = header.trim();
-                const field = form.querySelector(`[name="${fieldName}"]`);
-                if (field) {
-                    let value = rowData[header];
-                    if (field.type === 'number' && (value === '' || value === null || value === undefined)) {
-                        value = '0';
-                    }
-                    field.value = value;
-                }
-            }
-
-            form.querySelector('[name="Bulan"]').value = rowData['Bulan'];
-            form.querySelector('[name="Tahun"]').value = rowData['Tahun'];
-            form.querySelector('[name="Status"]').value = rowData['Status'];
-            form.querySelector('[name="Nama Sekolah"]').value = rowData['Nama Sekolah'];
-            form.querySelector('[name="NPSN"]').value = rowData['NPSN'];
-            form.querySelector('[name="Rombel"]').value = rowData['Rombel']; 
-
-            const agama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'];
-            for (let i = 1; i <= 6; i++) {
-                const rombelSelect = form.querySelector(`[name="k${i}_jumlah_rombel"]`);
-                const rombelKey = `k${i}_jumlah_rombel`; 
-                if (rombelSelect && rowData[rombelKey] !== undefined) {
-                    rombelSelect.value = rowData[rombelKey];
+        // Panggil data baris yang spesifik
+        google.script.run
+            .withSuccessHandler(rowData => {
+                if (rowData.error || !rowData || Object.keys(rowData).length === 0) {
+                    loadingDiv.innerHTML = `<p style="color:red;">Gagal: ${rowData.error || `Data untuk baris ${params.rowIndex} tidak ditemukan.`}</p>`;
+                    return;
                 }
 
-                agama.forEach(ag => {
-                    const L = parseInt(rowData[`k${i}_agama_${ag}_L`] || 0, 10);
-                    const P = parseInt(rowData[`k${i}_agama_${ag}_P`] || 0, 10);
-                    const selectAgama = form.querySelector(`.agama-toggle[data-kelas="${i}"][data-agama="${ag}"]`);
-                    if (selectAgama) {
-                        selectAgama.value = (L + P > 0) ? 'Ada' : 'Tidak Ada';
+                form.querySelector('[name="rowIndex"]').value = params.rowIndex;
+
+                // Isi semua field (Termasuk 83+ PTK fields baru)
+                for (const header in rowData) {
+                    const fieldName = header.trim();
+                    const field = form.querySelector(`[name="${fieldName}"]`);
+                    if (field) {
+                        let value = rowData[header];
+                        if (field.type === 'number' && (value === '' || value === null || value === undefined)) {
+                            value = '0';
+                        }
+                        field.value = value;
                     }
-                });
+                }
+
+                // (Data Tab 1 diisi oleh loop di atas)
+
+                // Picu 'change' untuk semua dropdown rombel dan agama
+                const agama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'];
+                for (let i = 1; i <= 6; i++) {
+                    const rombelSelect = form.querySelector(`[name="k${i}_jumlah_rombel"]`);
+                    rombelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    agama.forEach(ag => {
+                        const L = parseInt(rowData[`k${i}_agama_${ag}_L`] || 0, 10);
+                        const P = parseInt(rowData[`k${i}_agama_${ag}_P`] || 0, 10);
+                        const selectAgama = form.querySelector(`.agama-toggle[data-kelas="${i}"][data-agama="${ag}"]`);
+                        if (selectAgama) {
+                            selectAgama.value = (L + P > 0) ? 'Ada' : 'Tidak Ada';
+                            selectAgama.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    });
+                    checkKelasTotals(i); // Hitung ulang total setelah diisi
+                }
+
+                // Isi data file
+                const fileLinkContainer = document.getElementById('existingFileLink');
+                if (rowData['Dokumen']) { fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`; } else { fileLinkContainer.innerHTML = 'Tidak ada file.'; }
+
+                // Kunci field
+                lockField('Bulan'); lockField('Tahun'); lockField('Status'); lockField('Nama Sekolah');
+
+                // Buka semua tab
+                formLogic.unlockTab(1);
+                formLogic.unlockTab(2);
+                formLogic.unlockTab(3);
+                formLogic.showTab(0); // Mulai di Tab 1
+
+                loadingDiv.style.display = 'none';
+                formContainer.style.display = 'flex';
+            })
+            .withFailureHandler(err => { 
+                loadingDiv.style.display = 'none'; 
+                formContainer.style.display = 'none'; 
+                document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Gagal Memuat Data</h3><p>Gagal memuat data baris: ${err.message}. Coba muat ulang halaman.</p></div>`;
+            })
+            .getLapbulDataByRow(params.rowIndex, params.source);
+    })
+    .withFailureHandler(err => App.showAppModal('error', `Gagal memuat daftar sekolah: ${err.message}`))
+    .getSdSchoolLists();
+
+// Logika SUBMIT
+form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (!formLogic.validateTab(0)) { App.showAppModal('error', 'Data Sekolah (Tab 1) belum lengkap.'); formLogic.showTab(0); return; }
+    if (!formLogic.validateTab(1)) { formLogic.showTab(1); return; }
+    if (!formLogic.validateTab(2)) { formLogic.showTab(2); return; }
+
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput.files[0];
+    if (file && file.size > 300 * 1024) { 
+        App.showAppModal('error', 'Ukuran file tidak boleh lebih dari 300 KB.');
+        formLogic.showTab(3); 
+        return;
+    }
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    App.showAppModal('loading', 'Menyimpan perubahan...');
+
+    const payload = {};
+    const allFields = form.querySelectorAll('input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
+    allFields.forEach(field => {
+        if (field.name) {
+            if (field.type === 'number' && field.value === '') {
+                payload[field.name] = 0;
+            } else {
+                payload[field.name] = field.value;
             }
-
-            form.querySelectorAll('select').forEach(select => {
-                select.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-
-            for (let i = 1; i <= 6; i++) {
-                checkKelasTotals(i);
-            }
-
-            const fileLinkContainer = document.getElementById('existingFileLink');
-            if (rowData['Dokumen']) { fileLinkContainer.innerHTML = `<a href="${rowData['Dokumen']}" target="_blank">Lihat File Saat Ini</a>`; } else { fileLinkContainer.innerHTML = 'Tidak ada file.'; }
-
-            lockField('Bulan'); lockField('Tahun'); lockField('Status'); lockField('Nama Sekolah');
-
-            formLogic.unlockAndShowTab(1);
-            formLogic.unlockAndShowTab(2);
-            formLogic.unlockAndShowTab(3);
-            formLogic.unlockAndShowTab(0); 
-
-            loadingDiv.style.display = 'none';
-            formContainer.style.display = 'flex';
-        })
-        .withFailureHandler(err => { 
-            loadingDiv.style.display = 'none'; 
-            formContainer.style.display = 'none'; 
-            document.getElementById('main-content').innerHTML = `<div class="error-box"><h3>Gagal Memuat Data</h3><p>Gagal memuat data baris: ${err.message}. Coba muat ulang halaman.</p></div>`;
-        })
-        .getLapbulDataByRow(params.rowIndex, params.source);
-
-    // ===========================================
-    // ===== PERBAIKAN LOGIKA SUBMIT =====
-    // ===========================================
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // 1. Validasi Tab 1 (Data Sekolah)
-        if (!formLogic.validateTab(0)) {
-             App.showAppModal('error', 'Data Sekolah (Tab 1) belum lengkap.');
-             formLogic.showTab(0); // Pindahkan ke tab yang error
-             return; // Hentikan submit
         }
+    });
 
-        // 2. Validasi Tab 2 (Data Murid - checkKelasTotals)
-        if (!formLogic.validateTab(1)) { 
-             // Pesan error sudah di-handle di dalam fungsi validasi
-             formLogic.showTab(1); // Pindahkan ke tab yang error
-             return; // Hentikan submit
-        }
+    // Tambahkan field yang 'disabled' (kunci) secara manual
+    payload.rowIndex = form.querySelector('[name="rowIndex"]').value;
+    payload.source = form.querySelector('[name="source"]').value;
+    payload.Bulan = form.querySelector('[name="Bulan"]').value;
+    payload.Tahun = form.querySelector('[name="Tahun"]').value;
+    payload['Nama Sekolah'] = form.querySelector('[name="Nama Sekolah"]').value;
+    payload['Status'] = form.querySelector('[name="Status"]').value;
+    payload['NPSN'] = form.querySelector('[name="NPSN"]').value;
 
-        // 3. Validasi Tab 3 (Data PTK - Cek Kepsek)
-        if (!formLogic.validateTab(2)) { 
-             // Pesan error sudah di-handle di dalam validasi
-             formLogic.showTab(2); // Pindahkan ke tab yang error
-             return; // Hentikan submit
-        }
-
-        // 4. Validasi File (Hanya jika file BARU di-upload)
-        const fileInput = form.querySelector('input[type="file"]');
-        const file = fileInput.files[0];
-        if (file && file.size > 300 * 1024) { // 300 KB
-            App.showAppModal('error', 'Ukuran file tidak boleh lebih dari 300 KB.');
-            formLogic.showTab(3); // Pindahkan ke tab 4
-            return;
-        }
-
-        // --- JIKA SEMUA LOLOS, LANJUTKAN ---
-
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        App.showAppModal('loading', 'Menyimpan perubahan...');
-
-        const payload = {};
-        const allFields = form.querySelectorAll('input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
-        allFields.forEach(field => {
-            if (field.name) {
-                if (field.type === 'number' && field.value === '') {
-                    payload[field.name] = 0;
+    const sendData = (data) => {
+        google.script.run
+            .withSuccessHandler(res => {
+                if (res && res.error) {
+                     App.showAppModal('error', res.error);
+                     if (submitButton) submitButton.disabled = false;
                 } else {
-                    payload[field.name] = field.value;
+                     App.showAppModal('success', res, 'lapbul_kelola');
                 }
-            }
-        });
+            })
+            .withFailureHandler(err => {
+                App.showAppModal('error', err.message);
+                if (submitButton) submitButton.disabled = false;
+            })
+            .updateLapbulData(data); // Panggil fungsi UPDATE
+    };
 
-        // Tambahkan field yang 'disabled' (kunci) secara manual
-        payload.rowIndex = form.querySelector('[name="rowIndex"]').value;
-        payload.source = form.querySelector('[name="source"]').value;
-        payload.Bulan = form.querySelector('[name="Bulan"]').value;
-        payload.Tahun = form.querySelector('[name="Tahun"]').value;
-        payload['Nama Sekolah'] = form.querySelector('[name="Nama Sekolah"]').value;
-        payload['Status'] = form.querySelector('[name="Status"]').value;
-        payload['NPSN'] = form.querySelector('[name="NPSN"]').value;
-
-        const sendData = (data) => {
-            google.script.run
-                .withSuccessHandler(res => {
-                    if (res && res.error) {
-                         App.showAppModal('error', res.error);
-                         if (submitButton) submitButton.disabled = false;
-                    } else {
-                         App.showAppModal('success', res, 'lapbul_kelola');
-                    }
-                })
-                .withFailureHandler(err => {
-                    App.showAppModal('error', err.message);
-                    if (submitButton) submitButton.disabled = false;
-                })
-                .updateLapbulData(data); // Panggil fungsi UPDATE
-        };
-
-        if (file) {
-            // (Validasi ukuran sudah dilakukan di atas)
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
-                sendData(payload);
-            };
-            reader.readAsDataURL(file);
-        } else {
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            payload.fileData = { fileName: file.name, mimeType: file.type, data: event.target.result.split(',')[1] };
             sendData(payload);
-        }
-      });
-      // ===========================================
-      // ===== AKHIR PERBAIKAN SUBMIT =====
-      // ===========================================
-  }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        sendData(payload);
+    }
+  });
+}
 
 function initLapbulUnduhFormatPage() {
     initMenuPage();

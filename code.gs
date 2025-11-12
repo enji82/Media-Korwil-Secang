@@ -398,83 +398,31 @@ function processLapbulFormSd(formData) {
     const fileUrl = newFile.getUrl();
     const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    
+    // Ambil Peta Data (SD_FORM_INDEX_MAP) sebagai "Kebenaran"
+    const headersMap = SD_FORM_INDEX_MAP; 
+    
+    // Ambil nilai helper
     const getValue = (key) => formData[key] || 0;
 
-    const newRow = [
-      new Date(), formData.laporanBulan, formData.tahun, formData.statusSekolah, formData.namaSekolah, formData.npsn, formData.jumlahRombel, fileUrl,
-      
-      // Kelas 1 (I-AC)
-      getValue('k1_jumlah_rombel'), getValue('k1_rombel_tunggal_L'), getValue('k1_rombel_tunggal_P'),
-      getValue('k1_rombel_a_L'), getValue('k1_rombel_a_P'), getValue('k1_rombel_b_L'), getValue('k1_rombel_b_P'), getValue('k1_rombel_c_L'), getValue('k1_rombel_c_P'),
-      getValue('k1_agama_islam_L'), getValue('k1_agama_islam_P'), getValue('k1_agama_kristen_L'), getValue('k1_agama_kristen_P'), getValue('k1_agama_katolik_L'), getValue('k1_agama_katolik_P'), 
-      getValue('k1_agama_hindu_L'), getValue('k1_agama_hindu_P'), getValue('k1_agama_buddha_L'), getValue('k1_agama_buddha_P'), getValue('k1_agama_konghucu_L'), getValue('k1_agama_konghucu_P'),
-      
-      // Kelas 2 (AD-AX)
-      getValue('k2_jumlah_rombel'), getValue('k2_rombel_tunggal_L'), getValue('k2_rombel_tunggal_P'),
-      getValue('k2_rombel_a_L'), getValue('k2_rombel_a_P'), getValue('k2_rombel_b_L'), getValue('k2_rombel_b_P'), getValue('k2_rombel_c_L'), getValue('k2_rombel_c_P'),
-      getValue('k2_agama_islam_L'), getValue('k2_agama_islam_P'), getValue('k2_agama_kristen_L'), getValue('k2_agama_kristen_P'), getValue('k2_agama_katolik_L'), getValue('k2_agama_katolik_P'), 
-      getValue('k2_agama_hindu_L'), getValue('k2_agama_hindu_P'), getValue('k2_agama_buddha_L'), getValue('k2_agama_buddha_P'), getValue('k2_agama_konghucu_L'), getValue('k2_agama_konghucu_P'),
+    // --- ▼▼▼ TAKTIK BARU: Bangun baris berdasarkan PETA ▼▼▼ ---
+    const newRow = headersMap.map(headerName => {
+        // Cek Pengecualian
+        if (headerName === 'Tanggal Unggah') return new Date();
+        if (headerName === 'Jenjang') return "SD"; // <--- PAKSA "SD" di posisi yang benar
+        if (headerName === 'Dokumen') return fileUrl;
+        if (headerName === 'Update') return ""; // Kosong saat input baru
+        
+        // Jika nama header ada di formData, ambil nilainya
+        if (formData.hasOwnProperty(headerName)) {
+            return getValue(headerName);
+        }
+        
+        // Jika tidak ada (misal: header lama yang sudah tidak dipakai), isi 0
+        return 0; 
+    });
+    // --- ▲▲▲ AKHIR TAKTIK BARU ▲▲▲ ---
 
-    
-      // Kelas 3 (AY-BS)
-      getValue('k3_jumlah_rombel'), getValue('k3_rombel_tunggal_L'), getValue('k3_rombel_tunggal_P'),
-      getValue('k3_rombel_a_L'), getValue('k3_rombel_a_P'), getValue('k3_rombel_b_L'), getValue('k3_rombel_b_P'), getValue('k3_rombel_c_L'), getValue('k3_rombel_c_P'),
-      getValue('k3_agama_islam_L'), getValue('k3_agama_islam_P'), getValue('k3_agama_kristen_L'), getValue('k3_agama_kristen_P'), getValue('k3_agama_katolik_L'), getValue('k3_agama_katolik_P'), 
-      getValue('k3_agama_hindu_L'), getValue('k3_agama_hindu_P'), getValue('k3_agama_buddha_L'), getValue('k3_agama_buddha_P'), getValue('k3_agama_konghucu_L'), getValue('k3_agama_konghucu_P'),
-      
-      // Kelas 4 (BT-CN)
-      getValue('k4_jumlah_rombel'), getValue('k4_rombel_tunggal_L'), getValue('k4_rombel_tunggal_P'),
-      getValue('k4_rombel_a_L'), getValue('k4_rombel_a_P'), getValue('k4_rombel_b_L'), getValue('k4_rombel_b_P'), getValue('k4_rombel_c_L'), getValue('k4_rombel_c_P'),
-      getValue('k4_agama_islam_L'), getValue('k4_agama_islam_P'), getValue('k4_agama_kristen_L'), getValue('k4_agama_kristen_P'), getValue('k4_agama_katolik_L'), getValue('k4_agama_katolik_P'), 
-      getValue('k4_agama_hindu_L'), 
-      getValue('k4_agama_hindu_P'), getValue('k4_agama_buddha_L'), getValue('k4_agama_buddha_P'), getValue('k4_agama_konghucu_L'), getValue('k4_agama_konghucu_P'),
-
-      // Kelas 5 (CO-DI)
-      getValue('k5_jumlah_rombel'), getValue('k5_rombel_tunggal_L'), getValue('k5_rombel_tunggal_P'),
-      getValue('k5_rombel_a_L'), getValue('k5_rombel_a_P'), getValue('k5_rombel_b_L'), getValue('k5_rombel_b_P'), getValue('k5_rombel_c_L'), getValue('k5_rombel_c_P'),
-      getValue('k5_agama_islam_L'), getValue('k5_agama_islam_P'), getValue('k5_agama_kristen_L'), getValue('k5_agama_kristen_P'), getValue('k5_agama_katolik_L'), getValue('k5_agama_katolik_P'), 
-      getValue('k5_agama_hindu_L'), getValue('k5_agama_hindu_P'), getValue('k5_agama_buddha_L'), getValue('k5_agama_buddha_P'), getValue('k5_agama_konghucu_L'), getValue('k5_agama_konghucu_P'),
-
-      // Kelas 6 (DJ-ED)
-      getValue('k6_jumlah_rombel'), getValue('k6_rombel_tunggal_L'), getValue('k6_rombel_tunggal_P'),
-      getValue('k6_rombel_a_L'), getValue('k6_rombel_a_P'), getValue('k6_rombel_b_L'), getValue('k6_rombel_b_P'), getValue('k6_rombel_c_L'), getValue('k6_rombel_c_P'),
-      getValue('k6_agama_islam_L'), getValue('k6_agama_islam_P'), getValue('k6_agama_kristen_L'), getValue('k6_agama_kristen_P'), getValue('k6_agama_katolik_L'), getValue('k6_agama_katolik_P'), 
-     
-      getValue('k6_agama_hindu_L'), getValue('k6_agama_hindu_P'), getValue('k6_agama_buddha_L'), getValue('k6_agama_buddha_P'), getValue('k6_agama_konghucu_L'), getValue('k6_agama_konghucu_P'),
-
-      // Kolom EE-FQ (INDEX 134-172: 39 KOLOM) - Data PTK Negeri
-            getValue('ptk_negeri_ks_pns'), getValue('ptk_negeri_ks_pppk'),
-            getValue('ptk_negeri_guru_kelas_pns'), getValue('ptk_negeri_guru_kelas_pppk'), getValue('ptk_negeri_guru_kelas_pppkpw'), getValue('ptk_negeri_guru_kelas_gtt'),
-            getValue('ptk_negeri_guru_pai_pns'), getValue('ptk_negeri_guru_pai_pppk'), getValue('ptk_negeri_guru_pai_pppkpw'), getValue('ptk_negeri_guru_pai_gtt'),
-            getValue('ptk_negeri_guru_pjok_pns'), getValue('ptk_negeri_guru_pjok_pppk'), getValue('ptk_negeri_guru_pjok_pppkpw'), getValue('ptk_negeri_guru_pjok_gtt'),
-            getValue('ptk_negeri_guru_kristen_pns'), getValue('ptk_negeri_guru_kristen_pppk'), getValue('ptk_negeri_guru_kristen_pppkpw'), getValue('ptk_negeri_guru_kristen_gtt'),
-            getValue('ptk_negeri_guru_inggris_gtt'), getValue('ptk_negeri_guru_lainnya_gtt'),
-            getValue('ptk_negeri_tendik_pengelola_pppk'), getValue('ptk_negeri_tendik_pengelola_pppkpw'), getValue('ptk_negeri_tendik_pengelola_ptt'),
-            getValue('ptk_negeri_tendik_operator_pppk'), getValue('ptk_negeri_tendik_operator_pppkpw'), getValue('ptk_negeri_tendik_operator_ptt'),
-            getValue('ptk_negeri_plo_pppk'), getValue('ptk_negeri_plo_pppkpw'), getValue('ptk_negeri_plo_ptt'), 
-            getValue('ptk_negeri_penata_lo_pppk'), getValue('ptk_negeri_penata_lo_pppkpw'), getValue('ptk_negeri_penata_lo_ptt'), 
-            getValue('ptk_negeri_adm_perkantoran_pppk'), getValue('ptk_negeri_adm_perkantoran_pppkpw'), getValue('ptk_negeri_adm_perkantoran_ptt'), 
-            getValue('ptk_negeri_tendik_penjaga_ptt'), getValue('ptk_negeri_tendik_tas_ptt'), getValue('ptk_negeri_tendik_pustakawan_ptt'), getValue('ptk_negeri_tendik_lainnya_ptt'),
-            // Total 39 isian PTK Negeri (EE-FQ)
-
-            // Kolom FR-HE (INDEX 173-210: 38 KOLOM) - Data PTK Swasta
-            getValue('ptk_swasta_ks_gty'), getValue('ptk_swasta_ks_gtt'),
-            getValue('ptk_swasta_ks_pns'), getValue('ptk_swasta_ks_pppk'), 
-            getValue('ptk_swasta_guru_kelas_gty'), getValue('ptk_swasta_guru_kelas_gtt'), getValue('ptk_swasta_guru_kelas_pns'), getValue('ptk_swasta_guru_kelas_pppk'), 
-            getValue('ptk_swasta_guru_pai_gty'), getValue('ptk_swasta_guru_pai_gtt'), getValue('ptk_swasta_guru_pai_pns'), getValue('ptk_swasta_guru_pai_pppk'), 
-            getValue('ptk_swasta_guru_pjok_gty'), getValue('ptk_swasta_guru_pjok_gtt'), getValue('ptk_swasta_guru_pjok_pns'), getValue('ptk_swasta_guru_pjok_pppk'), 
-            getValue('ptk_swasta_guru_kristen_gty'), getValue('ptk_swasta_guru_kristen_gtt'), getValue('ptk_swasta_guru_kristen_pns'), getValue('ptk_swasta_guru_kristen_pppk'), 
-            getValue('ptk_swasta_guru_inggris_gty'), getValue('ptk_swasta_guru_inggris_gtt'), getValue('ptk_swasta_guru_inggris_pns'), getValue('ptk_swasta_guru_inggris_pppk'), 
-            getValue('ptk_swasta_guru_lainnya_gty'), getValue('ptk_swasta_guru_lainnya_gtt'), getValue('ptk_swasta_guru_lainnya_pns'), getValue('ptk_swasta_guru_lainnya_pppk'), 
-            getValue('ptk_swasta_tendik_penjaga_pty'), getValue('ptk_swasta_tendik_penjaga_ptt'),
-            getValue('ptk_swasta_tendik_tas_pty'), getValue('ptk_swasta_tendik_tas_ptt'),
-            getValue('ptk_swasta_tendik_pustakawan_pty'), getValue('ptk_swasta_tendik_pustakawan_ptt'),
-            getValue('ptk_swasta_tendik_lain_pty'), getValue('ptk_swasta_tendik_lain_ptt'),
-            getValue('ptk_swasta_tendik_operator_pty'), getValue('ptk_swasta_tendik_operator_ptt'),
-            getValue('ptk_swasta_tendik_pengelola_pty'), getValue('ptk_swasta_tendik_pengelola_ptt'),
-            // Total 38 isian PTK Swasta (FR-HE)
-            "SD"
-    ];
     sheet.appendRow(newRow);
     return "Sukses! Laporan Bulan SD berhasil dikirim.";
   } catch (e) {
@@ -895,38 +843,47 @@ const SD_FORM_INDEX_MAP = [
   'k6_agama_islam_L', 'k6_agama_islam_P', 'k6_agama_kristen_L', 'k6_agama_kristen_P', 'k6_agama_katolik_L', 'k6_agama_katolik_P', 
   'k6_agama_hindu_L', 'k6_agama_hindu_P', 'k6_agama_buddha_L', 'k6_agama_buddha_P', 'k6_agama_konghucu_L', 'k6_agama_konghucu_P',
 
-  // 140-178: PTK Negeri (EE-FQ)
-  'ptk_negeri_ks_pns', 'ptk_negeri_ks_pppk',
-  'ptk_negeri_guru_kelas_pns', 'ptk_negeri_guru_kelas_pppk', 'ptk_negeri_guru_kelas_pppkpw', 'ptk_negeri_guru_kelas_gtt',
-  'ptk_negeri_guru_pai_pns', 'ptk_negeri_guru_pai_pppk', 'ptk_negeri_guru_pai_pppkpw', 'ptk_negeri_guru_pai_gtt',
-  'ptk_negeri_guru_pjok_pns', 'ptk_negeri_guru_pjok_pppk', 'ptk_negeri_guru_pjok_pppkpw', 'ptk_negeri_guru_pjok_gtt',
-  'ptk_negeri_guru_kristen_pns', 'ptk_negeri_guru_kristen_pppk', 'ptk_negeri_guru_kristen_pppkpw', 'ptk_negeri_guru_kristen_gtt',
-  'ptk_negeri_guru_inggris_gtt', 'ptk_negeri_guru_lainnya_gtt',
-  'ptk_negeri_tendik_pengelola_pppk', 'ptk_negeri_tendik_pengelola_pppkpw', 'ptk_negeri_tendik_pengelola_ptt',
-  'ptk_negeri_tendik_operator_pppk', 'ptk_negeri_tendik_operator_pppkpw', 'ptk_negeri_tendik_operator_ptt',
-  'ptk_negeri_plo_pppk', 'ptk_negeri_plo_pppkpw', 'ptk_negeri_plo_ptt', 
-  'ptk_negeri_penata_lo_pppk', 'ptk_negeri_penata_lo_pppkpw', 'ptk_negeri_penata_lo_ptt', 
-  'ptk_negeri_adm_perkantoran_pppk', 'ptk_negeri_adm_perkantoran_pppkpw', 'ptk_negeri_adm_perkantoran_ptt', 
-  'ptk_negeri_tendik_penjaga_ptt', 'ptk_negeri_tendik_tas_ptt', 'ptk_negeri_tendik_pustakawan_ptt', 'ptk_negeri_tendik_lainnya_ptt',
+  // --- INI ADALAH "PETA DATA" BARU (83 KOLOM PTK) ---
+  // 140-142: Kepsek (3)
+  'ptk_kepsek_pns', 'ptk_kepsek_pppk', 'ptk_kepsek_nonasn',
   
-  // 179-212: PTK Swasta (FR-HE)
-  'ptk_swasta_ks_gty', 'ptk_swasta_ks_gtt', 'ptk_swasta_ks_pns', 'ptk_swasta_ks_pppk', 
-  'ptk_swasta_guru_kelas_gty', 'ptk_swasta_guru_kelas_gtt', 'ptk_swasta_guru_kelas_pns', 'ptk_swasta_guru_kelas_pppk', 
-  'ptk_swasta_guru_pai_gty', 'ptk_swasta_guru_pai_gtt', 'ptk_swasta_guru_pai_pns', 'ptk_swasta_guru_pai_pppk', 
-  'ptk_swasta_guru_pjok_gty', 'ptk_swasta_guru_pjok_gtt', 'ptk_swasta_guru_pjok_pns', 'ptk_swasta_guru_pjok_pppk', 
-  'ptk_swasta_guru_kristen_gty', 'ptk_swasta_guru_kristen_gtt', 'ptk_swasta_guru_kristen_pns', 'ptk_swasta_guru_kristen_pppk', 
-  'ptk_swasta_guru_inggris_gty', 'ptk_swasta_guru_inggris_gtt', 'ptk_swasta_guru_inggris_pns', 'ptk_swasta_guru_inggris_pppk', 
-  'ptk_swasta_guru_lainnya_gty', 'ptk_swasta_guru_lainnya_gtt', 'ptk_swasta_guru_lainnya_pns', 'ptk_swasta_guru_lainnya_pppk', 
-  'ptk_swasta_tendik_penjaga_pty', 'ptk_swasta_tendik_penjaga_ptt',
-  'ptk_swasta_tendik_tas_pty', 'ptk_swasta_tendik_tas_ptt',
-  'ptk_swasta_tendik_pustakawan_pty', 'ptk_swasta_tendik_pustakawan_ptt',
-  'ptk_swasta_tendik_lain_pty', 'ptk_swasta_tendik_lain_ptt',
-  'ptk_swasta_tendik_operator_pty', 'ptk_swasta_tendik_operator_ptt',
-  'ptk_swasta_tendik_pengelola_pty', 'ptk_swasta_tendik_pengelola_ptt',
+  // 143-147: Guru Kelas (5)
+  'ptk_guru_kelas_pns', 'ptk_guru_kelas_pppk', 'ptk_guru_kelas_pppkpw', 'ptk_guru_kelas_gty', 'ptk_guru_kelas_gtt',
+  // 148-152: Guru PAI (5)
+  'ptk_guru_pai_pns', 'ptk_guru_pai_pppk', 'ptk_guru_pai_pppkpw', 'ptk_guru_pai_gty', 'ptk_guru_pai_gtt',
+  // 153-157: Guru PJOK (5)
+  'ptk_guru_pjok_pns', 'ptk_guru_pjok_pppk', 'ptk_guru_pjok_pppkpw', 'ptk_guru_pjok_gty', 'ptk_guru_pjok_gtt',
+  // 158-162: Guru PA Kristen (5)
+  'ptk_guru_kristen_pns', 'ptk_guru_kristen_pppk', 'ptk_guru_kristen_pppkpw', 'ptk_guru_kristen_gty', 'ptk_guru_kristen_gtt',
+  // 163-167: Guru PA Katolik (5)
+  'ptk_guru_katolik_pns', 'ptk_guru_katolik_pppk', 'ptk_guru_katolik_pppkpw', 'ptk_guru_katolik_gty', 'ptk_guru_katolik_gtt',
+  // 168-172: Guru Bhs. Inggris (5)
+  'ptk_guru_inggris_pns', 'ptk_guru_inggris_pppk', 'ptk_guru_inggris_pppkpw', 'ptk_guru_inggris_gty', 'ptk_guru_inggris_gtt',
+  // 173-177: Guru Mapel Lain (5)
+  'ptk_guru_lainnya_pns', 'ptk_guru_lainnya_pppk', 'ptk_guru_lainnya_pppkpw', 'ptk_guru_lainnya_gty', 'ptk_guru_lainnya_gtt',
   
-  // 213: Jenjang (HF)
+  // 178-182: Tendik: Pengelola Umum (5)
+  'ptk_tendik_pengelola_umum_pns', 'ptk_tendik_pengelola_umum_pppk', 'ptk_tendik_pengelola_umum_pppkpw', 'ptk_tendik_pengelola_umum_pty', 'ptk_tendik_pengelola_umum_ptt',
+  // 183-187: Tendik: Operator (5)
+  'ptk_tendik_operator_pns', 'ptk_tendik_operator_pppk', 'ptk_tendik_operator_pppkpw', 'ptk_tendik_operator_pty', 'ptk_tendik_operator_ptt',
+  // 188-192: Tendik: Pengelola Layanan (5)
+  'ptk_tendik_pengelola_layanan_pns', 'ptk_tendik_pengelola_layanan_pppk', 'ptk_tendik_pengelola_layanan_pppkpw', 'ptk_tendik_pengelola_layanan_pty', 'ptk_tendik_pengelola_layanan_ptt',
+  // 193-197: Tendik: Penata (5)
+  'ptk_tendik_penata_pns', 'ptk_tendik_penata_pppk', 'ptk_tendik_penata_pppkpw', 'ptk_tendik_penata_pty', 'ptk_tendik_penata_ptt',
+  // 198-202: Tendik: Adm Perkantoran (5)
+  'ptk_tendik_adm_pns', 'ptk_tendik_adm_pppk', 'ptk_tendik_adm_pppkpw', 'ptk_tendik_adm_pty', 'ptk_tendik_adm_ptt',
+  // 203-207: Tendik: Penjaga (5)
+  'ptk_tendik_penjaga_pns', 'ptk_tendik_penjaga_pppk', 'ptk_tendik_penjaga_pppkpw', 'ptk_tendik_penjaga_pty', 'ptk_tendik_penjaga_ptt',
+  // 208-212: Tendik: TAS (5)
+  'ptk_tendik_tas_pns', 'ptk_tendik_tas_pppk', 'ptk_tendik_tas_pppkpw', 'ptk_tendik_tas_pty', 'ptk_tendik_tas_ptt',
+  // 213-217: Tendik: Pustakawan (5)
+  'ptk_tendik_pustakawan_pns', 'ptk_tendik_pustakawan_pppk', 'ptk_tendik_pustakawan_pppkpw', 'ptk_tendik_pustakawan_pty', 'ptk_tendik_pustakawan_ptt',
+  // 218-222: Tendik: Lainnya (5)
+  'ptk_tendik_lainnya_pns', 'ptk_tendik_lainnya_pppk', 'ptk_tendik_lainnya_pppkpw', 'ptk_tendik_lainnya_pty', 'ptk_tendik_lainnya_ptt',
+
+  // 223: Jenjang
   'Jenjang',
-  //214: Update
+  // 224: Update
   'Update'
 ];
 
@@ -1011,111 +968,101 @@ function getLapbulDataByRow(rowIndex, source) {
 }
 
 function updateLapbulData(formData) {
-    try {
-        const source = formData.source;
-        const rowIndex = parseInt(formData.rowIndex);
-        if (!source || isNaN(rowIndex) || rowIndex < 2) throw new Error("Informasi baris atau sumber data tidak valid.");
+  try {
+    const source = formData.source;
+    const rowIndex = parseInt(formData.rowIndex);
+    if (!source || isNaN(rowIndex) || rowIndex < 2) throw new Error("Informasi baris atau sumber data tidak valid.");
+    
+    const configKey = source === 'PAUD' ? 'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
+    const config = SPREADSHEET_CONFIG[configKey];
+    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
+    if (!sheet) throw new Error(`Sheet target tidak ditemukan: ${config.sheet}`);
+
+    const lastCol = sheet.getLastColumn();
+    const range = sheet.getRange(1, 1, rowIndex, lastCol);
+    const allValues = range.getValues();
+    
+    // PENTING: Ambil header yang sudah di-trim
+    const fullHeaders = allValues[0].map(h => String(h).trim()); 
+    const existingValues = allValues[rowIndex - 1]; // Nilai RAW dari baris target (termasuk Date)
+    
+    // 1. Logika Upload File Baru & Setup Metadata
+    const docIndex = fullHeaders.indexOf('Dokumen');
+    let fileUrl = docIndex !== -1 ?
+        sheet.getRange(rowIndex, docIndex + 1).getDisplayValue() : '';
         
-        const configKey = source === 'PAUD' ? 'LAPBUL_FORM_RESPONSES_PAUD' : 'LAPBUL_FORM_RESPONSES_SD';
-        const config = SPREADSHEET_CONFIG[configKey];
-        const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
-        if (!sheet) throw new Error(`Sheet target tidak ditemukan: ${config.sheet}`);
-
-        const lastCol = sheet.getLastColumn();
-        // 1. Ambil data mentah (RAW) dan header dari sheet
-        const range = sheet.getRange(1, 1, rowIndex, lastCol);
-        const allValues = range.getValues();
-        const fullHeaders = allValues[0].map(h => h.trim()); // Header Baris 1
-        const existingValues = allValues[rowIndex - 1]; // Nilai RAW dari baris target (termasuk Date Object)
-
-        const PAUD_MAP_LENGTH = PAUD_FORM_INDEX_MAP.length;
-        
-        // 2. LOGIKA UPLOAD FILE BARU & SETUP METADATA
-        const docIndex = fullHeaders.indexOf('Dokumen');
-        let fileUrl = docIndex !== -1 ?
-            sheet.getRange(rowIndex, docIndex + 1).getDisplayValue() : ''; 
-        
-        if (formData.fileData && formData.fileData.data) {
-             const FOLDER_ID_LAPBUL = source === 'PAUD' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_SD;
-             const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
-             
-             const tahunFolderName = formData.Tahun || sheet.getRange(rowIndex, fullHeaders.indexOf('Tahun') + 1).getDisplayValue();
-             const bulanFolderName = formData.Bulan || sheet.getRange(rowIndex, fullHeaders.indexOf('Bulan') + 1).getDisplayValue();
-             
-             const tahunFolder = getOrCreateFolder(mainFolder, tahunFolderName);
-             const bulanFolder = getOrCreateFolder(tahunFolder, bulanFolderName);
-
-             const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
-             if (oldFileIdMatch) {
-                 try { DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true); } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
-             }
-             
-             const newFileName = `${formData['Nama Sekolah']} - Lapbul ${bulanFolderName} ${tahunFolderName}.pdf`;
-             const decodedData = Utilities.base64Decode(formData.fileData.data);
-             const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
-             const newFile = bulanFolder.createFile(blob);
-             fileUrl = newFile.getUrl();
-        }
-
-        // ======================================================
-        // ===== PERBAIKAN: Format timestamp 'Update' =====
-        // ======================================================
-        const timeZone = Session.getScriptTimeZone();
-        formData.Update = Utilities.formatDate(new Date(), timeZone, "dd/MM/yyyy HH:mm:ss");
-        // ======================================================
-        
-        formData.Dokumen = fileUrl; // URL dokumen
-
-        // 3. SUSUN BARIS DATA BARU (Iterasi berdasarkan lebar sheet actual)
-        const newRowValues = [];
-        const DATE_COLUMNS = ['Tanggal Unggah', 'Update'];
-        
-        // Loop sampai lastCol (lebar sheet sebenarnya)
-        for (let i = 0; i < lastCol; i++) {
-            const header = fullHeaders[i];
-            let value = existingValues[i]; // Default: Nilai RAW lama (penting untuk Date)
-            
-            let formKey = header;
-            // Jika PAUD dan kolom ini termasuk yang dimodifikasi, gunakan nama pendek dari map
-            if (source === 'PAUD' && i < PAUD_MAP_LENGTH && PAUD_FORM_INDEX_MAP[i]) {
-                formKey = PAUD_FORM_INDEX_MAP[i];
-            }
-            // PERBAIKAN: Jika SD, gunakan juga PETA
-            else if (source === 'SD' && i < SD_FORM_INDEX_MAP.length && SD_FORM_INDEX_MAP[i]) {
-                 formKey = SD_FORM_INDEX_MAP[i];
-            }
-
-            // Cek apakah data baru ada di formData dengan formKey yang ditentukan
-            if (formData.hasOwnProperty(formKey)) {
-                value = formData[formKey]; 
-                if (typeof value === 'string' && value.trim() === '') {
-                     if (!DATE_COLUMNS.includes(header) && header !== 'Dokumen' && header !== 'Tanggal Unggah') {
-                         value = 0;
-                     } else {
-                        value = '';
-                     }
-                }
-            } 
-            
-            if (header === 'Update') {
-                 value = formData.Update;
-            } else if (header === 'Dokumen') {
-                 value = formData.Dokumen;
-            } else if (header === 'Tanggal Unggah' && (existingValues[i] === '' || existingValues[i] === null)) {
-                value = '';
-            }
-            
-            newRowValues.push(value);
-        }
-
-        // 4. SET NILAI
-        sheet.getRange(rowIndex, 1, 1, lastCol).setValues([newRowValues]);
-        
-        return "Data Laporan Bulan berhasil diperbarui.";
-    } catch (e) {
-        Logger.log(`FATAL ERROR in updateLapbulData: ${e.message} Stack: ${e.stack}`);
-        return { error: `Gagal memperbarui data di server: ${e.message}. Cek Log Server untuk detail.` };
+    if (formData.fileData && formData.fileData.data) {
+         const FOLDER_ID_LAPBUL = source === 'PAUD' ? FOLDER_CONFIG.LAPBUL_KB : FOLDER_CONFIG.LAPBUL_SD; // (Asumsi PAUD -> KB, jika tidak, sesuaikan)
+         const mainFolder = DriveApp.getFolderById(FOLDER_ID_LAPBUL);
+         
+         // Ambil nama dari formData (karena dikunci/disabled di form)
+         const tahunFolderName = formData.Tahun;
+         const bulanFolderName = formData.Bulan;
+         const namaSekolah = formData['Nama Sekolah'];
+         
+         const tahunFolder = getOrCreateFolder(mainFolder, tahunFolderName);
+         const bulanFolder = getOrCreateFolder(tahunFolder, bulanFolderName);
+         
+         const oldFileIdMatch = String(fileUrl).match(/[-\w]{25,}/);
+         if (oldFileIdMatch) {
+             try { DriveApp.getFileById(oldFileIdMatch[0]).setTrashed(true);
+             } catch (e) { Logger.log(`Gagal menghapus file lama: ${e.message}`); }
+         }
+         
+         const newFileName = `${namaSekolah} - Lapbul ${bulanFolderName} ${tahunFolderName}.pdf`;
+         const decodedData = Utilities.base64Decode(formData.fileData.data);
+         const blob = Utilities.newBlob(decodedData, formData.fileData.mimeType, newFileName);
+         const newFile = bulanFolder.createFile(blob);
+         fileUrl = newFile.getUrl();
     }
+
+    // 2. Format timestamp 'Update'
+    const timeZone = Session.getScriptTimeZone();
+    formData.Update = Utilities.formatDate(new Date(), timeZone, "dd/MM/yyyy HH:mm:ss");
+    formData.Dokumen = fileUrl; // URL dokumen
+    
+    // 3. Susun Baris Data Baru (Iterasi berdasarkan header)
+    const newRowValues = [];
+    const DATE_COLUMNS = ['Tanggal Unggah', 'Update'];
+    
+    for (let i = 0; i < fullHeaders.length; i++) {
+        const header = fullHeaders[i];
+        let value = existingValues[i]; // Default: Nilai RAW lama
+
+        // Cek apakah data baru ada di formData dengan nama header
+        // Ini adalah "perang" kita. 'header' (dari sheet) harus cocok dengan 'formData' (dari HTML)
+        if (formData.hasOwnProperty(header)) {
+            value = formData[header];
+            
+            // Jika input angka kosong, simpan sebagai 0 (bukan string kosong)
+            if (typeof value === 'string' && value.trim() === '') {
+                 if (!DATE_COLUMNS.includes(header) && header !== 'Dokumen') {
+                     value = 0;
+                 } else {
+                    value = '';
+                 }
+            }
+        } 
+        
+        // Paksa override untuk Update dan Dokumen
+        if (header === 'Update') {
+             value = formData.Update;
+        } else if (header === 'Dokumen') {
+             value = formData.Dokumen;
+        }
+        
+        newRowValues.push(value);
+    }
+
+    // 4. SET NILAI
+    // (Gunakan newRowValues.length untuk memastikan lebarnya cocok)
+    sheet.getRange(rowIndex, 1, 1, newRowValues.length).setValues([newRowValues]);
+    
+    return "Data Laporan Bulan berhasil diperbarui.";
+  } catch (e) {
+    Logger.log(`FATAL ERROR in updateLapbulData: ${e.message} Stack: ${e.stack}`);
+    return { error: `Gagal memperbarui data di server: ${e.message}. Cek Log Server untuk detail.` };
+  }
 }
 
 function deleteLapbulData(rowIndex, source, deleteCode) {
