@@ -11,7 +11,7 @@ const SPREADSHEET_IDS = {
   
   // ID unik lainnya
   LAPBUL_GABUNGAN: "1aKEIkhKApmONrCg-QQbMhXyeGDJBjCZrhR-fvXZFtJU",
-  PTK_PAUD_DB: "1iZO2VYIqKAn_ykJEzVAWtYS9dd23F_Y7TjeGN1nDSAk",
+  PTK_PAUD_DB: "1XetGkBymmN2NZQlXpzZ2MQyG0nhhZ0sXEPcNsLffhEU",
   PTK_SD_DB: "1HlyLv3Ai3_vKFJu3EKznqI9v8g0tfqiNg0UbIojNMQ0",
   DATA_SEKOLAH: "1qeOYVfqFQdoTpysy55UIdKwAJv3VHo4df3g6u6m72Bs",   
   DROPDOWN_DATA: "1wiDKez4rL5UYnpP2-OZjYowvmt1nRx-fIMy9trJlhBA",
@@ -55,6 +55,7 @@ const SPREADSHEET_CONFIG = {
   PTK_PAUD_KEADAAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Keadaan PTK PAUD" },
   PTK_PAUD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.PAUD_DATA, sheet: "Jumlah PTK Bulanan" },
   PTK_PAUD_DB: { id: SPREADSHEET_IDS.PTK_PAUD_DB, sheet: "PTK PAUD" },
+  PTK_PAUD_TIDAK_AKTIF: { id: SPREADSHEET_IDS.PTK_PAUD_DB, sheet: "PTK PAUD Tidak Aktif" },
   PTK_SD_KEADAAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Keadaan PTK SD" },
   PTK_SD_JUMLAH_BULANAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "PTK Bulanan SD"},
   PTK_SD_KEBUTUHAN: { id: SPREADSHEET_IDS.SD_DATA, sheet: "Kebutuhan Guru"},
@@ -1375,45 +1376,58 @@ function getDaftarPtkPaudData() {
         return { headers: [], rows: [], filterConfigs: [] };
     }
     
-    // PERBAIKAN 1: Membersihkan spasi dari semua header
+    // Perbaikan 1: Membersihkan spasi dari semua header
     const headers = allData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
 
-    // PERBAIKAN 2: Menemukan indeks untuk SEMUA 6 filter
+    // Perbaikan 2: Menemukan indeks untuk SEMUA 6 filter
     const jenjangIndex = headers.indexOf('Jenjang');
     const lembagaIndex = headers.indexOf('Nama Lembaga');
     const statusIndex = headers.indexOf('Status');
     const pendidikanIndex = headers.indexOf('Pendidikan');
     const serdikIndex = headers.indexOf('Serdik');
-    const dapodikIndex = headers.indexOf('Dapodik');
-    
-    const processedRows = dataRows.map(row => {
-        const rowObject = {};
+    const dapodikIndex = headers.indexOf('Dapodik'); // <-- TARGET KITA
 
-        // PERBAIKAN 3: Loop ini menyalin SEMUA data (termasuk "Dapodik")
+    // --- JEBAKAN LOG DIMULAI ---
+    // Log ini akan mencatat apa yang dilihat server TEPAT SETELAH membersihkan spasi
+    Logger.log("--- JEBAKAN LOG: getDaftarPtkPaudData ---");
+    Logger.log("Header yang Ditemukan (setelah .trim()): " + JSON.stringify(headers));
+    Logger.log("Indeks 'Dapodik' (Harusnya BUKAN -1): " + dapodikIndex);
+    // --- AKHIR JEBAKAN LOG ---
+    
+    const processedRows = dataRows.map((row, i) => { // 'i' ditambahkan untuk index
+        const rowObject = {};
+        // Perbaikan 3: Loop ini menyalin SEMUA data
         headers.forEach((h, i) => {
           rowObject[h] = row[i];
         });
         
-        // PERBAIKAN 4: Membuat data untuk SEMUA 6 filter
+        // Perbaikan 4: Membuat data untuk SEMUA 6 filter
         rowObject['_filterJenjang'] = row[jenjangIndex];
         rowObject['_filterNamaLembaga'] = row[lembagaIndex];
         rowObject['_filterStatus'] = row[statusIndex];
         rowObject['_filterPendidikan'] = row[pendidikanIndex];
         rowObject['_filterSerdik'] = row[serdikIndex];
-        rowObject['_filterDapodik'] = row[dapodikIndex];
+        rowObject['_filterDapodik'] = row[dapodikIndex]; // <-- TARGET KITA
         
+        // --- JEBAKAN LOG 2: Catat data baris pertama ---
+        if (i === 0) { // Hanya log baris data pertama
+            Logger.log("Data Baris Pertama (Mentah): " + JSON.stringify(row));
+            Logger.log("Data Baris Pertama (Diproses): " + JSON.stringify(rowObject));
+            Logger.log("Nilai _filterDapodik (Harusnya 'Ya'/'Tidak'): " + rowObject['_filterDapodik']);
+        }
+        // --- AKHIR JEBAKAN LOG 2 ---
+
         return rowObject;
     });
 
     // (Urutkan data)
     processedRows.sort((a,b) => (a['Nama'] || "").localeCompare(b['Nama'] || ""));
 
-    // (Kirim kembali header asli dari sheet, JANGAN kustom header)
+    // (Kirim kembali header asli dari sheet)
     return {
         headers: headers,
         rows: processedRows,
-        // (filterConfig dikirim untuk kompatibilitas, tapi JS akan mengabaikannya)
         filterConfigs: [
             { id: 'filterJenjang', dataColumn: '_filterJenjang' },
             { id: 'filterNamaLembaga', dataColumn: '_filterNamaLembaga', dependsOn: 'filterJenjang', dependencyColumn: '_filterJenjang' },
@@ -1425,6 +1439,8 @@ function getDaftarPtkPaudData() {
     };
 
   } catch (e) {
+    Logger.log("--- ERROR DI DALAM getDaftarPtkPaudData ---"); // Log error tambahan
+    Logger.log(e);
     return handleError('getDaftarPtkPaudData', e);
   }
 }
@@ -1435,46 +1451,69 @@ function getKelolaPtkPaudData() {
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     if (!sheet || sheet.getLastRow() < 2) return { headers: [], rows: [] };
 
+    // 1. Ambil data mentah (untuk tanggal) dan data tampilan (untuk string)
     const allData = sheet.getDataRange().getValues();
-    const headers = allData[0].map(h => String(h).trim());
+    const allDisplayData = sheet.getDataRange().getDisplayValues();
+
+    // 2. Bersihkan header (ini penting untuk 'Dapodik')
+    const headers = allDisplayData[0].map(h => String(h).trim());
     const dataRows = allData.slice(1);
+    const displayRows = allDisplayData.slice(1);
 
-    const indexedData = dataRows.map((row, index) => ({
-      originalRowIndex: index + 2,
-      rowData: row
-    }));
-
-    const parseDate = (value) => value instanceof Date && !isNaN(value) ? value.getTime() : 0;
     const updateIndex = headers.indexOf('Update');
     const dateInputIndex = headers.indexOf('Tanggal Input');
-    
-    indexedData.sort((a, b) => {
-      const updateA = parseDate(a.rowData[updateIndex]);
-      const updateB = parseDate(b.rowData[updateIndex]);
-      if (updateB !== updateA) return updateB - updateA;
-      const dateInputA = parseDate(a.rowData[dateInputIndex]);
-      const dateInputB = parseDate(b.rowData[dateInputIndex]);
-      return dateInputB - dateInputA;
-    });
+    const parseDate = (value) => value instanceof Date && !isNaN(value) ? value.getTime() : 0;
 
+    // 3. Gabungkan data dengan indeks baris aslinya
+    const indexedData = dataRows.map((row, index) => ({
+      originalRowIndex: index + 2,
+      rowData: row,
+      displayRow: displayRows[index]
+    }));
+
+    // 4. Urutkan berdasarkan Update (terbaru) lalu Tanggal Input (terbaru)
+    indexedData.sort((a, b) => {
+    // 1. Dapatkan tanggal mentah untuk baris A
+    const updateA = parseDate(a.rowData[updateIndex]);
+    const dateInputA = parseDate(a.rowData[dateInputIndex]);
+    // 2. Tentukan tanggal terbaru untuk baris A (mana yang lebih besar)
+    const newestDateA = Math.max(updateA, dateInputA);
+
+    // 3. Dapatkan tanggal mentah untuk baris B
+    const updateB = parseDate(b.rowData[updateIndex]);
+    const dateInputB = parseDate(b.rowData[dateInputIndex]);
+    // 4. Tentukan tanggal terbaru untuk baris B
+    const newestDateB = Math.max(updateB, dateInputB);
+
+    // 5. Urutkan berdasarkan tanggal terbaru (dari besar ke kecil)
+    return newestDateB - newestDateA;
+      });
+
+    // 5. Susun ulang data menjadi objek yang rapi
     const finalData = indexedData.map(item => {
       const rowDataObject = {
         _rowIndex: item.originalRowIndex,
         _source: 'PAUD',
       };
+
       headers.forEach((header, i) => {
-        let cell = item.rowData[i];
-        if (cell instanceof Date) {
-          rowDataObject[header] = Utilities.formatDate(cell, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-        } else {
-          rowDataObject[header] = cell || "";
-        }
+         // Pastikan Tanggal Input (Q) dan Update (R) diformat dengan benar
+         if (header === 'Tanggal Input' || header === 'Update') {
+            const rawDate = item.rowData[i];
+            if (rawDate instanceof Date) {
+               rowDataObject[header] = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+            } else {
+               rowDataObject[header] = item.displayRow[i] || ""; // Fallback
+            }
+         } else {
+            rowDataObject[header] = item.displayRow[i] || ""; // Gunakan display value untuk string
+         }
       });
       return rowDataObject;
     });
 
-     const displayHeaders = ["Nama", "Nama Lembaga", "Status", "NIP/NIY", "Jabatan", "Jurusan", "Tahun Lulus", "Dapodik", "Aksi"];
-    return { headers: displayHeaders, rows: finalData };
+    // 6. Kirim SEMUA header, biarkan javascript yang memilih
+    return { headers: headers, rows: finalData }; 
   } catch (e) {
     return handleError('getKelolaPtkPaudData', e);
   }
@@ -1520,10 +1559,31 @@ function updatePtkPaudData(formData) {
     formData['Update'] = new Date();
 
     const newRowValues = headers.map((header, index) => {
-      return formData.hasOwnProperty(header) ? formData[header] : oldValues[index];
+      // Cek apakah data baru ada di formData
+      if (formData.hasOwnProperty(header)) {
+
+        // --- ▼▼▼ TAKTIK BARU UNTUK TMT ▼▼▼ ---
+        if (header === 'TMT' && formData[header]) {
+          // formData[header] adalah string "yyyy-mm-dd"
+          return new Date(formData[header]);
+        }
+        // --- ▲▲▲ AKHIR TAKTIK ▲▲▲ ---
+
+        return formData[header]; // Ambil data baru
+      }
+      return oldValues[index]; // Jika tidak ada, pertahankan data lama
     });
 
-    range.setValues([newRowValues]);
+    range.setValues([newRowValues]); // 1. Simpan datanya
+
+    // --- ▼▼▼ MISI FORMATTING (BARU) ▼▼▼ ---
+    const tmtIndex = headers.indexOf('TMT');
+    if (tmtIndex !== -1) {
+      // 2. Terapkan format "dd-mm-yyyy" ke sel yang baru di-update
+      sheet.getRange(rowIndex, tmtIndex + 1).setNumberFormat("dd-MM-yyyy");
+    }
+    // --- ▲▲▲ AKHIR MISI ▲▲▲ ---
+
     return "Data PTK berhasil diperbarui.";
   } catch (e) {
     throw new Error(`Gagal memperbarui data: ${e.message}`);
@@ -1573,35 +1633,106 @@ function addNewPtkPaud(formData) {
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     if (!sheet) throw new Error("Sheet tidak ditemukan.");
 
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+
     const newRow = headers.map(header => {
       if (header === 'Tanggal Input') return new Date();
+
+      // --- ▼▼▼ TAKTIK BARU UNTUK TMT ▼▼▼ ---
+      if (header === 'TMT' && formData[header]) {
+        // formData[header] adalah string "yyyy-mm-dd"
+        // new Date(...) akan mengkonversinya ke Objek Date
+        return new Date(formData[header]); 
+      }
+      // --- ▲▲▲ AKHIR TAKTIK ▲▲▲ ---
+
       return formData[header] || "";
     });
 
-    sheet.appendRow(newRow);
+    sheet.appendRow(newRow); // 1. Simpan datanya
+
+    // --- ▼▼▼ MISI FORMATTING (BARU) ▼▼▼ ---
+    const lastRow = sheet.getLastRow();
+    const tmtIndex = headers.indexOf('TMT');
+    if (tmtIndex !== -1) {
+      // 2. Terapkan format "dd-mm-yyyy" ke sel yang baru ditambahkan
+      sheet.getRange(lastRow, tmtIndex + 1).setNumberFormat("dd-MM-yyyy");
+    }
+    // --- ▲▲▲ AKHIR MISI ▲▲▲ ---
+
     return "Data PTK baru berhasil disimpan.";
   } catch (e) {
     throw new Error(`Gagal menyimpan data: ${e.message}`);
   }
 }
 
-function deletePtkPaudData(rowIndex, deleteCode) {
+function deletePtkPaudData(rowIndex, deleteCode, alasan) {
   try {
+    // 1. Validasi Kode Hapus
     const todayCode = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMdd");
     if (String(deleteCode).trim() !== todayCode) throw new Error("Kode Hapus salah.");
-    
-    const config = SPREADSHEET_CONFIG.PTK_PAUD_DB;
-    const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
-    if (!sheet) throw new Error("Sheet tidak ditemukan.");
-    
-    const maxRows = sheet.getLastRow();
-    if (isNaN(rowIndex) || rowIndex < 2 || rowIndex > maxRows) throw new Error("Nomor baris tidak valid.");
+    if (!alasan || String(alasan).trim() === "") throw new Error("Alasan tidak boleh kosong.");
 
-    sheet.deleteRow(rowIndex);
-    return "Data PTK berhasil dihapus.";
+    // 2. Buka kedua sheet (Sumber dan Target)
+    const configSumber = SPREADSHEET_CONFIG.PTK_PAUD_DB;
+    const configTarget = SPREADSHEET_CONFIG.PTK_PAUD_TIDAK_AKTIF;
+    const ss = SpreadsheetApp.openById(configSumber.id); // Asumsi ID-nya sama
+    
+    const sheetSumber = ss.getSheetByName(configSumber.sheet);
+    const sheetTarget = ss.getSheetByName(configTarget.sheet);
+    if (!sheetSumber || !sheetTarget) throw new Error("Sheet 'PTK PAUD' atau 'PTK PAUD Tidak Aktif' tidak ditemukan.");
+
+    // 3. Ambil Headers dari kedua sheet (bersihkan spasi)
+    const headersSumber = sheetSumber.getRange(1, 1, 1, sheetSumber.getLastColumn()).getDisplayValues()[0].map(h => String(h).trim());
+    const headersTarget = sheetTarget.getRange(1, 1, 1, sheetTarget.getLastColumn()).getDisplayValues()[0].map(h => String(h).trim());
+
+    // 4. Ambil data baris yang akan 'dihapus' (mentah, untuk menjaga format tanggal)
+    const dataBarisSumber = sheetSumber.getRange(rowIndex, 1, 1, headersSumber.length).getValues()[0];
+
+    // 5. Bangun baris baru untuk sheet "Tidak Aktif" (ini adalah 1D array, [data1, data2, ...])
+    const barisBaruTarget = headersTarget.map(headerTarget => {
+        if (headerTarget === 'Alasan') {
+            return alasan; // Masukkan alasan
+        }
+        if (headerTarget === 'Update') {
+            return new Date(); // Masukkan waktu pemindahan
+        }
+        
+        // Cari data yang cocok dari sheet sumber
+        const indexDiSumber = headersSumber.indexOf(headerTarget);
+        if (indexDiSumber !== -1) {
+            return dataBarisSumber[indexDiSumber]; // Salin data
+        }
+        return ""; // Kolom ada di target tapi tidak di sumber
+    });
+
+    // --- ▼▼▼ INI ADALAH PERBAIKAN UTAMA ▼▼▼ ---
+
+    // 6. Buat baris kosong di Bawah Header (di Baris 2)
+    sheetTarget.insertRowAfter(1); 
+
+    // 7. Ambil range baris baru (Baris 2) dan isi datanya
+    // (setValues MENGHARUSKAN 2D array, jadi kita bungkus [barisBaruTarget])
+    sheetTarget.getRange(2, 1, 1, barisBaruTarget.length).setValues([barisBaruTarget]);
+
+    // 8. (Opsional tapi Direkomendasikan) Format Ulang Tanggal di Baris 2
+    const tmtIndex = headersTarget.indexOf('TMT');
+    const tglInputIndex = headersTarget.indexOf('Tanggal Input');
+    const updateIndex = headersTarget.indexOf('Update');
+    
+    if (tmtIndex !== -1) sheetTarget.getRange(2, tmtIndex + 1).setNumberFormat("dd-MM-yyyy");
+    if (tglInputIndex !== -1) sheetTarget.getRange(2, tglInputIndex + 1).setNumberFormat("dd/MM/yyyy HH:mm:ss");
+    if (updateIndex !== -1) sheetTarget.getRange(2, updateIndex + 1).setNumberFormat("dd/MM/yyyy HH:mm:ss");
+
+    // --- ▲▲▲ AKHIR PERBAIKAN ▲▲▲ ---
+
+    // 9. Hapus baris asli dari sheet "PTK PAUD"
+    sheetSumber.deleteRow(rowIndex);
+    
+    return "Data PTK berhasil dinonaktifkan dan dipindah ke arsip.";
   } catch (e) {
-    throw new Error(`Gagal menghapus data: ${e.message}`);
+    // Kirim pesan error yang spesifik ke client
+    return handleError('deletePtkPaudData', e);
   }
 }
 

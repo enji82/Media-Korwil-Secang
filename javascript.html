@@ -229,7 +229,7 @@ App.initializeGenericTablePage = (config) => {
     
     // --- FUNGSI HELPER LOKAL ---
     const getRowValue = (row, key) => {
-        const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
+        const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkSdTable';
         return isDataNested ? (row.data ? row.data[key] : row[key]) : row[key];
     };
     
@@ -475,7 +475,7 @@ App.initializeGenericTablePage = (config) => {
 
         if (searchTerm) {
             filtered = filtered.filter(row => {
-                const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkPaudTable' || config.tableId === 'kelolaPtkSdTable';
+                const isDataNested = config.tableId === 'kelolaTable' || config.tableId === 'lapbulKelolaTable' || config.tableId === 'kelolaPtkSdTable';
                 const targetRow = isDataNested ? row.data : row;
                 return Object.keys(targetRow).some(key => {
                     const cellValue = String(targetRow[key] ?? '').toLowerCase();
@@ -728,15 +728,18 @@ App.setupTabForm = (formId) => {
         setTabValidation: function(tabIndex, validationFunction) {
             customValidations[tabIndex] = validationFunction;
         },
+        unlockTab: function(tabIndex) {
+        if (tabIndex > maxUnlockedTabIndex) {
+            maxUnlockedTabIndex = tabIndex;
+        }
+        updateTabStates();
+        },
         unlockAndShowTab: function(tabIndex) {
             if (tabIndex > maxUnlockedTabIndex) {
                 maxUnlockedTabIndex = tabIndex;
             }
             showTab(tabIndex);
         },
-        // ===========================================
-        // ===== TAMBAHKAN DUA BARIS DI BAWAH INI =====
-        // ===========================================
         validateTab: validateTab,
         showTab: showTab
     };
@@ -774,14 +777,11 @@ App.showDeleteConfirmation = (button) => {
                     </div>`;
         deleteFunction = App.processDeletionSK;
         reloadPage = 'sk_kelola';
-    } else if (isPaud && !isLapbul) { // PTK PAUD
-        infoHtml = `<p>Apakah Anda yakin ingin menghapus data PTK ini?</p>
-                    <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
-                       Nama: ${rowInfo['Nama']}<br>
-                       Lembaga: ${rowInfo['Nama Lembaga']}
-                    </div>`;
-        deleteFunction = App.processDeletionPtkPaud;
-        reloadPage = 'ptk_kelola_paud';
+    } else if (isPaud && !isLapbul) { // PTK PAUD (MEMICU PROSES 2 LANGKAH)
+        // JANGAN TAMPILKAN MODAL INI
+        // Langsung panggil modal Alasan
+        App.showDeleteReasonPrompt(rowInfo, App.processDeletionPtkPaud, 'ptk_kelola_paud');
+        return;
     } else if (isSd) { // PTK SD
         infoHtml = `<p>Yakin ingin menghapus PTK ini?</p>
                     <div style="font-weight: bold; margin: 15px 0; background:rgba(0,0,0,0.1); padding: 10px; border-radius: 5px; line-height: 1.5; text-align: left;">
@@ -815,7 +815,40 @@ App.showDeleteConfirmation = (button) => {
     modal.classList.add('show');
 };
 
-App.showDeletePrompt = (rowInfo, deleteFunction, reloadPage) => {
+App.showDeleteReasonPrompt = (rowInfo, deleteFunction, reloadPage) => {
+    const modal = document.getElementById('deleteModal');
+    const modalTitle = modal.querySelector('#deleteModalTitle');
+    const modalBody = modal.querySelector('#deleteModalBody');
+    const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+    const cancelBtn = modal.querySelector('#cancelDeleteBtn');
+
+    const namaPtk = rowInfo['Nama'] || 'PTK Ini'; // Ambil nama dari data
+
+    modalTitle.textContent = 'Konfirmasi Hapus';
+    modalBody.innerHTML = `<p>Tuliskan alasan menghapus <strong>${namaPtk}</strong> dari database.</p>
+                           <input type="text" id="alasanHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Contoh: Pensiun, Mutasi, Wafat">`;
+
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.textContent = 'Proses';
+
+    newConfirmBtn.onclick = () => {
+        const alasan = document.getElementById('alasanHapusInput').value;
+        if (!alasan || alasan.trim() === '') {
+            App.showAppModal('error', 'Alasan tidak boleh kosong.');
+            return;
+        }
+        // Panggil Modal 2 (Kode Hapus) dan teruskan alasannya
+        App.showDeleteCodePrompt(rowInfo, deleteFunction, reloadPage, alasan);
+    };
+
+    cancelBtn.onclick = () => modal.classList.remove('show');
+    modal.classList.add('show');
+
+    setTimeout(() => document.getElementById('alasanHapusInput').focus(), 100);
+};
+
+App.showDeleteCodePrompt = (rowInfo, deleteFunction, reloadPage, alasan) => {
     const modal = document.getElementById('deleteModal');
     const modalTitle = modal.querySelector('#deleteModalTitle');
     const modalBody = modal.querySelector('#deleteModalBody');
@@ -828,7 +861,7 @@ App.showDeletePrompt = (rowInfo, deleteFunction, reloadPage) => {
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
     newConfirmBtn.textContent = 'Konfirmasi & Hapus';
-    newConfirmBtn.onclick = () => deleteFunction(rowInfo, reloadPage);
+    newConfirmBtn.onclick = () => deleteFunction(rowInfo, reloadPage, alasan);
 
     modal.querySelector('#cancelDeleteBtn').onclick = () => modal.classList.remove('show');
 
@@ -848,17 +881,25 @@ App.processDeletionSK = (rowInfo, reloadPage) => {
         .deleteSKData(rowInfo._rowIndex, deleteCode);
 };
 
-App.processDeletionPtkPaud = (rowInfo, reloadPage) => {
+App.processDeletionPtkPaud = (rowInfo, reloadPage, alasan) => {
     const deleteCode = document.getElementById('kodeHapusInput').value;
     if (!deleteCode) { App.showAppModal('error', 'Kode hapus tidak boleh kosong.'); return; }
     App.showAppModal('loading', 'Menghapus data...');
     google.script.run
-        .withSuccessHandler(response => {
-            document.getElementById('deleteModal').classList.remove('show');
-            App.showAppModal('success', response, reloadPage);
+        .withSuccessHandler(response => { // <--- TITIK EKSTRA SUDAH DIHAPUS
+    document.getElementById('deleteModal').classList.remove('show');
+
+    // --- TAKTIK DEKODER DIMULAI ---
+    if (response && response.error) {
+        // Jika server mengirim objek { error: "..." }
+        App.showAppModal('error', response.error); 
+    } else {
+        // Jika server mengirim string sukses
+        App.showAppModal('success', response, reloadPage); 
+    }
         })
         .withFailureHandler(error => App.showAppModal('error', error.message))
-        .deletePtkPaudData(rowInfo._rowIndex, deleteCode);
+        .deletePtkPaudData(rowInfo._rowIndex, deleteCode, alasan);
 };
 
 App.processDeletionPtkSd = (rowInfo, reloadPage) => {
@@ -3071,19 +3112,38 @@ function initPtkDaftarPaudPage() {
 }
 
 function initPtkKelolaPaudPage() {
+
+    // --- PERINTAH URUTAN KUSTOM (A, B, C, D, H, Aksi, Q, R) ---
+    const kustomHeaders = [
+        "Nama",        // A
+        "Nama Lembaga",   // B
+        "Status",         // D
+        "Jabatan",        // H
+        "Aksi",           // (Tombol)
+        "Tanggal Input",  // Q (sesuai asumsi)
+        "Update"          // R (sesuai asumsi)
+    ];
+    // --- AKHIR PERINTAH ---
+
     App.initializeGenericTablePage({
         tableId: 'kelolaPtkPaudTable',
         serverFunction: 'getKelolaPtkPaudData',
+        displayHeaders: kustomHeaders, // <-- SENJATA BARU DI AKTIFKAN
         editPage: 'ptk_edit_paud',
-        filterConfig: [
-            { id: 'filterJenjang', dataColumn: 'Jenjang' },
+
+        // ▼▼▼ PERBAIKAN: 'filterConfig' menjadi 'filters' & dibuat cascading ▼▼▼
+        filters: [
+            { id: 'filterJenjang', dataColumn: 'Jenjang', defaultText: 'Semua Jenjang' },
             { 
               id: 'filterNamaLembaga', 
               dataColumn: 'Nama Lembaga', 
-              dependsOn: 'filterJenjang',
-              dependencyColumn: 'Jenjang'
+              type: 'cascading-local', // <-- Taktik baru
+              parent: 'filterJenjang',      // <-- Taktik baru
+              parentKey: 'Jenjang',      // <-- Taktik baru
+              defaultText: 'Semua Lembaga' // <-- Taktik baru
             }
         ]
+        // ▲▲▲ AKHIR PERBAIKAN ▲▲▲
     });
 
     document.getElementById('tambahPtkBtn').addEventListener('click', (e) => {
@@ -3095,41 +3155,47 @@ function initPtkTambahPaudPage() {
     const form = document.getElementById('addPtkPaudForm');
     if (!form) return;
 
-    App.showAppModal('loading', 'Memuat formulir...');
+    // 1. Inisialisasi "Mesin" Tab
+    const formLogic = App.setupTabForm('addPtkPaudForm');
+    
+    // 2. Variabel untuk menyimpan data dropdown dari server
+    let serverOptions = {};
 
+    // 3. Fungsi untuk mengisi dropdown
+    function populateSingleDropdown(elementId, optionsArray, defaultText) {
+        const dropdown = document.getElementById(elementId);
+        if (!dropdown) return;
+        dropdown.innerHTML = `<option value="" disabled selected>${defaultText}</option>`;
+        if (optionsArray && optionsArray.length > 0) {
+            optionsArray.forEach(item => {
+                let option = document.createElement("option");
+                option.value = item;
+                option.textContent = item;
+                dropdown.appendChild(option);
+            });
+        }
+    }
+
+    // 4. Panggil data dari "Markas Komando" (code.gs)
+    App.showAppModal('loading', 'Memuat opsi formulir...');
     google.script.run
         .withSuccessHandler(options => {
             if (options.error) {
                 App.showAppModal('error', `Gagal memuat opsi: ${options.error}`);
                 return;
             }
+            serverOptions = options; // Simpan data server
 
-            const jenjangSelect = form.querySelector('#jenjang');
-            const lembagaSelect = form.querySelector('#namaLembaga');
-            const statusSelect = form.querySelector('#status');
-            const jabatanSelect = form.querySelector('#jabatan');
-
-            function populateSingleDropdown(elementId, optionsArray, defaultText) {
-                const dropdown = document.getElementById(elementId);
-                if (!dropdown) return;
-                dropdown.innerHTML = `<option value="" disabled selected>${defaultText}</option>`;
-                if (optionsArray && optionsArray.length > 0) {
-                    optionsArray.forEach(item => {
-                        let option = document.createElement("option");
-                        option.value = item;
-                        option.textContent = item;
-                        dropdown.appendChild(option);
-                    });
-                }
-            }
-
-            populateSingleDropdown("jenjang", options['Jenjang'], "-- Pilih Jenjang --");
-            populateSingleDropdown("status", options['Status'], "-- Pilih Status --");
-            populateSingleDropdown("jabatan", options['Jabatan'], "-- Pilih Jabatan --");
+            // Isi dropdown Status dan Jabatan
+            populateSingleDropdown("status", serverOptions['Status'], "-- Pilih Status --");
+            populateSingleDropdown("jabatan", serverOptions['Jabatan'], "-- Pilih Jabatan --");
             
-            jenjangSelect.addEventListener('change', function() {
+            // Atur listener untuk dropdown "Jenjang"
+            form.querySelector('#jenjang').addEventListener('change', function() {
                 const selectedJenjang = this.value;
-                const lembagaOptions = options['Nama Lembaga'][selectedJenjang] || [];
+                const lembagaOptions = serverOptions['Nama Lembaga'][selectedJenjang] || [];
+                const lembagaSelect = form.querySelector('#namaLembaga');
+                
                 lembagaSelect.innerHTML = '<option value="" disabled selected>-- Pilih Lembaga --</option>';
                 lembagaOptions.forEach(l => lembagaSelect.add(new Option(l, l)));
                 lembagaSelect.disabled = false;
@@ -3138,11 +3204,61 @@ function initPtkTambahPaudPage() {
             document.getElementById('appModal').classList.remove('show');
         })
         .withFailureHandler(err => App.showAppModal('error', `Gagal memuat opsi form: ${err.message}`))
-        .getNewPtkPaudOptions();
+        .getNewPtkPaudOptions(); // Memanggil fungsi code.gs yang sudah ada
 
+    // 5. Tentukan Aturan Validasi Kustom
+    
+    // Validasi Tab 1 (Data Lembaga) - Cukup validasi standar
+    formLogic.setTabValidation(0, () => formLogic.validateTab(0));
+
+    // Validasi Tab 2 (Data Pribadi) - Validasi standar + Jurusan
+    formLogic.setTabValidation(1, () => {
+        // Jalankan validasi standar dulu (untuk 'required')
+        if (!formLogic.validateTab(1)) return false; 
+        
+        // Validasi Kustom "Jurusan"
+        const pendidikan = form.querySelector('#pendidikan').value;
+        const jurusanInput = form.querySelector('#jurusan');
+        const jurusan = jurusanInput.value;
+        const needsJurusan = ['S2', 'S1', 'D4', 'D3', 'D2', 'SMA', 'SMK', 'MA', 'Paket C'].includes(pendidikan);
+
+        if (needsJurusan && !jurusan) {
+            App.showAppModal('error', 'Jurusan wajib diisi untuk jenjang pendidikan yang Anda pilih.');
+            jurusanInput.classList.add('input-error');
+            return false;
+        }
+        
+        return true; // Lolos semua
+    });
+    
+    // Validasi Tab 3 (Data Kepegawaian) - Cukup validasi standar
+    formLogic.setTabValidation(2, () => formLogic.validateTab(2));
+
+
+    // 6. Atur Logika "Submit" Final
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
+        
+        // Cek semua tab sebelum mengirim
+        if (!formLogic.validateTab(0)) {
+            App.showAppModal('error', 'Data Lembaga (Tab 1) belum lengkap.');
+            formLogic.showTab(0); // Pindahkan ke tab yang error
+            return;
+        }
+        if (!formLogic.validateTab(1)) {
+            // Pesan error sudah dihandle oleh validasi kustom (Jurusan)
+            // App.showAppModal('error', 'Data Pribadi (Tab 2) belum lengkap.');
+            formLogic.showTab(1); // Pindahkan ke tab yang error
+            return;
+        }
+        if (!formLogic.validateTab(2)) {
+            App.showAppModal('error', 'Data Kepegawaian (Tab 3) belum lengkap.');
+            formLogic.showTab(2); // Pindahkan ke tab yang error
+            return;
+        }
+
+        // --- Jika Semua Lolos ---
+        const submitButton = form.querySelector('#finalSubmitBtn');
         submitButton.disabled = true;
         App.showAppModal('loading', 'Menyimpan data PTK baru...');
 
@@ -3156,13 +3272,15 @@ function initPtkTambahPaudPage() {
                 App.showAppModal('error', `Gagal menyimpan: ${error.message}`);
                 submitButton.disabled = false;
             })
-            .addNewPtkPaud(formData);
+            .addNewPtkPaud(formData); // Memanggil fungsi code.gs yang sudah ada
     });
 }
 
 function initPtkEditPaudPage(params) {
     const form = document.getElementById('editPtkPaudForm');
     const loadingDiv = document.getElementById('loading-data');
+    
+    // 1. Cek "Amunisi" (parameter)
     if (!form || !params || !params.rowIndex) {
         document.getElementById('main-content').innerHTML = `<p style="color:red; text-align:center;">Error: Parameter untuk edit tidak ditemukan.</p>`;
         return;
@@ -3170,76 +3288,129 @@ function initPtkEditPaudPage(params) {
 
     form.querySelector('[name="rowIndex"]').value = params.rowIndex;
 
+    // 2. Inisialisasi "Mesin" Tab
+    const formLogic = App.setupTabForm('editPtkPaudForm');
+    let serverOptions = {};
+
+    // 3. Fungsi untuk mengisi dropdown
+    function populateSingleDropdown(elementId, optionsArray, defaultText) {
+        const dropdown = form.querySelector('#' + elementId); // Targetkan form
+        if (!dropdown) return;
+        dropdown.innerHTML = `<option value="" disabled selected>${defaultText}</option>`;
+        if (optionsArray && optionsArray.length > 0) {
+            optionsArray.forEach(item => {
+                let option = document.createElement("option");
+                option.value = item;
+                option.textContent = item;
+                dropdown.appendChild(option);
+            });
+        }
+    }
+
+    // 4. Panggil data dari "Markas Komando" (code.gs)
     App.showAppModal('loading', 'Memuat data PTK...');
 
-    google.script.run.withSuccessHandler(options => {
-        google.script.run.withSuccessHandler(rowData => {
-            App.showAppModal('loading', 'Mengisi formulir...');
-
-            if (options.error || rowData.error) {
-                App.showAppModal('error', options.error || rowData.error);
+    google.script.run
+        .withSuccessHandler(options => {
+            if (options.error) {
+                App.showAppModal('error', `Gagal memuat opsi: ${options.error}`);
                 return;
             }
+            serverOptions = options; // Simpan data server
 
-            // --- Isi semua dropdown dengan opsi dari server ---
+            // Isi dropdown Status dan Jabatan
+            populateSingleDropdown("status", serverOptions['Status'], "-- Pilih Status --");
+            populateSingleDropdown("jabatan", serverOptions['Jabatan'], "-- Pilih Jabatan --");
+            
+            // Atur listener untuk dropdown "Jenjang"
             const jenjangSelect = form.querySelector('#jenjang');
             const lembagaSelect = form.querySelector('#namaLembaga');
-            const statusSelect = form.querySelector('#status');
-            const jabatanSelect = form.querySelector('#jabatan');
-
-            function populateSelect(selectEl, optionsArr, placeholder) {
-                selectEl.innerHTML = `<option value="" disabled>${placeholder}</option>`;
-                if (optionsArr) optionsArr.forEach(opt => selectEl.add(new Option(opt, opt)));
-            }
-
-            populateSelect(jenjangSelect, options['Jenjang'], '-- Pilih Jenjang --');
-            populateSelect(statusSelect, options['Status'], '-- Pilih Status --');
-            populateSelect(jabatanSelect, options['Jabatan'], '-- Pilih Jabatan --');
             
-            // --- Isi form dengan data yang ada ---
-            for (const key in rowData) {
-                const field = form.querySelector(`[name="${key}"]`);
-                if (field) {
-                    if (key === 'NUPTK' && rowData[key] === '-') {
-                        field.value = ''; 
-                    } else {
-                        field.value = rowData[key];
-                    }
-                }
-            }
-            
-            // --- Atur dropdown Nama Lembaga ---
-            const selectedJenjang = jenjangSelect.value;
-            const lembagaOptions = options['Nama Lembaga'][selectedJenjang] || [];
-            lembagaSelect.innerHTML = '<option value="">-- Pilih Lembaga --</option>';
-            lembagaOptions.forEach(l => lembagaSelect.add(new Option(l, l)));
-            lembagaSelect.value = rowData['Nama Lembaga'];
-
-            // Tambahkan event listener untuk mengubah lembaga jika jenjang diubah
             jenjangSelect.addEventListener('change', function() {
-                const newJenjang = this.value;
-                const newLembagaOptions = options['Nama Lembaga'][newJenjang] || [];
-                lembagaSelect.innerHTML = '<option value="">-- Pilih Lembaga --</option>';
-                newLembagaOptions.forEach(l => lembagaSelect.add(new Option(l, l)));
+                const selectedJenjang = this.value;
+                const lembagaOptions = serverOptions['Nama Lembaga'][selectedJenjang] || [];
+                lembagaSelect.innerHTML = '<option value="" disabled selected>-- Pilih Lembaga --</option>';
+                lembagaOptions.forEach(l => lembagaSelect.add(new Option(l, l)));
                 lembagaSelect.disabled = false;
             });
 
-            // Sembunyikan modal loading dan tampilkan form
-            document.getElementById('appModal').classList.remove('show');
-            loadingDiv.style.display = 'none';
-            form.style.display = 'block';
+            // 5. Setelah Opsi Siap, Panggil Data Baris yang Akan Diedit
+            google.script.run
+                .withSuccessHandler(rowData => {
+                    if (rowData.error) {
+                        App.showAppModal('error', `Gagal memuat data baris: ${rowData.error}`);
+                        return;
+                    }
 
-        }).withFailureHandler(err => App.showAppModal('error', `Gagal mengambil data baris: ${err.message}`)).getPtkPaudDataByRow(params.rowIndex);
-    }).withFailureHandler(err => App.showAppModal('error', `Gagal memuat opsi form: ${err.message}`)).getNewPtkPaudOptions();
+                    // 6. Isi Semua Field Form
+                    for (const key in rowData) {
+                        const field = form.querySelector(`[name="${key}"]`);
+                        if (field) {
+                            // Taktik khusus untuk TMT (tanggal)
+                            if (key === 'TMT' && rowData[key].includes('/')) {
+                                // Ubah format dd/MM/yyyy (dari server) ke yyyy-MM-dd (untuk input)
+                                const parts = rowData[key].split(' ')[0].split('/');
+                                field.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            } else {
+                                field.value = rowData[key];
+                            }
+                        }
+                    }
 
-    // Logika saat form disubmit
+                    // 7. Taktik Kunci: Isi Dropdown Bertingkat
+                    jenjangSelect.value = rowData['Jenjang'];
+                    jenjangSelect.dispatchEvent(new Event('change')); // Picu event 'change'
+                    lembagaSelect.value = rowData['Nama Lembaga']; // Set nilai anak
+
+                    // 8. Buka semua tab
+                    formLogic.unlockTab(1);
+                    formLogic.unlockTab(2);
+
+                    // Sembunyikan loading, tampilkan form
+                    loadingDiv.style.display = 'none';
+                    form.style.display = 'flex';
+                    document.getElementById('appModal').classList.remove('show');
+
+                })
+                .withFailureHandler(err => App.showAppModal('error', `Gagal mengambil data baris: ${err.message}`))
+                .getPtkPaudDataByRow(params.rowIndex); // <- Panggil data baris
+
+        })
+        .withFailureHandler(err => App.showAppModal('error', `Gagal memuat opsi form: ${err.message}`))
+        .getNewPtkPaudOptions(); // <- Panggil opsi dropdown dulu
+
+    // 9. Tentukan Aturan Validasi Kustom (Sama seperti Tambah)
+    formLogic.setTabValidation(0, () => formLogic.validateTab(0));
+    formLogic.setTabValidation(1, () => {
+        if (!formLogic.validateTab(1)) return false; 
+        const pendidikan = form.querySelector('#pendidikan').value;
+        const jurusanInput = form.querySelector('#jurusan');
+        const jurusan = jurusanInput.value;
+        const needsJurusan = ['S2', 'S1', 'D4', 'D3', 'D2', 'SMA', 'SMK', 'MA', 'Paket C'].includes(pendidikan);
+        if (needsJurusan && !jurusan) {
+            App.showAppModal('error', 'Jurusan wajib diisi untuk jenjang pendidikan yang Anda pilih.');
+            jurusanInput.classList.add('input-error');
+            return false;
+        }
+        return true; 
+    });
+    formLogic.setTabValidation(2, () => formLogic.validateTab(2));
+
+    // 10. Atur Logika "Submit" Final (Memanggil UPDATE)
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
+        
+        // Cek semua tab
+        if (!formLogic.validateTab(0)) { App.showAppModal('error', 'Data Lembaga (Tab 1) belum lengkap.'); formLogic.showTab(0); return; }
+        if (!formLogic.validateTab(1)) { formLogic.showTab(1); return; }
+        if (!formLogic.validateTab(2)) { App.showAppModal('error', 'Data Kepegawaian (Tab 3) belum lengkap.'); formLogic.showTab(2); return; }
+
+        const submitButton = form.querySelector('#editSubmitBtn');
         submitButton.disabled = true;
         App.showAppModal('loading', 'Menyimpan perubahan...');
 
         const formData = Object.fromEntries(new FormData(form));
+        // rowIndex sudah ada di dalam formData (dari hidden input)
         
         google.script.run
             .withSuccessHandler(response => {
@@ -3249,7 +3420,7 @@ function initPtkEditPaudPage(params) {
                 App.showAppModal('error', `Gagal menyimpan: ${error.message}`);
                 submitButton.disabled = false;
             })
-            .updatePtkPaudData(formData);
+            .updatePtkPaudData(formData); // <- Panggil fungsi UPDATE
     });
 }
 

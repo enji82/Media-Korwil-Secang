@@ -39,6 +39,9 @@ padding-top: 15px;
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.3); }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+  #tableWrapper .table-container::-webkit-scrollbar {
+    display: none !important; 
+  }
 
 /* --- Animasi Global --- */
 @keyframes stretch-bounce { 0% { transform: scaleX(0.5); } 50% { transform: scaleX(1); } 100% { transform: scaleX(0.5); } }
@@ -964,6 +967,57 @@ flex-grow: 1;
   padding: 25px;
   display: flex;
   flex-direction: column; 
+}
+
+/* =================================================================== */
+/* ============= 11. GAYA KUSTOM FORM PENCARIAN (BARU) ============ */
+/* =================================================================== */
+
+/* Label untuk ikon search di filter */
+.search-icon-label {
+  font-weight: 500;
+  color: #ffffff;
+  padding: 0 5px; /* Sedikit padding */
+}
+
+/* Input search di filter */
+.search-input {
+  /* Terapkan Glassmorphism */
+  background: rgba(255, 255, 255, 0.08); 
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #e0e0e0; 
+  
+  /* Ukuran & Padding */
+  padding: 10px 15px;
+  box-sizing: border-box;
+  font-size: 14px;
+  width: 250px; /* Lebar default */
+  transition: all 0.3s ease;
+}
+
+/* Hilangkan 'X' bawaan di input[type=search] */
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Gaya saat di-klik (Fokus) */
+.search-input:focus {
+  outline: none;
+  border-color: #00c3ff; 
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+}
+
+/* Perbaikan Autofill (jika browser mengisinya) */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:hover,
+.search-input:-webkit-autofill:focus,
+.search-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1f2a3a inset !important;
+    -webkit-text-fill-color: #e0e0e0 !important;
+    caret-color: #e0e0e0 !important;
 }
 
 </style>
