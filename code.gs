@@ -127,8 +127,8 @@ const COLUMNS_MAP = {
         "Status": 3,          // Kolom D
         "Nama Sekolah": 4,    // Kolom E
         "Dokumen": 7,         // Kolom H
-        "Jenjang": 213,       // Kolom GI (Index 213)
-        "Update": 214,        // Kolom GJ (Index 1214)
+        "Jenjang": 223,       // Kolom GI (Index 213)
+        "Update": 224,        // Kolom GJ (Index 1214)
         "Jumlah Rombel": 6,   // Kolom G (Asumsi)
     }
 };
@@ -388,23 +388,36 @@ function processLapbulFormPaud(formData) {
 function processLapbulFormSd(formData) {
   try {
     const mainFolder = DriveApp.getFolderById(FOLDER_CONFIG.LAPBUL_SD);
-    const tahunFolder = getOrCreateFolder(mainFolder, formData.tahun);
-    const bulanFolder = getOrCreateFolder(tahunFolder, formData.laporanBulan);
+
+    // ========================================================
+    // INI ADALAH PERBAIKANNYA:
+    // Menggunakan nama properti yang dikirim dari JavaScript
+    // (formData.Tahun bukan formData.tahun)
+    // (formData.Bulan bukan formData.laporanBulan)
+    const tahunFolder = getOrCreateFolder(mainFolder, formData.Tahun);
+    const bulanFolder = getOrCreateFolder(tahunFolder, formData.Bulan);
+    // ========================================================
+    
     const fileData = formData.fileData;
     const decodedData = Utilities.base64Decode(fileData.data);
     const blob = Utilities.newBlob(decodedData, fileData.mimeType, fileData.fileName);
-    const newFileName = `${formData.namaSekolah} - Lapbul ${formData.laporanBulan} ${formData.tahun}.pdf`;
+    
+    // ========================================================
+    // PERBAIKAN KEDUA:
+    // Menggunakan nama properti yang benar untuk nama file
+    // (Gunakan kurung siku '[]' karena ada spasi)
+    const newFileName = `${formData['Nama Sekolah']} - Lapbul ${formData.Bulan} ${formData.Tahun}.pdf`;
+    // ========================================================
+    
     const newFile = bulanFolder.createFile(blob).setName(newFileName);
     const fileUrl = newFile.getUrl();
     const config = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
     const sheet = SpreadsheetApp.openById(config.id).getSheetByName(config.sheet);
     
     // Ambil Peta Data (SD_FORM_INDEX_MAP) sebagai "Kebenaran"
-    const headersMap = SD_FORM_INDEX_MAP; 
-    
+    const headersMap = SD_FORM_INDEX_MAP;
     // Ambil nilai helper
     const getValue = (key) => formData[key] || 0;
-
     // --- ▼▼▼ TAKTIK BARU: Bangun baris berdasarkan PETA ▼▼▼ ---
     const newRow = headersMap.map(headerName => {
         // Cek Pengecualian
@@ -412,6 +425,7 @@ function processLapbulFormSd(formData) {
         if (headerName === 'Jenjang') return "SD"; // <--- PAKSA "SD" di posisi yang benar
         if (headerName === 'Dokumen') return fileUrl;
         if (headerName === 'Update') return ""; // Kosong saat input baru
+    
         
         // Jika nama header ada di formData, ambil nilainya
         if (formData.hasOwnProperty(headerName)) {
@@ -697,7 +711,7 @@ const mapSheet = (sheet, source, timeZone) => {
     };
     
     // Proses setiap baris data (mulai dari baris ke-2 / index 1)
-    return display.slice(1).map((displayRow, index) => { 
+    return display.slice(1).map((displayRow, index) => {
         const rowIndex = index + 2; 
 
         const namaSekolahIndex = mapping["Nama Sekolah"];
@@ -709,6 +723,8 @@ const mapSheet = (sheet, source, timeZone) => {
         const dateUpdateRaw = mapping["Update"] !== undefined ? raw[rowIndex - 1][mapping["Update"]] : null;
 
         if (!dateUnggahRaw) return null; 
+        const dateUnggah = (dateUnggahRaw instanceof Date && !isNaN(dateUnggahRaw)) ? dateUnggahRaw.getTime() : 0;
+        const dateUpdate = (dateUpdateRaw instanceof Date && !isNaN(dateUpdateRaw)) ? dateUpdateRaw.getTime() : 0;
         
         const rowObject = {
             _rowIndex: rowIndex,
@@ -766,11 +782,9 @@ function getLapbulKelolaData() {
         
         let combinedData = [];
 
-        // Panggil mapSheet (Pastikan Anda menggunakan ID SpreadSheet yang benar)
         combinedData.push(...mapSheet(PAUD_SHEET, 'PAUD', PAUD_TIME_ZONE));
         combinedData.push(...mapSheet(SD_SHEET, 'SD', SD_TIME_ZONE));
-        
-        // Data tidak perlu diurutkan di server; biarkan frontend (JS) yang mengurutkan (lebih cepat)
+        combinedData.sort((a, b) => b._sortDate - a._sortDate);
         
         return { headers: FINAL_HEADERS, rows: combinedData };
 

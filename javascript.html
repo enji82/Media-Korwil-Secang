@@ -1320,9 +1320,30 @@ App.calculateTotalMuridPaud = (form) => {
     totalRombel += parseInt(form.querySelector('[name="kelompok_B_L"]').value, 10) || 0;
     totalRombel += parseInt(form.querySelector('[name="kelompok_B_P"]').value, 10) || 0;
 
-    // Perbarui tampilan validasi
-    document.getElementById('totalUsia').textContent = totalUsia;
-    document.getElementById('totalRombel').textContent = totalRombel;
+    // Ambil elemen validasi
+    const totalUsiaEl = document.getElementById('totalUsia') || document.getElementById('edit-totalUsia');
+    const totalRombelEl = document.getElementById('totalRombel') || document.getElementById('edit-totalRombel');
+    const statusEl = document.getElementById('murid-validation-status') || document.getElementById('edit-murid-validation-status');
+
+    // Perbarui tampilan angka
+    if (totalUsiaEl) totalUsiaEl.textContent = totalUsia;
+    if (totalRombelEl) totalRombelEl.textContent = totalRombel;
+    
+    // === LOGIKA VALIDASI BARU ===
+    if (statusEl) {
+        statusEl.classList.remove('status-ok', 'status-error');
+        if (totalUsia !== totalRombel) {
+            statusEl.textContent = "Jumlah TIDAK SAMA!";
+            statusEl.classList.add('status-error');
+        } else if (totalUsia === 0) {
+            statusEl.textContent = "Isikan jumlah murid.";
+            statusEl.classList.add('status-ok');
+        } else {
+            statusEl.textContent = "Jumlah SAMA!";
+            statusEl.classList.add('status-ok');
+        }
+    }
+    // === AKHIR LOGIKA VALIDASI BARU ===
     
     return { totalUsia, totalRombel };
 };
@@ -1389,12 +1410,11 @@ function initLapbulFormPaudPage(params) {
 
     // --- 2. VALIDASI KUSTOM TAB 2 (DATA MURID) ---
     formLogic.setTabValidation(1, () => {
+        // Panggil fungsi global yang sudah kita perbaiki
         const { totalUsia, totalRombel } = App.calculateTotalMuridPaud(form);
         const statusEl = document.getElementById('murid-validation-status');
 
-        statusEl.classList.remove('status-ok', 'status-error');
-
-        // Skenario 2a: Total Murid 0
+        // Skenario 2a: Total Murid 0 (Konfirmasi)
         if (totalUsia === 0) {
             const confirmModal = document.getElementById('deleteModal'); // Menggunakan modal yang ada
             confirmModal.querySelector('#deleteModalTitle').textContent = 'Konfirmasi Data Siswa';
@@ -1419,17 +1439,14 @@ function initLapbulFormPaudPage(params) {
             return false; // Kembali ke tab murid dulu
         }
 
-        // Skenario 2b: Jumlah Murid Tidak Sama
+        // Skenario 2b: Jumlah Murid Tidak Sama (Gagal)
         if (totalUsia !== totalRombel) {
-            statusEl.textContent = "Jumlah TIDAK SAMA!";
-            statusEl.classList.add('status-error');
+            // Status sudah diatur oleh App.calculateTotalMuridPaud, kita tinggal tampilkan popup
             App.showAppModal('error', 'Kesalahan Validasi: Total Murid Menurut Usia harus SAMA dengan Total Murid Menurut Rombel.');
             return false;
         }
 
-        // Skenario 2c: Valid dan Sama
-        statusEl.textContent = "Jumlah SAMA!";
-        statusEl.classList.add('status-ok');
+        // Skenario 2c: Valid dan Sama (Lolos)
         return true;
     });
 
@@ -1611,11 +1628,15 @@ App.submitLapbulSd = (form) => {
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
     
-    // Kumpulkan field penting dari Tab 1
-    payload.laporanBulan = form.querySelector('[name="laporanBulan"]').value;
-    payload.tahun = form.querySelector('[name="tahun"]').value;
-    payload.statusSekolah = form.querySelector('[name="statusSekolah"]').value;
-    payload.namaSekolah = form.querySelector('[name="namaSekolah"]').value;
+    // ========================================================
+    // INI ADALAH PERBAIKANNYA:
+    // Mengambil nilai dari field yang namanya sudah kita ubah
+    payload.Bulan = form.querySelector('[name="Bulan"]').value;
+    payload.Tahun = form.querySelector('[name="Tahun"]').value;
+    payload.Status = form.querySelector('[name="Status"]').value;
+    // (Gunakan kurung siku karena ada spasi)
+    payload['Nama Sekolah'] = form.querySelector('[name="Nama Sekolah"]').value; 
+    // ========================================================
 
     const sendData = (data) => {
         google.script.run
@@ -1651,20 +1672,38 @@ function initLapbulFormSdPage() {
 
     // 2. Fungsi Bantuan untuk dropdown Bulan/Tahun
     function setupInitialDropdowns() {
-        const bulanSelect = form.querySelector('[name="laporanBulan"]');
-        const tahunSelect = form.querySelector('[name="tahun"]');
+        // ========================================================
+        // INI ADALAH PERBAIKANNYA:
+        // Mencari [name="Bulan"] (bukan "laporanBulan")
+        // Mencari [name="Tahun"] (bukan "tahun")
+        const bulanSelect = form.querySelector('[name="Bulan"]');
+        const tahunSelect = form.querySelector('[name="Tahun"]');
+        // ========================================================
+
         const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const d = new Date();
         const currentYear = d.getFullYear();
         const prevMonthIndex = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
-        bulanSelect.innerHTML = bulanOptions.map((m, i) => `<option value="${m}" ${i === prevMonthIndex ? 'selected' : ''}>${m}</option>`).join('');
-        tahunSelect.innerHTML = [currentYear, currentYear - 1].map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
+        
+        // Ditambahkan pengecekan (if) agar lebih aman
+        if (bulanSelect) {
+            bulanSelect.innerHTML = bulanOptions.map((m, i) => `<option value="${m}" ${i === prevMonthIndex ? 'selected' : ''}>${m}</option>`).join('');
+        }
+        if (tahunSelect) {
+            tahunSelect.innerHTML = [currentYear, currentYear - 1].map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
+        }
     }
 
     // 3. Fungsi Bantuan untuk Validasi Total Murid
     function checkKelasTotals(kelas) {
         const kelasContent = document.getElementById(`kelas-content-${kelas}`);
-        if (!kelasContent) return true;
+        if (!kelasContent) return true; // Jika konten kelas tidak ada, anggap valid
+
+        // === LOGIKA BARU DIMULAI ===
+        // 1. Ambil nilai dropdown 'Jumlah Rombel'
+        const rombelDropdown = kelasContent.querySelector('.rombel-toggle');
+        const jumlahRombelDipilih = parseInt(rombelDropdown.value, 10);
+        // === LOGIKA BARU SELESAI ===
 
         const rombelInputs = kelasContent.querySelectorAll('.rombel-container input[type="number"]');
         const agamaInputs = kelasContent.querySelectorAll('.agama-container-grid input[type="number"]');
@@ -1676,15 +1715,44 @@ function initLapbulFormSdPage() {
         document.getElementById(`totalRombel-${kelas}`).textContent = totalRombel;
         document.getElementById(`totalAgama-${kelas}`).textContent = totalAgama;
 
+        // === VALIDASI BARU ===
+
+        // Aturan 1: Jika dropdown rombel DIPILIH (bukan 0)
+        if (jumlahRombelDipilih > 0) {
+            // Aturan 1a: Total murid rombel tidak boleh 0
+            if (totalRombel === 0) {
+                statusEl.textContent = "Total Rombel tidak boleh 0";
+                statusEl.className = 'status-error';
+                return false; // Gagal
+            }
+            // Aturan 1b: Total murid agama tidak boleh 0
+            if (totalAgama === 0) {
+                statusEl.textContent = "Total Agama tidak boleh 0";
+                statusEl.className = 'status-error';
+                return false; // Gagal
+            }
+        }
+
+        // Aturan 2: (Aturan Lama) Total Rombel HARUS SAMA DENGAN Total Agama
         if (totalRombel !== totalAgama) {
             statusEl.textContent = "Jumlah TIDAK SAMA!";
             statusEl.className = 'status-error';
-            return false;
-        } else {
-            statusEl.textContent = "Jumlah Sesuai";
-            statusEl.className = 'status-ok';
-            return true;
+            return false; // Gagal
         }
+
+        // Aturan 3: (Aturan Baru) Jika rombel 0, total murid juga harus 0
+        if (jumlahRombelDipilih === 0 && (totalRombel > 0 || totalAgama > 0)) {
+            statusEl.textContent = "Rombel 0, tapi Jml Murid ada";
+            statusEl.className = 'status-error';
+            return false; // Gagal
+        }
+        
+        // === AKHIR VALIDASI BARU ===
+
+        // Jika lolos semua aturan
+        statusEl.textContent = "Jumlah Sesuai";
+        statusEl.className = 'status-ok';
+        return true;
     }
     
     // 4. Fungsi Bantuan untuk Generate HTML (SAMA SEPERTI FUNGSI TAMBAH)
@@ -1825,7 +1893,8 @@ function initLapbulFormSdPage() {
 
     // 6. Fungsi Bantuan untuk Setup Logika Tab 1 (Sekolah)
     function setupDataSekolah(schoolLists) {
-        const statusSekolah = form.querySelector('#statusSekolah');
+        // DIUBAH: Mencari [name="Status"]
+        const statusSekolah = form.querySelector('[name="Status"]');
         const namaSekolah = document.getElementById('namaSekolah');
         
         // Hapus listener lama jika ada
@@ -2088,12 +2157,6 @@ function initLapbulKelolaPage() {
                 defaultText: 'Semua Sekolah'
             }
         ],
-        // --- KODE BARU YANG DIMINTA: INITIAL SORT ---
-        initialSort: [
-            { column: 'Update', order: 'DESC', parser: parseCustomDateTime },
-            { column: 'Tanggal Unggah', order: 'DESC', parser: parseCustomDateTime }
-        ]
-        // ------------------------------------------
     });
 }
 
@@ -2450,14 +2513,23 @@ function initLapbulEditSdPage(params) {
 
     // 2. Fungsi Bantuan untuk dropdown Bulan/Tahun
     function setupInitialDropdowns() {
+        // DIUBAH: Mencari nama yang benar (sesuai HTML & code.gs)
         const bulanSelect = form.querySelector('[name="Bulan"]');
         const tahunSelect = form.querySelector('[name="Tahun"]');
+        // --- AKHIR PERUBAHAN ---
+
         const bulanOptions = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const d = new Date();
         const currentYear = d.getFullYear();
-
-        bulanSelect.innerHTML = bulanOptions.map(m => `<option value="${m}">${m}</option>`).join('');
-        tahunSelect.innerHTML = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => `<option value="${y}">${y}</option>`).join('');
+        const prevMonthIndex = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
+        
+        // Cek jika elemen ditemukan sebelum mengatur innerHTML
+        if (bulanSelect) {
+            bulanSelect.innerHTML = bulanOptions.map((m, i) => `<option value="${m}" ${i === prevMonthIndex ? 'selected' : ''}>${m}</option>`).join('');
+        }
+        if (tahunSelect) {
+            tahunSelect.innerHTML = [currentYear, currentYear - 1].map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`).join('');
+        }
     }
 
     // 3. Fungsi Bantuan untuk Validasi Total Murid (disalin dari form Tambah)
