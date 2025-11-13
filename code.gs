@@ -107,19 +107,20 @@ const NUM_COLUMNS_TO_FETCH = 16;
 const STATUS_COLUMN_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 const COLUMNS_MAP = {
-    // PAUD (Sheet: "Form Responses 1") - Ganti dengan indeks kolom aktual Anda
+    // PAUD (Sheet: "Form Responses 1")
     PAUD: {
         "Tanggal Unggah": 0,  // Kolom A
         "Bulan": 1,           // Kolom B
         "Tahun": 2,           // Kolom C
-        "Status": 4,          // Kolom E
+        "Status": 4,         
         "Jenjang": 6,         // Kolom G
         "Nama Sekolah": 7,    // Kolom H
         "Dokumen": 36,        // Kolom AK
         "Update": 37,         // Kolom AL
-        "Jumlah Rombel": 5,   // Kolom F (Asumsi)
+        "Jumlah Rombel": 5,   // Kolom F
     },
-    // SD (Sheet: "Input") - Ganti dengan indeks kolom aktual Anda
+  
+   // SD (Sheet: "Input")
     SD: {
         "Tanggal Unggah": 0,  // Kolom A
         "Bulan": 1,           // Kolom B
@@ -127,8 +128,8 @@ const COLUMNS_MAP = {
         "Status": 3,          // Kolom D
         "Nama Sekolah": 4,    // Kolom E
         "Dokumen": 7,         // Kolom H
-        "Jenjang": 223,       // Kolom GI (Index 213)
-        "Update": 224,        // Kolom GJ (Index 1214)
+        "Jenjang": 217,       // Kolom HJ (Indeks 217)
+        "Update": 218,        // Kolom HK (Indeks 218)
         "Jumlah Rombel": 6,   // Kolom G (Asumsi)
     }
 };
@@ -451,7 +452,7 @@ const LAPBUL_COLUMNS = {
         'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 4, 'Jenjang': 6, 'Nama Sekolah': 7, 'Rombel': 5, 'Dokumen': 36
     },
     'SD': {
-        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 3, 'Nama Sekolah': 4, 'Rombel': 6, 'Dokumen': 7, 'Jenjang': 213
+        'Tanggal Unggah': 0, 'Bulan': 1, 'Tahun': 2, 'Status': 3, 'Nama Sekolah': 4, 'Rombel': 6, 'Dokumen': 7, 'Jenjang': 217
     }
 };
 
@@ -592,11 +593,11 @@ function getLapbulStatusData() {
         let rawCombinedData = [];
         
         // 1. Fetch data PAUD
-        const dataPAUD = _fetchSheetDataSecure(configPaud.id, configPaud.sheet);
+        const dataPAUD = _getLimitedSheetData(configPaud.id, configPaud.sheet, START_ROW, NUM_COLUMNS_TO_FETCH);
         if (dataPAUD) rawCombinedData.push(...dataPAUD);
         
         // 2. Fetch data SD
-        const dataSD = _fetchSheetDataSecure(configSd.id, configSd.sheet);
+        const dataSD = _getLimitedSheetData(configSd.id, configSd.sheet, START_ROW, NUM_COLUMNS_TO_FETCH);
         if (dataSD) rawCombinedData.push(...dataSD);
         
         if (rawCombinedData.length === 0) {
@@ -703,15 +704,14 @@ const mapSheet = (sheet, source, timeZone) => {
 
     const { display, raw } = sheetData;
     const mapping = COLUMNS_MAP[source]; 
-    if (!mapping) return []; 
-
+    if (!mapping) return [];
     const getCleanedDisplayValue = (displayRow, keyIndex) => {
         if (keyIndex === undefined || keyIndex < 0) return null;
         return String(displayRow[keyIndex] || '').trim();
     };
     
     // Proses setiap baris data (mulai dari baris ke-2 / index 1)
-    return display.slice(1).map((displayRow, index) => {
+    return display.slice(1).map((displayRow, index) => { 
         const rowIndex = index + 2; 
 
         const namaSekolahIndex = mapping["Nama Sekolah"];
@@ -723,12 +723,24 @@ const mapSheet = (sheet, source, timeZone) => {
         const dateUpdateRaw = mapping["Update"] !== undefined ? raw[rowIndex - 1][mapping["Update"]] : null;
 
         if (!dateUnggahRaw) return null; 
+        
+        // ========================================================
+        // === KODE BARU DITAMBAHKAN DI SINI ===
+        // 1. Ambil nilai waktu (angka) dari Tanggal Unggah
         const dateUnggah = (dateUnggahRaw instanceof Date && !isNaN(dateUnggahRaw)) ? dateUnggahRaw.getTime() : 0;
+        // 2. Ambil nilai waktu (angka) dari Update
         const dateUpdate = (dateUpdateRaw instanceof Date && !isNaN(dateUpdateRaw)) ? dateUpdateRaw.getTime() : 0;
+        // ========================================================
         
         const rowObject = {
             _rowIndex: rowIndex,
             _source: source,
+            
+            // ========================================================
+            // === KODE BARU DITAMBAHKAN DI SINI ===
+            // 3. Buat kolom _sortDate berisi tanggal terbaru (terbesar)
+            _sortDate: Math.max(dateUnggah, dateUpdate),
+            // ========================================================
             
             // Urutan key di sini MENENTUKAN Urutan Kolom (Harus sesuai FINAL_HEADERS)
             "Nama Sekolah": getCleanedDisplayValue(displayRow, mapping["Nama Sekolah"]) || '-',
@@ -738,8 +750,10 @@ const mapSheet = (sheet, source, timeZone) => {
             "Tahun": getCleanedDisplayValue(displayRow, mapping["Tahun"]) || '-',
             "Dokumen": getCleanedDisplayValue(displayRow, mapping["Dokumen"]) || '',
             // Aksi tidak memiliki kolom di spreadsheet, hanya di rendering
-            "Tanggal Unggah": (dateUnggahRaw instanceof Date) ? Utilities.formatDate(dateUnggahRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
-            "Update": (dateUpdateRaw instanceof Date) ? Utilities.formatDate(dateUpdateRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
+            "Tanggal Unggah": (dateUnggahRaw instanceof Date) ?
+ Utilities.formatDate(dateUnggahRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
+            "Update": (dateUpdateRaw instanceof Date) ?
+ Utilities.formatDate(dateUpdateRaw, timeZone, "dd/MM/yyyy HH:mm:ss") : '-',
         };
         
         return rowObject;
@@ -748,48 +762,48 @@ const mapSheet = (sheet, source, timeZone) => {
 
 function getLapbulKelolaData() {
     try {
+        // --- HAPUS LOG "TES v4" DARI SINI ---
+
         const PAUD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_PAUD;
         const SD_CONFIG = SPREADSHEET_CONFIG.LAPBUL_FORM_RESPONSES_SD;
         
         const PAUD_SS = SpreadsheetApp.openById(PAUD_CONFIG.id);
         const SD_SS = SpreadsheetApp.openById(SD_CONFIG.id);
-        
         if (!PAUD_SS || !SD_SS) throw new Error("Gagal mengakses satu atau lebih Spreadsheet input data (periksa ID dan izin).");
-
+        
         const PAUD_SHEET = PAUD_SS.getSheetByName(PAUD_CONFIG.sheet);
         const SD_SHEET = SD_SS.getSheetByName(SD_CONFIG.sheet);
 
         if (!PAUD_SHEET || !SD_SHEET) {
-            Logger.log("ERROR: Salah satu Sheet tidak ditemukan. PAUD Sheet: " + (PAUD_SHEET ? "Ditemukan" : "TIDAK DITEMUKAN"));
+            // --- HAPUS LOG "ERROR" DARI SINI ---
             throw new Error("Satu atau lebih Sheet input data tidak ditemukan (nama sheet salah).");
         }
         
         const PAUD_TIME_ZONE = PAUD_SS.getSpreadsheetTimeZone();
         const SD_TIME_ZONE = SD_SS.getSpreadsheetTimeZone();
         
-        // URUTAN INI MENENTUKAN HEADER TABEL YANG DIKIRIM KE BROWSER
         const FINAL_HEADERS = [
-            "Nama Sekolah", 
-            "Jenjang", 
-            "Status", 
-            "Bulan", 
-            "Tahun", 
-            "Dokumen", 
-            "Aksi", // Disisipkan di sini untuk rendering tombol
-            "Tanggal Unggah", 
-            "Update"
+            "Nama Sekolah", "Jenjang", "Status", "Bulan", "Tahun", 
+            "Dokumen", "Aksi", "Tanggal Unggah", "Update"
         ];
         
         let combinedData = [];
 
         combinedData.push(...mapSheet(PAUD_SHEET, 'PAUD', PAUD_TIME_ZONE));
         combinedData.push(...mapSheet(SD_SHEET, 'SD', SD_TIME_ZONE));
+        
+        // --- HAPUS SEMUA LOG "SEBELUM SORT" DAN "SETELAH SORT" DARI SINI ---
+
+        // Ini adalah baris KUNCI
         combinedData.sort((a, b) => b._sortDate - a._sortDate);
         
+        // --- HAPUS LOG "TES v4 SELESAI" DARI SINI ---
+
         return { headers: FINAL_HEADERS, rows: combinedData };
 
     } catch (e) {
-        Logger.log('FATAL Error in getLapbulKelolaData: ' + e.message + ' Stack: ' + e.stack);
+        // --- GANTI LOG "FATAL Error" MENJADI Logger.log YANG ASLI ---
+        Logger.log('Error in getLapbulKelolaData: ' + e.message + ' Stack: ' + e.stack);
         return handleError('getLapbulKelolaData', e);
     }
 }

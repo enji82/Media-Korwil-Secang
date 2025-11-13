@@ -809,7 +809,7 @@ App.showDeleteConfirmation = (button) => {
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
     newConfirmBtn.textContent = 'Ya, Hapus';
-    newConfirmBtn.onclick = () => App.showDeletePrompt(rowInfo, deleteFunction, reloadPage);
+    newConfirmBtn.onclick = () => App.showDeleteCodePrompt(rowInfo, deleteFunction, reloadPage);
 
     cancelBtn.onclick = () => modal.classList.remove('show');
     modal.classList.add('show');
@@ -826,7 +826,7 @@ App.showDeleteReasonPrompt = (rowInfo, deleteFunction, reloadPage) => {
 
     modalTitle.textContent = 'Konfirmasi Hapus';
     modalBody.innerHTML = `<p>Tuliskan alasan menghapus <strong>${namaPtk}</strong> dari database.</p>
-                           <input type="text" id="alasanHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Contoh: Pensiun, Mutasi, Wafat">`;
+                           <input type="text" id="alasanHapusInput" class="custom-modal-input" autocomplete="off" placeholder="Contoh: Pensiun, Mutasi, Resign, Meninggal, dsb.">`;
 
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
@@ -1721,13 +1721,13 @@ function initLapbulFormSdPage() {
         if (jumlahRombelDipilih > 0) {
             // Aturan 1a: Total murid rombel tidak boleh 0
             if (totalRombel === 0) {
-                statusEl.textContent = "Total Rombel tidak boleh 0";
+                statusEl.textContent = "Isikan jumlah murid per rombel.";
                 statusEl.className = 'status-error';
                 return false; // Gagal
             }
             // Aturan 1b: Total murid agama tidak boleh 0
             if (totalAgama === 0) {
-                statusEl.textContent = "Total Agama tidak boleh 0";
+                statusEl.textContent = "Isikan jumlah murid menurut agama.";
                 statusEl.className = 'status-error';
                 return false; // Gagal
             }
@@ -2535,7 +2535,18 @@ function initLapbulEditSdPage(params) {
     // 3. Fungsi Bantuan untuk Validasi Total Murid (disalin dari form Tambah)
     function checkKelasTotals(kelas) {
         const kelasContent = document.getElementById(`kelas-content-${kelas}`);
-        if (!kelasContent) return true;
+        if (!kelasContent) return true; // Jika konten kelas tidak ada, anggap valid
+
+        // === LOGIKA BARU DIMULAI ===
+        // 1. Ambil nilai dropdown 'Jumlah Rombel'
+        const rombelDropdown = kelasContent.querySelector('.rombel-toggle');
+        // Handle case where dropdown might not be found (shouldn't happen, but good safety)
+        if (!rombelDropdown) {
+             console.error("Gagal menemukan dropdown rombel for kelas " + kelas);
+             return true; // Failsafe
+        }
+        const jumlahRombelDipilih = parseInt(rombelDropdown.value, 10);
+        // === LOGIKA BARU SELESAI ===
 
         const rombelInputs = kelasContent.querySelectorAll('.rombel-container input[type="number"]');
         const agamaInputs = kelasContent.querySelectorAll('.agama-container-grid input[type="number"]');
@@ -2544,24 +2555,52 @@ function initLapbulEditSdPage(params) {
         const totalAgama = Array.from(agamaInputs).reduce((sum, input) => sum + (parseInt(input.value, 10) || 0), 0);
 
         const statusEl = document.getElementById(`murid-validation-status-${kelas}`);
+        // Safety check for elements
         const rombelEl = document.getElementById(`totalRombel-${kelas}`);
         const agamaEl = document.getElementById(`totalAgama-${kelas}`);
 
         if (rombelEl) rombelEl.textContent = totalRombel;
         if (agamaEl) agamaEl.textContent = totalAgama;
+        if (!statusEl) return true; // Failsafe if status element isn't found
 
-        if (statusEl) {
-            if (totalRombel !== totalAgama) {
-                statusEl.textContent = "Jumlah TIDAK SAMA!";
+        // === VALIDASI BARU ===
+
+        // Aturan 1: Jika dropdown rombel DIPILIH (bukan 0)
+        if (jumlahRombelDipilih > 0) {
+            // Aturan 1a: Total murid rombel tidak boleh 0
+            if (totalRombel === 0) {
+                statusEl.textContent = "Isikan jumlah murid per rombel.";
                 statusEl.className = 'status-error';
-                return false;
-            } else {
-                statusEl.textContent = "Jumlah Sesuai";
-                statusEl.className = 'status-ok';
-                return true;
+                return false; // Gagal
+            }
+            // Aturan 1b: Total murid agama tidak boleh 0
+            if (totalAgama === 0) {
+                statusEl.textContent = "Isikan jumlah murid menurut agama.";
+                statusEl.className = 'status-error';
+                return false; // Gagal
             }
         }
-        return totalRombel === totalAgama;
+
+        // Aturan 2: (Aturan Lama) Total Rombel HARUS SAMA DENGAN Total Agama
+        if (totalRombel !== totalAgama) {
+            statusEl.textContent = "Jumlah TIDAK SAMA!";
+            statusEl.className = 'status-error';
+            return false; // Gagal
+        }
+
+        // Aturan 3: (Aturan Baru) Jika rombel 0, total murid juga harus 0
+        if (jumlahRombelDipilih === 0 && (totalRombel > 0 || totalAgama > 0)) {
+            statusEl.textContent = "Rombel 0, tapi Jml Murid ada";
+            statusEl.className = 'status-error';
+            return false; // Gagal
+        }
+        
+        // === AKHIR VALIDASI BARU ===
+
+        // Jika lolos semua aturan
+        statusEl.textContent = "Jumlah Sesuai";
+        statusEl.className = 'status-ok';
+        return true;
     }
 
     // 4. Fungsi Bantuan untuk Generate HTML (SAMA SEPERTI FUNGSI TAMBAH)
@@ -2799,7 +2838,7 @@ formLogic.setTabValidation(1, () => {
     }
     if (!allValid) {
          document.querySelector(`#edit-kelas-tabs .sub-tab-link[data-kelas="${firstInvalidKelas}"]`).click(); 
-         App.showAppModal('error', `Data Murid di Kelas ${firstInvalidKelas} tidak valid. Total Rombel tidak sama dengan Total Agama.`);
+         App.showAppModal('error', `Data Murid di Kelas ${firstInvalidKelas} tidak valid. Jumlah murid per rombel tidak sama dengan jumlah murid menurut agama.`);
     }
     return allValid;
 });
@@ -3016,16 +3055,176 @@ function initPtkKeadaanPaudPage() {
 }
 
 function initPtkKeadaanSdPage() {
-    App.initializeGenericTablePage({
-        tableId: 'keadaanPtkSdTable',
-        serverFunction: 'getPtkKeadaanSdData',
-        filterConfig: [ { id: 'filterStatusSekolah', dataColumn: 'Status' } ],
-        footerConfig: {
-            enabled: true,
-            labelColumn: 'Nama Sekolah',
-            sumStartColumn: 'Rombel'
+    const loadingStatus = document.getElementById('loadingStatus');
+    const tableWrapper = document.getElementById('tableWrapper');
+    const table = document.getElementById('keadaanPtkSdTable');
+    const tableHead = table.querySelector('thead');
+    const tableBody = table.querySelector('tbody');
+    const tableFoot = table.querySelector('tfoot');
+    const filterSelect = document.getElementById('filterStatusSekolah');
+
+    let allDataRows = []; // Menyimpan baris data asli (tengah)
+    let headerRow1_Data = []; // Data mentah header 1
+    let headerRow2_Data = []; // Data mentah header 2
+    let statusColumnIndex = -1; // Indeks kolom "Status"
+    let dataHeaderCount = 0; // Untuk colspan
+
+    // 1. Fungsi untuk membangun <tbody> DAN <tfoot> (DINAMIS)
+    function buildTableBody() {
+        tableBody.innerHTML = '';
+        tableFoot.innerHTML = ''; // Kosongkan footer setiap kali filter
+        const filterValue = filterSelect.value;
+        
+        const filteredRows = allDataRows.filter(row => {
+            if (!filterValue || statusColumnIndex === -1) {
+                return true; // Tampilkan semua jika filter "Semua"
+            }
+            // Filter berdasarkan nilai kolom Status
+            return String(row[statusColumnIndex]).trim() === filterValue;
+        });
+
+        if (filteredRows.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${dataHeaderCount + 1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+            tableFoot.classList.remove('has-content');
+            return; // Stop jika tidak ada data
         }
-    });
+
+        // --- MULAI PERBAIKAN ---
+        
+        // Indeks kolom Rombel (kolom ke-6) adalah 4
+        // (0:Nama, 1:NPSN, 2:Jenjang, 3:Status, 4:Rombel)
+        const sumStartIndex = 4; 
+        const totals = new Array(dataHeaderCount).fill(0); // Buat array [0, 0, 0, ...]
+
+        // 1. Bangun <tbody>
+        filteredRows.forEach((row, index) => {
+            const tr = document.createElement('tr');
+            let cellsHTML = `<td>${index + 1}</td>`; // Tambah "No."
+            
+            let rowCells = row.map((cell, cellIndex) => {
+                // Ambil nilai mentah. Jika kosong/null, set ke 0 (angka). Jika tidak, biarkan (bisa "0" string).
+                const rawValue = (cell === "" || cell === null || cell === undefined) ? 0 : cell;
+                
+                // ===============================================
+                // INI PERBAIKANNYA: Gunakan '==' (loose equality)
+                // Ini akan menangkap (0 == 0) -> true DAN ("0" == 0) -> true
+                const displayValue = (rawValue == 0) ? '-' : rawValue;
+                // ===============================================
+                
+                // Kalkulasi total (hanya jika kolom data)
+                if (cellIndex >= sumStartIndex) {
+                    // Konversi rawValue (yang bisa "0" string) ke angka untuk penjumlahan
+                    const numericValue = parseFloat(String(rawValue).replace(/,/g, '')) || 0;
+                    totals[cellIndex] += numericValue; 
+                }
+                return `<td>${displayValue}</td>`;
+            });
+
+            cellsHTML += rowCells.join('');
+            tr.innerHTML = cellsHTML;
+            tableBody.appendChild(tr);
+        });
+        // --- Selesai <tbody> ---
+
+        // --- 2. Bangun <tfoot> DINAMIS ---
+        let footerHTML = '<tr>';
+        footerHTML += '<td>-</td>';       // Kolom No.
+        footerHTML += '<td>JUMLAH</td>'; // Kolom Nama Sekolah (Index 0)
+        footerHTML += '<td>-</td>';       // Kolom NPSN (Index 1)
+        footerHTML += '<td>-</td>';       // Kolom Jenjang (Index 2)
+        footerHTML += '<td>-</td>';       // Kolom Status (Index 3)
+        
+        // Loop untuk kolom total (mulai dari index 4 / "Rombel")
+        for (let i = sumStartIndex; i < totals.length; i++) {
+            // Logika untuk footer (total[i] adalah angka) sudah benar
+            let displayTotal = (totals[i] === 0) ? '-' : totals[i];
+            footerHTML += `<td>${displayTotal}</td>`;
+        }
+
+        footerHTML += '</tr>';
+        tableFoot.innerHTML = footerHTML;
+        tableFoot.classList.add('has-content');
+        
+        // --- AKHIR PERBAIKAN ---
+    }
+
+    // 2. Fungsi buildTableHeader (v2 - sudah benar, JANGAN DIUBAH)
+    function buildTableHeader() {
+        let row1HTML = '<th rowspan="2">No.</th>';
+        let row2HTML = ''; 
+        dataHeaderCount = headerRow1_Data.length; 
+
+        for (let i = 0; i < headerRow1_Data.length; i++) {
+            const header1 = headerRow1_Data[i];
+            const header2 = headerRow2_Data[i];
+
+            if (header1 !== "" && header2 === "") {
+                row1HTML += `<th rowspan="2">${header1}</th>`;
+            } 
+            else if (header1 !== "" && header2 !== "") {
+                let colspan = 1;
+                for (let j = i + 1; j < headerRow1_Data.length; j++) {
+                    if (headerRow1_Data[j] === "" && headerRow2_Data[j] !== "") {
+                        colspan++;
+                    } else {
+                        break; 
+                    }
+                }
+                row1HTML += `<th colspan="${colspan}">${header1}</th>`;
+                row2HTML += `<th>${header2}</th>`;
+            } 
+            else if (header1 === "" && header2 !== "") {
+                 row2HTML += `<th>${header2}</th>`;
+            }
+        }
+        tableHead.innerHTML = `<tr>${row1HTML}</tr><tr>${row2HTML}</tr>`;
+    }
+
+    // 3. Ambil data mentah dari server
+    google.script.run
+        .withSuccessHandler(data => {
+            if (data.error) {
+                loadingStatus.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+                return;
+            }
+            
+            if (!data || data.length < 3) {
+                loadingStatus.innerHTML = '<p>Data tidak memadai untuk ditampilkan (kurang dari 3 baris).</p>';
+                return;
+            }
+
+            // --- Logika Pemisahan Data (BARU) ---
+            headerRow1_Data = data[0];
+            headerRow2_Data = data[1];
+            // Kita abaikan baris terakhir (footer statis)
+            allDataRows = data.slice(2, data.length - 1); 
+            // --- Selesai Logika Pemisahan ---
+
+            statusColumnIndex = headerRow1_Data.indexOf('Status'); 
+            buildTableHeader();
+
+            // 4. Buat dropdown filter
+            if (statusColumnIndex !== -1) {
+                const uniqueStatus = [...new Set(allDataRows.map(row => row[statusColumnIndex]))].filter(Boolean).sort();
+                filterSelect.innerHTML = '<option value="">Semua Status</option>';
+                uniqueStatus.forEach(status => {
+                    filterSelect.add(new Option(status, status));
+                });
+            } else {
+                if(filterSelect) filterSelect.parentElement.style.display = 'none';
+            }
+
+            // 5. Tampilkan tabel dan jalankan filter pertama kali
+            loadingStatus.style.display = 'none';
+            tableWrapper.style.display = 'block';
+            filterSelect.addEventListener('change', buildTableBody);
+            buildTableBody(); 
+
+        })
+        .withFailureHandler(error => { 
+            loadingStatus.innerHTML = `<p style="color:red;">Gagal memuat data: ${error.message}</p>`;
+        })
+        .getPtkKeadaanSdData(); // <-- Memanggil fungsi code.gs
 }
 
 function initPtkJumlahBulananPaudPage() {
