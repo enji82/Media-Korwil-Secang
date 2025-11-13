@@ -675,27 +675,42 @@ App.setupTabForm = (formId) => {
         updateTabStates();
     }
 
+    // ========================================================
+    // === PERBAIKAN TOTAL DIMULAI DI SINI ===
+    // ========================================================
     function validateTab(tabIndex) {
         const tabContent = contentDivs[tabIndex];
-        const fields = tabContent.querySelectorAll('[required]');
+        
+        // PERBAIKAN: Hanya validasi field yang 'required' DAN 'enabled' (:not(:disabled))
+        const fields = tabContent.querySelectorAll('[required]:not(:disabled)');
+
         let isValid = true;
-        tabContent.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+        
+        // Hapus glow merah HANYA dari field yang akan kita periksa
+        fields.forEach(field => field.classList.remove('input-error'));
+        // (Kita tidak lagi menghapus SEMUA .input-error, 
+        //  agar glow merah di field tersembunyi tidak hilang)
+
         fields.forEach(field => {
             let fieldIsValid = true;
             if (field.type === 'file') {
                 if (field.files.length === 0) fieldIsValid = false;
-            } else if (!field.value) {
+            } else if (!field.value) { // Cek value kosong
                 fieldIsValid = false;
-            } else if (field.name === 'jumlahRombel' && field.value === '0') {
+            } else if (field.name === 'jumlahRombel' && field.value === '0') { // Cek Rombel 0
                 fieldIsValid = false;
             }
+            
             if (!fieldIsValid) {
                 isValid = false;
-                field.classList.add('input-error');
+                field.classList.add('input-error'); // Tambahkan glow merah
             }
         });
         return isValid;
     }
+    // ========================================================
+    // === AKHIR PERBAIKAN ===
+    // ========================================================
     
     updateTabStates(); 
 
@@ -4466,7 +4481,7 @@ function initPtkTambahSdPage() {
     const jabatanSelect = form.querySelector('#jabatan');
     const tugasTambahanSelect = form.querySelector('#tugasTambahan');
     
-    let allOptions = {}; // Untuk menyimpan data dropdown dari server
+    let allOptions = {}; // Untuk menyimpan data DARI SERVER
 
     // 3. Fungsi helper untuk mengisi dropdown
     function populateSelect(selectEl, optionsArr, placeholder) {
@@ -4475,7 +4490,19 @@ function initPtkTambahSdPage() {
         if (optionsArr) optionsArr.forEach(opt => selectEl.add(new Option(opt, opt)));
     }
 
-    // 4. Panggil data dropdown dari server
+    // 4. Isi dropdown STATIS (Agama, Pendidikan, DAN STATUS)
+    if (typeof DROPDOWN_STATIS !== 'undefined') {
+        populateSelect(agamaSelect, DROPDOWN_STATIS['Agama'], 'Pilih Agama');
+        populateSelect(pendidikanSelect, DROPDOWN_STATIS['Pendidikan'], 'Pilih Pendidikan');
+        populateSelect(statusNegeriSelect, DROPDOWN_STATIS['StatusKepegawaian'], 'Pilih Status');
+        populateSelect(jabatanSelect, DROPDOWN_STATIS['TugasJabatan'], 'Pilih Tugas/Jabatan');
+        populateSelect(tugasTambahanSelect, DROPDOWN_STATIS['TugasTambahan'], 'Pilih Tugas Tambahan');
+    } else {
+        console.error("Gagal memuat DROPDOWN_STATIS. Pastikan file dropdown_data.js.html sudah di-include.");
+    }
+
+
+    // 5. Panggil data DINAMIS dari server (Unit Kerja, Pangkat)
     App.showAppModal('loading', 'Memuat opsi formulir...');
     google.script.run
         .withSuccessHandler(options => {
@@ -4485,126 +4512,135 @@ function initPtkTambahSdPage() {
             }
             allOptions = options; // Simpan data server
             
-            // Isi dropdown yang tidak tergantung pada apapun
-            populateSelect(agamaSelect, allOptions['Agama'], 'Pilih Agama');
-            populateSelect(pendidikanSelect, allOptions['Pendidikan'], 'Pilih Pendidikan');
-            populateSelect(jabatanSelect, allOptions['Jabatan'], 'Pilih Tugas/Jabatan');
-            populateSelect(tugasTambahanSelect, allOptions['Tugas Tambahan'], 'Pilih Tugas Tambahan');
-            populateSelect(statusNegeriSelect, allOptions['Status Negeri'], 'Pilih Status');
+            // 6. Logika Utama: Event Listener for "Status Sekolah" (Tab 1)
+            statusSekolahSelect.addEventListener('change', function() {
+                const isNegeri = this.value === 'Negeri';
+                
+                formNegeri.style.display = isNegeri ? 'block' : 'none';
+                formSwasta.style.display = isNegeri ? 'none' : 'block';
+                
+                formNegeri.querySelectorAll('select, input').forEach(el => el.disabled = !isNegeri);
+                formSwasta.querySelectorAll('select, input').forEach(el => el.disabled = isNegeri);
+
+                if (isNegeri) {
+                    populateSelect(unitKerjaSelect, allOptions['Unit Kerja Negeri'], 'Pilih Unit Kerja (Negeri)');
+                } else {
+                    populateSelect(unitKerjaSelect, allOptions['Unit Kerja Swasta'], 'Pilih Unit Kerja (Swasta)');
+                }
+                unitKerjaSelect.disabled = false;
+                
+                pangkatNegeriSelect.innerHTML = '<option value="">-- Pilih Status Dahulu --</option>';
+                pangkatNegeriSelect.disabled = true;
+            });
+
+            // 7. Logika Dropdown Bertingkat: "Status Negeri" -> "Pangkat" (Tab 3)
+            statusNegeriSelect.addEventListener('change', function() {
+                const status = this.value;
+                const nipInput = form.querySelector('#nip');
+                
+                const isPNS = (status === 'PNS');
+                const isPPPK = (status === 'PPPK');
+                const isPPPKPW = (status === 'PPPK PW'); 
+                const isASN = isPNS || isPPPK || isPPPKPW;
+                const isNonASN = (status === 'Tenaga Non ASN');
+
+                nipInput.disabled = !isASN;
+                nipInput.required = isASN;
+                if (!isASN) {
+                    nipInput.value = ""; 
+                }
+                
+                pangkatNegeriSelect.disabled = !isASN;
+
+                if (isPNS) {
+                    populateSelect(pangkatNegeriSelect, allOptions['Pangkat PNS'], 'Pilih Pangkat');
+                } else if (isPPPK) {
+                    populateSelect(pangkatNegeriSelect, allOptions['Pangkat PPPK'], 'Pilih Golongan');
+                } else if (isPPPKPW) {
+                    populateSelect(pangkatNegeriSelect, allOptions['Pangkat PPPK PW'], 'Pilih Golongan'); 
+                } else if (isNonASN) {
+                    pangkatNegeriSelect.innerHTML = '<option value="— Tidak Perlu Diisi —" selected>— Tidak Perlu Diisi —</option>';
+                } else {
+                     pangkatNegeriSelect.innerHTML = '<option value="">-- Pilih Status Dahulu --</option>';
+                }
+            });
 
             document.getElementById('appModal').classList.remove('show');
         })
         .withFailureHandler(err => App.showAppModal('error', `Gagal memuat opsi form: ${err.message}`))
-        .getNewPtkSdOptions(); // Panggil fungsi BARU di code.gs
+        .getNewPtkSdOptions(); 
 
-    // 5. Logika Utama: Event Listener untuk "Status Sekolah" (Tab 1)
-    statusSekolahSelect.addEventListener('change', function() {
-        const isNegeri = this.value === 'Negeri';
-        
-        // Tampilkan/sembunyikan bagian form di Tab 3
-        formNegeri.style.display = isNegeri ? 'block' : 'none';
-        formSwasta.style.display = isNegeri ? 'none' : 'block';
-        
-        // Aktifkan/nonaktifkan field berdasarkan pilihan
-        formNegeri.querySelectorAll('select, input').forEach(el => el.disabled = !isNegeri);
-        formSwasta.querySelectorAll('select, input').forEach(el => el.disabled = isNegeri);
 
-        // Isi dropdown "Unit Kerja"
-        if (isNegeri) {
-            populateSelect(unitKerjaSelect, allOptions['Unit Kerja Negeri'], 'Pilih Unit Kerja (Negeri)');
-        } else {
-            populateSelect(unitKerjaSelect, allOptions['Unit Kerja Swasta'], 'Pilih Unit Kerja (Swasta)');
-        }
-        unitKerjaSelect.disabled = false;
-        
-        // Reset dropdown bertingkat di Tab 3 (Pangkat)
-        pangkatNegeriSelect.innerHTML = '<option value="">-- Pilih Status Dahulu --</option>';
-        pangkatNegeriSelect.disabled = true;
-    });
-
-    // 6. Logika Dropdown Bertingkat: "Status Negeri" -> "Pangkat" (Tab 3)
-    statusNegeriSelect.addEventListener('change', function() {
-        const status = this.value;
-        const isPNS = (status === 'PNS');
-        const isPPPK = (status === 'PPPK' || status === 'PPPK Paruh Waktu');
-        const isNonASN = (status === 'Tenaga Non ASN');
-        const nipInput = form.querySelector('#nip');
-
-        pangkatNegeriSelect.disabled = true; // Nonaktifkan dulu
-        pangkatNegeriSelect.innerHTML = '<option value="">-- Tidak Perlu Diisi --</option>';
-        nipInput.disabled = true;
-        nipInput.required = false;
-
-        if (isPNS) {
-            populateSelect(pangkatNegeriSelect, allOptions['Pangkat PNS'], 'Pilih Pangkat');
-            pangkatNegeriSelect.disabled = false;
-            nipInput.disabled = false;
-            nipInput.required = true;
-        } else if (isPPPK) {
-            populateSelect(pangkatNegeriSelect, allOptions['Pangkat PPPK'], 'Pilih Golongan');
-            pangkatNegeriSelect.disabled = false;
-            nipInput.disabled = false;
-            nipInput.required = true;
-        } else if (isNonASN) {
-            // NIP & Pangkat tetap nonaktif
-        }
-    });
-
-    // 7. Atur Validasi Kustom untuk setiap Tab
+    // 8. Atur Validasi Kustom untuk setiap Tab
     
     // Validasi Tab 1 (Data Sekolah)
     formLogic.setTabValidation(0, () => formLogic.validateTab(0));
 
     // Validasi Tab 2 (Data Pribadi)
     formLogic.setTabValidation(1, () => {
-        if (!formLogic.validateTab(1)) return false; // Cek 'required' dulu
+        // 1. Cek 'required' fields dulu (Nama, TTL, L/P, Agama, Pendidikan, Jurusan, Th Lulus, Serdik)
+        if (!formLogic.validateTab(1)) return false; 
         
-        // Validasi Kustom "Jurusan"
+        // 2. Validasi Kustom "Jurusan"
         const pendidikan = form.querySelector('#pendidikan').value;
         const jurusanInput = form.querySelector('#jurusan');
         const jurusan = jurusanInput.value;
-        const needsNoJurusan = ['SD', 'MI', 'SMP', 'MTs'].some(p => pendidikan.startsWith(p));
+        const needsNoJurusan = ['SD', 'MI', 'SMP', 'MTs', 'Paket A', 'Paket B'].includes(pendidikan);
 
         if (needsNoJurusan && jurusan !== '-') {
             App.showAppModal('error', 'Jurusan harus diisi tanda - (strip) untuk jenjang SD/SMP sederajat.');
             jurusanInput.classList.add('input-error');
             return false;
         }
+
+        // ========================================================
+        // === 3. VALIDASI BARU: NUPTK (Wajib 16 digit ATAU kosong) ===
+        // ========================================================
+        const nuptkInput = form.querySelector('#nuptk');
+        const nuptkValue = nuptkInput.value.trim();
+        const nuptkRegex = /^\d{16}$/; // Regex: Tepat 16 digit angka
+
+        // Cek: JIKA diisi (tidak kosong) DAN TIDAK valid
+        if (nuptkValue !== "" && !nuptkRegex.test(nuptkValue)) {
+            App.showAppModal('error', 'NUPTK tidak valid. Harap isikan 16 digit angka atau kosongkan field tersebut.');
+            nuptkInput.classList.add('input-error'); // Tampilkan glow merah
+            return false; // Gagal validasi
+        }
         
+        // Jika lolos (kosong atau valid 16 digit)
+        nuptkInput.classList.remove('input-error'); // Hapus glow merah (jika ada)
         return true; // Lolos semua
+        // ========================================================
     });
     
     // Validasi Tab 3 (Data Kepegawaian)
     formLogic.setTabValidation(2, () => formLogic.validateTab(2));
 
-    // 8. Atur Logika "Submit" Final
+    // 9. Atur Logika "Submit" Final
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Cek semua tab sebelum mengirim
         if (!formLogic.validateTab(0)) {
             App.showAppModal('error', 'Data Sekolah (Tab 1) belum lengkap.');
-            formLogic.showTab(0); // Pindahkan ke tab yang error
+            formLogic.showTab(0); 
             return;
         }
         if (!formLogic.validateTab(1)) {
-            // Pesan error sudah dihandle oleh validasi kustom (Jurusan)
-            formLogic.showTab(1); // Pindahkan ke tab yang error
+            // Pesan error (Jurusan atau NUPTK) sudah muncul dari validasi kustom
+            formLogic.showTab(1); 
             return;
         }
         if (!formLogic.validateTab(2)) {
             App.showAppModal('error', 'Data Kepegawaian (Tab 3) belum lengkap.');
-            formLogic.showTab(2); // Pindahkan ke tab yang error
+            formLogic.showTab(2); 
             return;
         }
 
-        // --- Jika Semua Lolos ---
         const submitButton = form.querySelector('#finalSubmitBtn');
         submitButton.disabled = true;
         App.showAppModal('loading', 'Menyimpan data PTK baru...');
 
         const formData = Object.fromEntries(new FormData(form));
-        // 'statusSekolah' (Negeri/Swasta) sudah ada di formData
         
         google.script.run
             .withSuccessHandler(response => {
@@ -4619,7 +4655,7 @@ function initPtkTambahSdPage() {
                 App.showAppModal('error', `Gagal menyimpan: ${error.message}`);
                 submitButton.disabled = false;
             })
-            .addNewPtkSd(formData); // Memanggil fungsi BARU di code.gs
+            .addNewPtkSd(formData); 
     });
 }
 
@@ -4698,7 +4734,7 @@ function initPtkEditSdPage(params) {
     
     formNegeri.querySelector('#statusNegeri').addEventListener('change', function() {
         const status = this.value;
-        const isASN = ['PNS', 'PPPK', 'PPPK Paruh Waktu'].includes(status);
+        const isASN = ['PNS', 'PPPK', 'PPPK PW'].includes(status);
         const nipInput = formNegeri.querySelector('#nip');
         const pangkatNegeriSelect = formNegeri.querySelector('#pangkatNegeri');
         
@@ -4712,7 +4748,7 @@ function initPtkEditSdPage(params) {
             populateSelect(pangkatNegeriSelect, allOptions['Pangkat PNS'], 'Pilih Pangkat');
         } else if (status === 'PPPK') {
             populateSelect(pangkatNegeriSelect, allOptions['Pangkat PPPK'], 'Pilih Golongan');
-        } else if (status === 'PPPK Paruh Waktu') {
+        } else if (status === 'PPPK PW') {
             populateSelect(pangkatNegeriSelect, allOptions['Pangkat PPPK PW'], 'Pilih Golongan');
         } else {
             pangkatNegeriSelect.innerHTML = '<option value="-">--</option>';

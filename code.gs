@@ -1744,50 +1744,91 @@ function getKelolaPtkSdData() {
     const sdsSheet = ss.getSheetByName("PTK SDS");
     let combinedData = [];
     let allHeaders = []; 
+
+    // Fungsi helper untuk mem-parsing tanggal
     const parseDate = (value) => value instanceof Date && !isNaN(value) ? value.getTime() : 0;
 
+    // Fungsi untuk memproses satu sheet
     const processSheet = (sheet, sourceName) => {
       if (!sheet || sheet.getLastRow() < 2) return;
+      
       const range = sheet.getDataRange();
-      const rawValues = range.getValues(); 
-      const displayValues = range.getDisplayValues();
+      const rawValues = range.getValues(); // Untuk tanggal
+      const displayValues = range.getDisplayValues(); // Untuk string
+
       const headers = displayValues[0].map(h => String(h).trim());
-      if (allHeaders.length === 0) allHeaders = headers; 
+      if (allHeaders.length === 0) allHeaders = headers; // Simpan header
+      
+      // ========================================================
+      // === PERBAIKAN: Temukan semua indeks kolom yang kita butuhkan ===
+      // ========================================================
       const updateIndex = headers.indexOf('Update');
       const inputIndex = headers.indexOf('Input');
+      const namaIndex = headers.indexOf('Nama');
+      const unitKerjaIndex = headers.indexOf('Unit Kerja');
+      const statusIndex = headers.indexOf('Status');
+      const jabatanIndex = headers.indexOf('Jabatan');
+      
+      // Ini adalah kunci perbaikannya:
+      // Cari 'NIP' (untuk SDN) atau 'NIY' (untuk SDS)
+      const nipIndex = headers.indexOf('NIP'); 
+      const niyIndex = headers.indexOf('NIY');
+      // ========================================================
+
       const dataRows = displayValues.slice(1);
       const rawRows = rawValues.slice(1);
 
       dataRows.forEach((row, index) => {
+        // Jangan proses baris kosong
+        if (!row[namaIndex]) return; 
+        
         const rawRow = rawRows[index];
         const rowObject = {
           _rowIndex: index + 2,
           _source: sourceName,
         };
-        
-        // === INI LOGIKA PENGURUTANNYA ===
+
+        // Ambil tanggal mentah untuk pengurutan
         const dateUpdate = parseDate(rawRow[updateIndex]);
         const dateInput = parseDate(rawRow[inputIndex]);
-        rowObject._sortDate = Math.max(dateUpdate, dateInput); // <- 1. Buat tanggal terbaru
-        // ==================================
+        rowObject._sortDate = Math.max(dateUpdate, dateInput); // Tanggal terbaru
 
-        headers.forEach((header, i) => {
-          rowObject[header] = row[i] || "";
-        });
+        // ========================================================
+        // === PERBAIKAN: Isi rowObject secara eksplisit ===
+        // ========================================================
+        rowObject['Nama'] = row[namaIndex] || "";
+        rowObject['Unit Kerja'] = row[unitKerjaIndex] || "";
+        rowObject['Status'] = row[statusIndex] || "";
+        rowObject['Jabatan'] = row[jabatanIndex] || "";
+        rowObject['Input'] = row[inputIndex] || "";
+        rowObject['Update'] = row[updateIndex] || "";
+
+        // Buat kolom 'NIP/NIY' gabungan
+        if (nipIndex !== -1) { // Jika ini sheet SDN (ada kolom NIP)
+            rowObject['NIP/NIY'] = row[nipIndex] || "";
+        } else if (niyIndex !== -1) { // Jika ini sheet SDS (ada kolom NIY)
+            rowObject['NIP/NIY'] = row[niyIndex] || "";
+        } else {
+            rowObject['NIP/NIY'] = ""; // Fallback
+        }
+        // ========================================================
+        
         combinedData.push(rowObject);
       });
     };
 
+    // Proses kedua sheet
     processSheet(sdnSheet, 'SDN');
     processSheet(sdsSheet, 'SDS');
     
-    // === INI LOGIKA PENGURUTANNYA ===
-    combinedData.sort((a, b) => b._sortDate - a._sortDate); // <- 2. Urutkan (Terbaru di atas)
-    // ==================================
-    
+    // Urutkan data gabungan berdasarkan tanggal terbaru
+    combinedData.sort((a, b) => b._sortDate - a._sortDate);
+
+    // Header yang diminta oleh Klien (javascript.html)
     const desiredHeaders = [
         "Nama", "Unit Kerja", "Status", "NIP/NIY", "Jabatan", "Aksi", "Input", "Update"
     ];
+
     return { headers: desiredHeaders, rows: combinedData };
 
   } catch (e) {
@@ -1797,42 +1838,53 @@ function getKelolaPtkSdData() {
 
 function getNewPtkSdOptions() {
   try {
-    // Buka spreadsheet sumber data dropdown yang benar
-    const ss = SpreadsheetApp.openById(SPREADSHEET_IDS.DROPDOWN_DATA); // ID: 1wi...
+    const ssOptions = SpreadsheetApp.openById(SPREADSHEET_CONFIG.FORM_OPTIONS_DB.id); // 1pr...
+    const ssDropdown = SpreadsheetApp.openById(SPREADSHEET_IDS.DROPDOWN_DATA); // 1wi...
 
-    // Fungsi helper untuk mengambil data dari sheet
-    const getValuesFromSheet = (sheetName, colLetter = 'A') => {
-      const sheet = ss.getSheetByName(sheetName);
-      if (!sheet) return [];
+    // --- 1. Ambil Unit Kerja (dari ssDropdown / 1wi...) ---
+    const sheetSDNS = ssDropdown.getSheetByName("Nama SDNS"); 
+    const unitKerjaNegeri = [];
+    const unitKerjaSwasta = [];
+
+    if (sheetSDNS && sheetSDNS.getLastRow() > 1) {
+        const data = sheetSDNS.getRange(2, 1, sheetSDNS.getLastRow() - 1, 2).getDisplayValues(); 
+        data.forEach(row => {
+            const status = row[0];
+            const namaSekolah = row[1];
+            if (status === "Negeri" && namaSekolah) {
+                unitKerjaNegeri.push(namaSekolah);
+            } else if (status === "Swasta" && namaSekolah) {
+                unitKerjaSwasta.push(namaSekolah);
+            }
+        });
+    }
+
+    // --- 2. Helper untuk mengambil data PANGKAT dari ssOptions (1pr...) ---
+    const getValuesFromOptionsDB = (sheetName, colLetter = 'A') => {
+      const sheet = ssOptions.getSheetByName(sheetName);
+      if (!sheet) {
+        Logger.log(`Peringatan: Sheet '${sheetName}' tidak ditemukan di FORM_OPTIONS_DB.`);
+        return [];
+      }
       return sheet.getRange(colLetter + '2:' + colLetter + sheet.getLastRow())
                   .getValues()
                   .flat()
                   .filter(value => String(value).trim() !== '');
     };
     
-    // Fungsi helper untuk mengambil 2 kolom
-    const getTwoColumnValues = (sheetName, col1 = 'A', col2 = 'B') => {
-      const sheet = ss.getSheetByName(sheetName);
-      if (!sheet || sheet.getLastRow() < 2) return [];
-      return sheet.getRange(col1 + '2:' + col2 + sheet.getLastRow())
-                  .getDisplayValues();
-    };
-
-    // Ambil semua data yang diperlukan
-    const pangkatData = getTwoColumnValues('Pangkat'); // Kolom A: PNS, Kolom B: PPPK
-    const jabatanData = getTwoColumnValues('Jabatan'); // Kolom A: Jabatan, Kolom B: Tugas Tambahan
-
     return {
-      'Unit Kerja Negeri': getValuesFromSheet('Nama SDN', 'B').sort(), // Ambil dari Kolom B
-      'Unit Kerja Swasta': getValuesFromSheet('Nama SDS', 'B').sort(), // Ambil dari Kolom B
-      'Agama': getValuesFromSheet('Agama').sort(),
-      'Pendidikan': getValuesFromSheet('Pendidikan').sort(),
-      'Status Negeri': getValuesFromSheet('Status').sort(),
-      'Pangkat PNS': [...new Set(pangkatData.map(row => row[0]).filter(Boolean))].sort(),
-      'Pangkat PPPK': [...new Set(pangkatData.map(row => row[1]).filter(Boolean))].sort(),
-      'Jabatan': [...new Set(jabatanData.map(row => row[0]).filter(Boolean))].sort(),
-      'Tugas Tambahan': [...new Set(jabatanData.map(row => row[1]).filter(Boolean))].sort(),
+      'Unit Kerja Negeri': unitKerjaNegeri, // Dari 1wi...
+      'Unit Kerja Swasta': unitKerjaSwasta, // Dari 1wi...
+      
+      // 'Agama', 'Pendidikan', 'Status' (diambil dari Klien)
+      // 'Jabatan', 'Tugas Tambahan' (diambil dari Klien)
+      
+      // Data dinamis dari sheet 'Form SD' di 1pr...
+      'Pangkat PNS': getValuesFromOptionsDB('Form SD', 'D'),
+      'Pangkat PPPK': getValuesFromOptionsDB('Form SD', 'E'),
+      'Pangkat PPPK PW': getValuesFromOptionsDB('Form SD', 'F'),
     };
+
   } catch (e) {
     return handleError('getNewPtkSdOptions', e);
   }

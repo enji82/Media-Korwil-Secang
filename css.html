@@ -1020,4 +1020,64 @@ flex-grow: 1;
     caret-color: #e0e0e0 !important;
 }
 
+/* =================================================================== */
+  /* ===== 12. SISTEM GRID 12-KOLOM (BARU) ===== */
+  /* =================================================================== */
+
+  /* Kontainer grid 12-kolom */
+  .form-grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr); /* 12 kolom sama lebar */
+    gap: 15px;
+  }
+
+  /* Hapus margin-bottom default di dalam grid kustom */
+  .form-grid-12 .form-group {
+    margin-bottom: 0;
+  }
+  
+  /* Tambahkan jarak antar baris grid */
+  .form-grid-12 + .form-grid-12 {
+    margin-top: 20px;
+  }
+
+  /* Ukuran bentang kolom */
+  .col-span-1 { grid-column: span 1 / span 1; }
+  .col-span-2 { grid-column: span 2 / span 2; }
+  .col-span-3 { grid-column: span 3 / span 3; } /* 25% */
+  .col-span-4 { grid-column: span 4 / span 4; } /* 33.3% (untuk 30/70) */
+  .col-span-5 { grid-column: span 5 / span 5; }
+  .col-span-6 { grid-column: span 6 / span 6; } /* 50% */
+  .col-span-7 { grid-column: span 7 / span 7; }
+  .col-span-8 { grid-column: span 8 / span 8; } /* 66.6% (untuk 30/70) */
+  .col-span-9 { grid-column: span 9 / span 9; }
+  .col-span-10 { grid-column: span 10 / span 10; }
+  .col-span-11 { grid-column: span 11 / span 11; }
+  .col-span-12 { grid-column: span 12 / span 12; } /* 100% */
+
+  /* Responsif: Buat semua kolom jadi 1 baris di layar kecil */
+  @media (max-width: 768px) {
+    .form-grid-12 {
+      grid-template-columns: 1fr; /* Tumpuk semua kolom */
+    }
+    
+    /* Paksa semua item mengambil lebar penuh */
+    .col-span-1, .col-span-2, .col-span-3, .col-span-4,
+    .col-span-5, .col-span-6, .col-span-7, .col-span-8,
+    .col-span-9, .col-span-10, .col-span-11, .col-span-12 {
+      grid-column: span 1 / span 1;
+    }
+
+    /* Tambahkan jarak antar baris yang ditumpuk */
+    .form-grid-12 > div + div {
+        margin-top: 20px;
+    }
+    
+    .form-grid-12 + .form-grid-12 {
+        margin-top: 20px;
+    }
+  }
+
+</style>
+
 </style>
