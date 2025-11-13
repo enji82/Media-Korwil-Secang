@@ -56,24 +56,66 @@
     flex-direction: column !important;
   }
 
-  /* 4. INTI: Perintahkan .table-container untuk mengisi sisa ruang DAN SCROLL */
+  /* 4. INTI: Aktifkan scroll Vertikal DAN Horizontal */
   #tableWrapper .table-container {
     flex-grow: 1 !important;
-    overflow-y: auto !important; /* Aktifkan scrollbar vertikal HANYA di sini */
+    overflow-y: auto !important; /* Scroll atas-bawah */
+    overflow-x: auto !important; /* Scroll kiri-kanan */
   }
 
-  /* 5. PERBAIKAN Z-INDEX: Paksa header pojok (Kolom 1 & 2) ke lapisan paling atas */
-  #keadaanPtkPaudTable thead th:nth-child(1),
-  #keadaanPtkPaudTable thead th:nth-child(2) {
+  /* 5. PERBAIKAN Z-INDEX (ANTI 'GLITTER' v2)
+     Hanya targetkan header di BARIS PERTAMA (tr:first-child)
+  */
+  #keadaanPtkSdTable thead tr:first-child th:nth-child(1),
+  #keadaanPtkSdTable thead tr:first-child th:nth-child(2) {
     z-index: 7 !important;
   }
 
-  /* 6. PERBAIKAN SCROLLBAR: Sembunyikan scrollbar */
+  /* 6. PERBAIKAN SCROLLBAR: Sembunyikan scrollbar (sesuai kode Anda) */
   #tableWrapper .table-container::-webkit-scrollbar {
     display: none !important; 
   }
   #tableWrapper .table-container {
     scrollbar-width: none !important; 
     -ms-overflow-style: none !important; 
+  }
+
+  /* ======================================================== */
+  /* === 7. ATURAN PEWARNAAN KOLOM (PERBAIKAN: HANYA tbody) === */
+  /* ======================================================== */
+
+  /* Grup 1 (Biru): Kolom 7 s/d 44 (HANYA tbody) */
+  #keadaanPtkSdTable tbody td:nth-child(n+7):nth-child(-n+44) {
+    background-color: rgba(52, 152, 219, 0.1); /* Biru */
+  }
+
+  /* Grup 2 (Hijau): Kolom 45 s/d 89 (HANYA tbody) */
+  #keadaanPtkSdTable tbody td:nth-child(n+45):nth-child(-n+89) {
+    background-color: rgba(46, 204, 113, 0.1); /* Hijau */
+  }
+
+  /* Grup 3 (Ungu): Kolom 90 s/d 101 (HANYA tbody) */
+  #keadaanPtkSdTable tbody td:nth-child(n+90):nth-child(-n+101) {
+    background-color: rgba(155, 89, 182, 0.1); /* Ungu */
+  }
+
+  /* Grup 4 (Kuning): Kolom 102 (HANYA tbody) */
+  #keadaanPtkSdTable tbody td:nth-child(102) {
+    background-color: rgba(241, 196, 15, 0.1); /* Kuning */
+  }
+  
+  /* ======================================================== */
+  /* === 8. PERBAIKAN HOVER (DI ATAS WARNA BARU) === */
+  /* ======================================================== */
+  
+  /* Pastikan hover umum tetap berfungsi */
+  #keadaanPtkSdTable tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  /* Pastikan hover kolom beku (kiri) tetap lebih gelap */
+  #keadaanPtkSdTable tbody tr:hover td:nth-child(1),
+  #keadaanPtkSdTable tbody tr:hover td:nth-child(2) {
+    background-color: #2a4152 !important;
   }
 </style>
