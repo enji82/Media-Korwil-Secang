@@ -1078,6 +1078,68 @@ flex-grow: 1;
     }
   }
 
-</style>
+  /* =================================================================== */
+  /* ===== 12. SKELETON LOADER (BARU) ===== */
+  /* =================================================================== */
 
+  /* Animasi denyut (pulse) untuk skeleton */
+  @keyframes skeleton-pulse {
+    0% { background-color: rgba(255, 255, 255, 0.08); }
+    50% { background-color: rgba(255, 255, 255, 0.15); }
+    100% { background-color: rgba(255, 255, 255, 0.08); }
+  }
+  
+  /* Kelas dasar untuk semua elemen skeleton */
+  .skeleton {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 6px;
+    color: transparent !important; /* Sembunyikan teks jika ada */
+    user-select: none;
+    cursor: wait;
+  }
+  
+  /* Kerangka untuk teks (label) */
+  .skeleton-text {
+    height: 1.2em;
+    margin-bottom: 8px;
+    width: 150px; /* Lebar default, bisa di-override */
+  }
+  
+  /* Kerangka untuk input/select */
+  .skeleton-input {
+    height: 40px; /* Cocokkan tinggi input/select Anda */
+  }
+
+  /* Kerangka untuk navigasi Tab */
+  .skeleton-tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 25px;
+  }
+  .skeleton-tab {
+    height: 40px;
+    margin-bottom: -1px;
+    border-bottom: 3px solid transparent;
+  }
+  
+  /* Kerangka untuk teks petunjuk (hint) */
+  .skeleton-hint {
+    height: 0.9em;
+    width: 70%;
+    margin-top: 8px;
+  }
+
+  /* Kerangka untuk tombol di footer */
+  .skeleton-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .skeleton-button {
+    height: 40px;
+    width: 120px;
+  }
 </style>

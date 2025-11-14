@@ -1985,7 +1985,6 @@ function updatePtkSdData(formData) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_CONFIG.PTK_SD_DB.id);
     let sheet;
     const source = formData.source;
-    
     if (source === 'SDN') {
       sheet = ss.getSheetByName("PTK SDN");
     } else if (source === 'SDS') {
@@ -2000,18 +1999,45 @@ function updatePtkSdData(formData) {
 
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => h.trim());
     const range = sheet.getRange(rowIndex, 1, 1, headers.length);
-    const oldValues = range.getValues()[0];
+    const oldValues = range.getValues()[0]; // Ambil nilai mentah (termasuk Date objects)
 
-    formData['Update'] = new Date();
-    if (formData['NUPTK']) {
-      formData['NUPTK'] = "'" + formData['NUPTK'];
-    }
+    formData['Update'] = new Date(); // Tambahkan stempel waktu update
 
     const newRowValues = headers.map((header, index) => {
-      return formData.hasOwnProperty(header) ? formData[header] : oldValues[index];
+      // Cek jika data baru ada di formData
+      if (formData.hasOwnProperty(header)) {
+        
+        let value = formData[header];
+        
+        // --- PERBAIKAN LOGIKA PENYIMPANAN ---
+        // 1. Ubah string tanggal "yyyy-mm-dd" kembali ke Objek Date
+        if (header === 'TMT' && value) {
+          return new Date(value); 
+        }
+        // 2. Tambahkan petik (') untuk NUPTK
+        if (header === 'NUPTK' && value) {
+          return "'" + value;
+        }
+        // 3. Jika input Pangkat/Gol untuk Non ASN (yang di-disabled)
+        if (header === 'Pangkat, Gol./Ruang' && value === '— Tidak Perlu Diisi —') {
+            return ""; // Simpan sebagai string kosong
+        }
+        
+        return value; // Ambil data baru
+      }
+      
+      // Jika tidak ada di formData (karena disabled, dll), pertahankan data lama
+      return oldValues[index]; 
     });
+    
+    range.setValues([newRowValues]); // 1. Simpan datanya
 
-    range.setValues([newRowValues]);
+    // 2. Format Ulang Tanggal
+    const tmtIndex = headers.indexOf('TMT');
+    if (tmtIndex !== -1) {
+      sheet.getRange(rowIndex, tmtIndex + 1).setNumberFormat("dd-MM-yyyy");
+    }
+
     return "Data PTK berhasil diperbarui.";
   } catch (e) {
     throw new Error(`Gagal memperbarui data: ${e.message}`);
